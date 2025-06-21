@@ -120,63 +120,63 @@
         let editId = null;
 
         function confirmDelete(id) {
-    swal({
-        title: "Apakah Anda Yakin?",
-        text: "Data ini akan dihapus secara permanen!",
-        icon: "warning",
-        buttons: [
-            'Tidak',
-            'Ya, Hapus'
-        ],
-        dangerMode: true,
-    }).then(function(isConfirm) {
-        if (isConfirm) {
-            const form = document.getElementById(`delete-form-${id}`);
-            const url = form.action;
+            swal({
+                title: "Apakah Anda Yakin?",
+                text: "Data ini akan dihapus secara permanen!",
+                icon: "warning",
+                buttons: [
+                    'Tidak',
+                    'Ya, Hapus'
+                ],
+                dangerMode: true,
+            }).then(function(isConfirm) {
+                if (isConfirm) {
+                    const form = document.getElementById(`delete-form-${id}`);
+                    const url = form.action;
 
-            // Opsi 1: Menggunakan FormData (Recommended)
-            const formData = new FormData();
-            formData.append('_method', 'DELETE');
-            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                    // Opsi 1: Menggunakan FormData (Recommended)
+                    const formData = new FormData();
+                    formData.append('_method', 'DELETE');
+                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
 
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    swal({
-                        title: "Berhasil!",
-                        text: "Data berhasil dihapus.",
-                        icon: "success",
-                        timer: 3000,
-                        buttons: false
-                    }).then(() => {
-                        // Reload table data
-                        performSearch(document.getElementById('search-input').value);
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            swal({
+                                title: "Berhasil!",
+                                text: "Data berhasil dihapus.",
+                                icon: "success",
+                                timer: 3000,
+                                buttons: false
+                            }).then(() => {
+                                // Reload table data
+                                performSearch(document.getElementById('search-input').value);
+                            });
+                        } else {
+                            swal("Gagal", data.message || "Terjadi kesalahan saat menghapus data.", "error");
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        swal("Gagal", "Terjadi kesalahan saat menghapus data.", "error");
                     });
-                } else {
-                    swal("Gagal", data.message || "Terjadi kesalahan saat menghapus data.", "error");
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                swal("Gagal", "Terjadi kesalahan saat menghapus data.", "error");
             });
         }
-    });
-}
 
         function renumberTableRows() {
             const tableBody = document.querySelector('#sortable-table tbody');

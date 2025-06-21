@@ -47,6 +47,13 @@ class UserSeeder extends Seeder
                 'type' => 'teacher',
             ],
             [
+                'email' => 'hekel@gmail.com',
+                'name' => 'Hekel',
+                'phone' => '0856',
+                'status' => '1',
+                'type' => 'teacher',
+            ],
+            [
                 'email' => 'parent@gmail.com',
                 'name' => 'parent',
                 'phone' => '111',

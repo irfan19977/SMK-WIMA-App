@@ -17,18 +17,71 @@ class ScheduleController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Schedule::with(['classRoom', 'subject', 'teacher']);
+        // Get all classes
+        $classes = Classes::with(['students'])->orderBy('name')->get();
         
-        // Filter pencarian berdasarkan nama guru, nama kelas, dan mata pelajaran
+        // Get selected class (default to first class if exists)
+        $selectedClassId = $request->get('class_id', $classes->first()?->id);
+        $selectedClass = $classes->find($selectedClassId);
+        
+        $schedules = collect();
+        
+        if ($selectedClass) {
+            $query = Schedule::with(['classRoom', 'subject', 'teacher'])
+                           ->where('class_id', $selectedClassId);
+            
+            // Filter pencarian berdasarkan nama guru, mata pelajaran, dan hari
+            if ($request->has('q') && !empty($request->q)) {
+                $searchTerm = $request->q;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->whereHas('teacher', function($subQuery) use ($searchTerm) {
+                        $subQuery->where('name', 'LIKE', '%' . $searchTerm . '%')
+                                ->orWhere('nip', 'LIKE', '%' . $searchTerm . '%');
+                    })
+                    ->orWhereHas('subject', function($subQuery) use ($searchTerm) {
+                        $subQuery->where('name', 'LIKE', '%' . $searchTerm . '%');
+                    })
+                    ->orWhere('day', 'LIKE', '%' . $searchTerm . '%');
+                });
+            }
+            
+            $query->orderByRaw("FIELD(day, 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu')")
+                  ->orderBy('start_time');
+            
+            $schedules = $query->paginate(10);
+        }
+        
+        // Jika request AJAX, return JSON
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'schedules' => $schedules->items() ?? [],
+                'pagination' => [
+                    'current_page' => $schedules->currentPage() ?? 1,
+                    'per_page' => $schedules->perPage() ?? 10,
+                    'total' => $schedules->total() ?? 0,
+                    'last_page' => $schedules->lastPage() ?? 1,
+                ],
+                'currentPage' => $schedules->currentPage() ?? 1,
+                'perPage' => $schedules->perPage() ?? 10,
+            ]);
+        }
+        
+        return view('schedules.index', compact('schedules', 'classes', 'selectedClass'));
+    }
+    
+    public function getSchedulesByClass(Request $request, $classId)
+    {
+        $query = Schedule::with(['classRoom', 'subject', 'teacher'])
+                        ->where('class_id', $classId);
+        
+        // Filter pencarian
         if ($request->has('q') && !empty($request->q)) {
             $searchTerm = $request->q;
             $query->where(function($q) use ($searchTerm) {
                 $q->whereHas('teacher', function($subQuery) use ($searchTerm) {
                     $subQuery->where('name', 'LIKE', '%' . $searchTerm . '%')
                             ->orWhere('nip', 'LIKE', '%' . $searchTerm . '%');
-                })
-                ->orWhereHas('classRoom', function($subQuery) use ($searchTerm) {
-                    $subQuery->where('name', 'LIKE', '%' . $searchTerm . '%');
                 })
                 ->orWhereHas('subject', function($subQuery) use ($searchTerm) {
                     $subQuery->where('name', 'LIKE', '%' . $searchTerm . '%');
@@ -38,27 +91,22 @@ class ScheduleController extends Controller
         }
         
         $query->orderByRaw("FIELD(day, 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu')")
-            ->orderBy('start_time');
+              ->orderBy('start_time');
         
         $schedules = $query->paginate(10);
         
-        // Jika request AJAX, return JSON
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'schedules' => $schedules->items(),
-                'pagination' => [
-                    'current_page' => $schedules->currentPage(),
-                    'per_page' => $schedules->perPage(),
-                    'total' => $schedules->total(),
-                    'last_page' => $schedules->lastPage(),
-                ],
-                'currentPage' => $schedules->currentPage(),
-                'perPage' => $schedules->perPage(),
-            ]);
-        }
-        
-        return view('schedules.index', compact('schedules'));
+        return response()->json([
+            'success' => true,
+            'schedules' => $schedules->items(),
+            'pagination' => [
+                'current_page' => $schedules->currentPage(),
+                'per_page' => $schedules->perPage(),
+                'total' => $schedules->total(),
+                'last_page' => $schedules->lastPage(),
+            ],
+            'currentPage' => $schedules->currentPage(),
+            'perPage' => $schedules->perPage(),
+        ]);
     }
 
     /**

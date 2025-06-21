@@ -34,6 +34,11 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('subjects', SubjectController::class);
     
     Route::resource('schedules', ScheduleController::class);
+    Route::get('schedules/class/{classId}', [ScheduleController::class, 'getSchedulesByClass'])->name('schedules.by-class');
+
+    // Optional: Add these routes if you want print and export functionality
+    Route::get('schedules/print', [ScheduleController::class, 'printSchedule'])->name('schedules.print');
+    Route::get('schedules/export', [ScheduleController::class, 'exportSchedule'])->name('schedules.export');
 });
 
 

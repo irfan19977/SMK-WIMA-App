@@ -72,14 +72,6 @@
         </div>
     </div>
 
-    {{-- Pagination --}}
-    {{-- @if ($schedules->hasPages())
-    <div class="card-footer text-center">
-      <nav class="d-inline-block">
-        {{ $schedules->links() }}
-    </nav>
-</div>
-@endif --}}
 </div>
 </section>
 
@@ -88,70 +80,70 @@
 @push('scripts')
     <script>
         function confirmDelete(id) {
-    swal({
-        title: "Apakah Anda Yakin?",
-        text: "Data ini akan dihapus secara permanen!",
-        icon: "warning",
-        buttons: [
-            'Tidak',
-            'Ya, Hapus'
-        ],
-        dangerMode: true,
-    }).then(function(isConfirm) {
-        if (isConfirm) {
-            // Langsung submit form yang sudah ada
-            const form = document.getElementById(`delete-form-${id}`);
-            
-            // Atau gunakan AJAX dengan pendekatan yang lebih sederhana
-            const url = form.action;
-            const token = form.querySelector('input[name="_token"]').value;
+            swal({
+                title: "Apakah Anda Yakin?",
+                text: "Data ini akan dihapus secara permanen!",
+                icon: "warning",
+                buttons: [
+                    'Tidak',
+                    'Ya, Hapus'
+                ],
+                dangerMode: true,
+            }).then(function(isConfirm) {
+                if (isConfirm) {
+                    // Langsung submit form yang sudah ada
+                    const form = document.getElementById(`delete-form-${id}`);
+                    
+                    // Atau gunakan AJAX dengan pendekatan yang lebih sederhana
+                    const url = form.action;
+                    const token = form.querySelector('input[name="_token"]').value;
 
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRF-TOKEN': token,
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: new URLSearchParams({
-                    '_method': 'DELETE',
-                    '_token': token
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    swal({
-                        title: "Berhasil!",
-                        text: data.message || "Data berhasil dihapus.",
-                        icon: "success",
-                        timer: 3000,
-                        buttons: false
-                    }).then(() => {
-                        // Hapus baris tabel
-                        const rowToRemove = form.closest('tr');
-                        if (rowToRemove) {
-                            rowToRemove.remove();
-                            // Perbarui nomor urut
-                            renumberTableRows();
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRF-TOKEN': token,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new URLSearchParams({
+                            '_method': 'DELETE',
+                            '_token': token
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
                         }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            swal({
+                                title: "Berhasil!",
+                                text: data.message || "Data berhasil dihapus.",
+                                icon: "success",
+                                timer: 3000,
+                                buttons: false
+                            }).then(() => {
+                                // Hapus baris tabel
+                                const rowToRemove = form.closest('tr');
+                                if (rowToRemove) {
+                                    rowToRemove.remove();
+                                    // Perbarui nomor urut
+                                    renumberTableRows();
+                                }
+                            });
+                        } else {
+                            swal("Gagal", data.message || "Terjadi kesalahan saat menghapus data.", "error");
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        swal("Gagal", "Terjadi kesalahan saat menghapus data.", "error");
                     });
-                } else {
-                    swal("Gagal", data.message || "Terjadi kesalahan saat menghapus data.", "error");
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                swal("Gagal", "Terjadi kesalahan saat menghapus data.", "error");
             });
         }
-    });
-}
 
         function renumberTableRows() {
             const tableBody = document.querySelector('#sortable-table tbody');
