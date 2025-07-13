@@ -68,12 +68,12 @@
                                 <label for="day">Hari</label>
                                 <select name="day" class="form-control select2 @error('day') is-invalid @enderror" required>
                                     <option value="">--Pilih Hari--</option>
-                                    <option value="Senin" {{ old('day', $schedules->day) == 'senin' ? 'selected' : '' }}>Senin</option>
-                                    <option value="Selasa" {{ old('day', $schedules->day) == 'selasa' ? 'selected' : '' }}>Selasa</option>
-                                    <option value="Rabu" {{ old('day', $schedules->day) == 'rabu' ? 'selected' : '' }}>Rabu</option>
-                                    <option value="Kamis" {{ old('day', $schedules->day) == 'kamis' ? 'selected' : '' }}>Kamis</option>
-                                    <option value="Jumat" {{ old('day', $schedules->day) == 'jumat' ? 'selected' : '' }}>Jumat</option>
-                                    <option value="Sabtu" {{ old('day', $schedules->day) == 'sabtu' ? 'selected' : '' }}>Sabtu</option>
+                                    <option value="senin" {{ old('day', $schedules->day) == 'senin' ? 'selected' : '' }}>Senin</option>
+                                    <option value="selasa" {{ old('day', $schedules->day) == 'selasa' ? 'selected' : '' }}>Selasa</option>
+                                    <option value="rabu" {{ old('day', $schedules->day) == 'rabu' ? 'selected' : '' }}>Rabu</option>
+                                    <option value="kamis" {{ old('day', $schedules->day) == 'kamis' ? 'selected' : '' }}>Kamis</option>
+                                    <option value="jumat" {{ old('day', $schedules->day) == 'jumat' ? 'selected' : '' }}>Jumat</option>
+                                    <option value="sabtu" {{ old('day', $schedules->day) == 'sabtu' ? 'selected' : '' }}>Sabtu</option>
                                 </select>
                                 @error('day')
                                     <div class="invalid-feedback">{{ $message }}</div>

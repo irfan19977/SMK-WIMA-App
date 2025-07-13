@@ -15,9 +15,11 @@
                         </p>
                     </div>
                     <div>
-                        <a href="{{ route('classes.edit', $classes->id) }}" class="btn btn-primary btn-shadow">
-                            <i class="fas fa-edit"></i> Edit Kelas
-                        </a>
+                        @can('classes.edit')    
+                            <a href="{{ route('classes.edit', $classes->id) }}" class="btn btn-primary btn-shadow">
+                                <i class="fas fa-edit"></i> Edit Kelas
+                            </a>
+                        @endcan
                         <a href="{{ route('classes.index') }}" class="btn btn-light btn-shadow">
                             <i class="fas fa-arrow-left"></i> Kembali
                         </a>
@@ -191,20 +193,22 @@
                                             </h5>
                                         </div>
                                         <div class="card-body">
-                                            @if($availableStudents->count() > 0)
-                                            <button type="button" class="btn btn-primary btn-block btn-modern mb-3"
-                                                data-toggle="modal" data-target="#bulkAssignModal">
-                                                <i class="fas fa-users mr-2"></i>Tambah Siswa
-                                            </button>
-                                            <button type="button" class="btn btn-info btn-block btn-modern mb-3"
-                                                onclick="window.print()">
-                                                <i class="fas fa-print mr-2"></i>Cetak Daftar Siswa
-                                            </button>
-                                            <button type="button" class="btn btn-success btn-block btn-modern mb-3"
-                                                onclick="window.print()">
-                                                <i class="fas fa-print mr-2"></i>Cetak Daftar Absen
-                                            </button>
-                                            @else
+                                            @can('classes.edit')
+                                                @if($availableStudents->count() > 0)
+                                                <button type="button" class="btn btn-primary btn-block btn-modern mb-3"
+                                                    data-toggle="modal" data-target="#bulkAssignModal">
+                                                    <i class="fas fa-users mr-2"></i>Tambah Siswa
+                                                </button>
+                                                <button type="button" class="btn btn-info btn-block btn-modern mb-3"
+                                                    onclick="window.print()">
+                                                    <i class="fas fa-print mr-2"></i>Cetak Daftar Siswa
+                                                </button>
+                                                <button type="button" class="btn btn-success btn-block btn-modern mb-3"
+                                                    onclick="window.print()">
+                                                    <i class="fas fa-print mr-2"></i>Cetak Daftar Absen
+                                                </button>
+                                                @else
+                                            @endcan
                                             <div class="alert alert-info">
                                                 <i class="fas fa-info-circle mr-2"></i>
                                                 Tidak ada siswa yang tersedia untuk ditambahkan.
@@ -243,7 +247,9 @@
                                             <th>Email</th>
                                             <th>NISN</th>
                                             <th>Gender</th>
-                                            <th width="100">Aksi</th>
+                                            @can('classes.edit')
+                                                <th width="100">Aksi</th>
+                                            @endcan
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -282,13 +288,15 @@
                                                 <span class="text-muted">-</span>
                                                 @endif
                                             </td>
-                                            <td>
-                                                <button type="button" class="btn btn-danger"
-                                                    onclick="removeStudent('{{ $student->id }}', '{{ $student->name }}')"
-                                                    title="Hapus dari kelas">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </td>
+                                            @can('classes.edit')
+                                                <td>
+                                                    <button type="button" class="btn btn-danger"
+                                                        onclick="removeStudent('{{ $student->id }}', '{{ $student->name }}')"
+                                                        title="Hapus dari kelas">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            @endcan
                                         </tr>
                                         @endforeach
                                     </tbody>
@@ -319,18 +327,23 @@
                                     <div class="form-group">
                                         <label for="attendanceMonth">Pilih Bulan:</label>
                                         <select class="form-control" id="attendanceMonth" onchange="filterAttendance()">
-                                            <option value="2024-01">Januari 2024</option>
-                                            <option value="2024-02">Februari 2024</option>
-                                            <option value="2024-03">Maret 2024</option>
-                                            <option value="2024-04">April 2024</option>
-                                            <option value="2024-05">Mei 2024</option>
-                                            <option value="2024-06" selected>Juni 2024</option>
-                                            <option value="2024-07">Juli 2024</option>
-                                            <option value="2024-08">Agustus 2024</option>
-                                            <option value="2024-09">September 2024</option>
-                                            <option value="2024-10">Oktober 2024</option>
-                                            <option value="2024-11">November 2024</option>
-                                            <option value="2024-12">Desember 2024</option>
+                                            @php
+                                                $currentYear = date('Y');
+                                                $currentMonth = request('month', date('Y-m'));
+                                                $months = [
+                                                    '01' => 'Januari', '02' => 'Februari', '03' => 'Maret',
+                                                    '04' => 'April', '05' => 'Mei', '06' => 'Juni',
+                                                    '07' => 'Juli', '08' => 'Agustus', '09' => 'September',
+                                                    '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+                                                ];
+                                            @endphp
+                                            @foreach($months as $monthNum => $monthName)
+                                                @php $monthValue = $currentYear.'-'.$monthNum; @endphp
+                                                <option value="{{ $monthValue }}" 
+                                                    {{ $currentMonth == $monthValue ? 'selected' : '' }}>
+                                                    {{ $monthName }} {{ $currentYear }}
+                                                </option>
+                                            @endforeach
                                         </select>
                                     </div>
                                 </div>
@@ -350,7 +363,7 @@
                                 <div class="card-header bg-gradient-success text-white">
                                     <h6 class="card-title mb-0">
                                         <i class="fas fa-calendar-check mr-2"></i>
-                                        Absensi Bulan <span id="selectedMonth">Juni 2024</span>
+                                        Absensi Bulan <span id="selectedMonth">{{ \Carbon\Carbon::createFromFormat('Y-m', $currentMonth ?? date('Y-m'))->format('F Y') }}</span>
                                     </h6>
                                 </div>
                                 <div class="card-body p-0">
@@ -360,127 +373,155 @@
                                                 <tr>
                                                     <th width="50">No</th>
                                                     <th width="200">Nama Siswa</th>
-                                                    <th width="80">1</th>
-                                                    <th width="80">2</th>
-                                                    <th width="80">3</th>
-                                                    <th width="80">4</th>
-                                                    <th width="80">5</th>
-                                                    <th width="80">6</th>
-                                                    <th width="80">7</th>
-                                                    <th width="80">8</th>
-                                                    <th width="80">9</th>
-                                                    <th width="80">10</th>
-                                                    <th width="80">11</th>
-                                                    <th width="80">12</th>
-                                                    <th width="80">13</th>
-                                                    <th width="80">14</th>
-                                                    <th width="80">15</th>
-                                                    <th width="80">16</th>
-                                                    <th width="80">17</th>
-                                                    <th width="80">18</th>
-                                                    <th width="80">19</th>
-                                                    <th width="80">20</th>
-                                                    <th width="80">21</th>
-                                                    <th width="80">22</th>
-                                                    <th width="80">23</th>
-                                                    <th width="80">24</th>
-                                                    <th width="80">25</th>
-                                                    <th width="80">26</th>
-                                                    <th width="80">27</th>
-                                                    <th width="80">28</th>
-                                                    <th width="80">29</th>
-                                                    <th width="80">30</th>
+                                                    @for($day = 1; $day <= ($daysInMonth ?? 30); $day++)
+                                                        <th width="80">{{ $day }}</th>
+                                                    @endfor
                                                     <th width="100">Hadir</th>
-                                                    <th width="100">Tidak Hadir</th>
+                                                    <th width="100">Sakit</th>
+                                                    <th width="100">Izin</th>
+                                                    <th width="100">Alpha</th>
                                                     <th width="100">Persentase</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
+                                            <tbody id="attendanceTableBody">
                                                 @if($students->count() > 0)
-                                                @foreach($students as $index => $student)
-                                                @php
-                                                $attendanceData = [];
-                                                $presentCount = 0;
-                                                $absentCount = 0;
-
-                                                // Generate random attendance data for demo
-                                                for($day = 1; $day <= 30; $day++) { $status=rand(1, 10) <=8 ? 'H' :
-                                                    (rand(1, 2)==1 ? 'S' : 'I' ); // 80% hadir, 20% sakit/izin
-                                                    $attendanceData[$day]=$status; if($status=='H' ) $presentCount++;
-                                                    else $absentCount++; } $percentage=$presentCount> 0 ?
-                                                    round(($presentCount / 30) * 100, 1) : 0;
-                                                    @endphp
-                                                    <tr>
-                                                        <td class="text-center">{{ $index + 1 }}</td>
-                                                        <td>
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="avatar-small mr-2">
-                                                                    {{ strtoupper(substr($student->name, 0, 1)) }}
+                                                    @foreach($students as $index => $student)
+                                                        @php
+                                                            $presentCount = 0;
+                                                            $sickCount = 0;
+                                                            $permitCount = 0;
+                                                            $absentCount = 0;
+                                                            $currentMonthData = \Carbon\Carbon::createFromFormat('Y-m', $currentMonth ?? date('Y-m'));
+                                                            $totalDaysInMonth = $daysInMonth ?? $currentMonthData->daysInMonth;
+                                                        @endphp
+                                                        <tr>
+                                                            <td class="text-center">{{ $index + 1 }}</td>
+                                                            <td>
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="avatar-small mr-2">
+                                                                        {{ strtoupper(substr($student->name, 0, 1)) }}
+                                                                    </div>
+                                                                    <span class="font-weight-medium">{{ $student->name }}</span>
                                                                 </div>
-                                                                <span
-                                                                    class="font-weight-medium">{{ $student->name }}</span>
-                                                            </div>
-                                                        </td>
-                                                        @for($day = 1; $day <= 30; $day++) <td class="text-center">
-                                                            @php $status = $attendanceData[$day]; @endphp
-                                                            <span
-                                                                class="attendance-status attendance-{{ strtolower($status) }}">
-                                                                {{ $status }}
-                                                            </span>
                                                             </td>
+                                                            @for($day = 1; $day <= $totalDaysInMonth; $day++)
+                                                                @php
+                                                                    // Get attendance for this student and day
+                                                                    $attendanceForDay = $attendanceData->get($student->id, collect())->get($day);
+                                                                    $checkDate = $currentMonthData->copy()->day($day);
+                                                                    $status = '-'; // Default to belum absen
+                                                                    
+                                                                    if ($attendanceForDay) {
+                                                                        $attendance = $attendanceForDay->first();
+                                                                        // Determine status based on check_in_status or check_out_status
+                                                                        $checkStatus = $attendance->check_in_status ?? $attendance->check_out_status;
+                                                                        switch($checkStatus) {
+                                                                            case 'tepat':
+                                                                            case 'terlambat':
+                                                                                $status = 'H';
+                                                                                $presentCount++;
+                                                                                break;
+                                                                            case 'sakit':
+                                                                                $status = 'S';
+                                                                                $sickCount++;
+                                                                                break;
+                                                                            case 'izin':
+                                                                                $status = 'I';
+                                                                                $permitCount++;
+                                                                                break;
+                                                                            case 'alpha':
+                                                                            default:
+                                                                                $status = 'A';
+                                                                                $absentCount++;
+                                                                                break;
+                                                                        }
+                                                                    } else {
+                                                                        // PERBAIKAN LOGIKA: cek kondisi hari
+                                                                        if ($checkDate->isFuture()) {
+                                                                            // Jika tanggal belum tiba
+                                                                            $status = '-';
+                                                                        } elseif ($checkDate->isWeekend()) {
+                                                                            // Jika weekend/libur
+                                                                            $status = 'L';
+                                                                        } else {
+                                                                            // Jika hari sudah berlalu tapi tidak ada absen
+                                                                            $status = 'A';
+                                                                            $absentCount++;
+                                                                        }
+                                                                    }
+                                                                @endphp
+                                                                <td class="text-center">
+                                                                    <span class="attendance-status attendance-{{ strtolower($status) }}">
+                                                                        {{ $status }}
+                                                                    </span>
+                                                                </td>
                                                             @endfor
                                                             <td class="text-center">
-                                                                <span
-                                                                    class="badge badge-success">{{ $presentCount }}</span>
+                                                                <span class="badge badge-success">{{ $presentCount }}</span>
                                                             </td>
                                                             <td class="text-center">
-                                                                <span
-                                                                    class="badge badge-danger">{{ $absentCount }}</span>
+                                                                <span class="badge badge-warning">{{ $sickCount }}</span>
                                                             </td>
                                                             <td class="text-center">
-                                                                <span
-                                                                    class="badge {{ $percentage >= 80 ? 'badge-success' : ($percentage >= 70 ? 'badge-warning' : 'badge-danger') }}">
+                                                                <span class="badge badge-info">{{ $permitCount }}</span>
+                                                            </td>
+                                                            <td class="text-center">
+                                                                <span class="badge badge-danger">{{ $absentCount }}</span>
+                                                            </td>
+                                                            <td class="text-center">
+                                                                @php
+                                                                    $totalValidDays = $presentCount + $sickCount + $permitCount + $absentCount;
+                                                                    $percentage = $totalValidDays > 0 ? round(($presentCount / $totalValidDays) * 100, 1) : 0;
+                                                                @endphp
+                                                                <span class="badge {{ $percentage >= 80 ? 'badge-success' : ($percentage >= 70 ? 'badge-warning' : 'badge-danger') }}">
                                                                     {{ $percentage }}%
                                                                 </span>
                                                             </td>
-                                                    </tr>
+                                                        </tr>
                                                     @endforeach
-                                                    @else
+                                                @else
                                                     <tr>
-                                                        <td colspan="35" class="text-center py-4">
-                                                            <div class="text-muted">Tidak ada data siswa untuk
-                                                                ditampilkan</div>
+                                                        <td colspan="{{ 7 + ($daysInMonth ?? 30) }}" class="text-center py-4">
+                                                            <div class="text-muted">Tidak ada data siswa untuk ditampilkan</div>
                                                         </td>
                                                     </tr>
-                                                    @endif
+                                                @endif
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Attendance Legend -->
+                            <!-- Attendance Legend - UPDATE dengan status baru -->
                             <div class="mt-3">
                                 <div class="row">
                                     <div class="col-12">
                                         <div class="card border-0 shadow-sm">
                                             <div class="card-body py-2">
-                                                <div class="d-flex align-items-center justify-content-center">
-                                                    <span class="mr-4">
+                                                <div class="d-flex align-items-center justify-content-center flex-wrap">
+                                                    <span class="mr-4 mb-1">
                                                         <span class="attendance-status attendance-h mr-1">H</span>
                                                         <small>Hadir</small>
                                                     </span>
-                                                    <span class="mr-4">
+                                                    <span class="mr-4 mb-1">
                                                         <span class="attendance-status attendance-s mr-1">S</span>
                                                         <small>Sakit</small>
                                                     </span>
-                                                    <span class="mr-4">
+                                                    <span class="mr-4 mb-1">
                                                         <span class="attendance-status attendance-i mr-1">I</span>
                                                         <small>Izin</small>
                                                     </span>
-                                                    <span>
+                                                    <span class="mr-4 mb-1">
                                                         <span class="attendance-status attendance-a mr-1">A</span>
                                                         <small>Alpha</small>
+                                                    </span>
+                                                    <span class="mr-4 mb-1">
+                                                        <span class="attendance-status attendance-l mr-1">L</span>
+                                                        <small>Libur</small>
+                                                    </span>
+                                                    <span class="mb-1">
+                                                        <span class="attendance-status attendance-- mr-1">-</span>
+                                                        <small>Belum Absen</small>
                                                     </span>
                                                 </div>
                                             </div>
@@ -647,17 +688,12 @@
         }
 
         // Rest of your existing scripts remain the same
-        $(document).ready(function () {
-            // Search functionality
-            $('#searchStudent').on('keyup', function () {
-                var value = $(this).val().toLowerCase();
-                $('#studentsTable tbody tr').filter(function () {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-                });
-            });
-
-            // Initialize tooltips
-            $('[data-toggle="tooltip"]').tooltip();
+        $(document).ready(function() {
+            // Pastikan dropdown bulan ter-initialize dengan benar
+            const currentMonth = $('#attendanceMonth').val();
+            
+            // Bind event handler untuk dropdown
+            $('#attendanceMonth').off('change').on('change', filterAttendance);
         });
 
         function selectAll() {
@@ -669,32 +705,211 @@
         }
 
         function filterAttendance() {
-            const selectedValue = $('#attendanceMonth').val();
-            const monthNames = {
-                '2024-01': 'Januari 2024',
-                '2024-02': 'Februari 2024',
-                '2024-03': 'Maret 2024',
-                '2024-04': 'April 2024',
-                '2024-05': 'Mei 2024',
-                '2024-06': 'Juni 2024',
-                '2024-07': 'Juli 2024',
-                '2024-08': 'Agustus 2024',
-                '2024-09': 'September 2024',
-                '2024-10': 'Oktober 2024',
-                '2024-11': 'November 2024',
-                '2024-12': 'Desember 2024'
-            };
-
-            $('#selectedMonth').text(monthNames[selectedValue]);
-
-            swal({
-                title: 'Memuat Data...',
-                text: 'Sedang memuat data absensi untuk ' + monthNames[selectedValue],
-                icon: 'info',
-                timer: 1500,
-                buttons: false
+    const selectedValue = $('#attendanceMonth').val();
+    
+    // Validasi input
+    if (!selectedValue || !selectedValue.match(/^\d{4}-\d{2}$/)) {
+        swal('Error', 'Format bulan tidak valid', 'error');
+        return;
+    }
+    
+    // Split tahun dan bulan dari format "YYYY-MM"
+    const [year, month] = selectedValue.split('-');
+    
+    // PERBAIKAN: Pastikan parsing yang benar
+    const monthNumber = parseInt(month, 10); // Gunakan radix 10
+    const yearNumber = parseInt(year, 10);
+    
+    // Validasi bulan
+    if (monthNumber < 1 || monthNumber > 12) {
+        swal('Error', 'Bulan tidak valid', 'error');
+        return;
+    }
+    
+    // Array nama bulan dalam bahasa Indonesia
+    const monthNames = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    
+    // Convert month number to month name (monthNumber-1 karena array dimulai dari 0)
+    const monthIndex = monthNumber - 1;
+    const monthName = monthNames[monthIndex];
+    const displayText = `${monthName} ${year}`;
+    
+    // DEBUG: Log untuk debugging
+    console.log('Selected Value:', selectedValue);
+    console.log('Year:', year, 'Month:', month);
+    console.log('Month Number:', monthNumber);
+    console.log('Month Index:', monthIndex);
+    console.log('Month Name:', monthName);
+    console.log('Display Text:', displayText);
+    
+    // Update display text SEBELUM AJAX call
+    $('#selectedMonth').text(displayText);
+    
+    // Show loading message
+    swal({
+        title: 'Memuat Data...',
+        text: 'Sedang memuat data absensi untuk ' + displayText,
+        icon: 'info',
+        timer: 1500,
+        buttons: false
+    });
+    
+    // AJAX call untuk mengambil data attendance baru
+    $.ajax({
+        url: window.location.pathname + '/attendance-data',
+        method: 'GET',
+        data: { 
+            month: selectedValue, // Kirim format YYYY-MM
+            _token: $('meta[name="csrf-token"]').attr('content')
+        },
+        dataType: 'json',
+        success: function(response) {
+            console.log('AJAX Response:', response); // DEBUG log
+            
+            if (response.success) {
+                // PERBAIKAN: Jangan update month name lagi dari response
+                // karena sudah di-update sebelum AJAX call
+                updateAttendanceTable(response.students, response.days_in_month, displayText);
+                
+                swal({
+                    title: 'Berhasil!',
+                    text: 'Data absensi berhasil dimuat untuk ' + displayText,
+                    icon: 'success',
+                    timer: 1000,
+                    buttons: false
+                });
+            } else {
+                swal('Error', response.message || 'Gagal memuat data', 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', {
+                status: xhr.status,
+                statusText: xhr.statusText,
+                responseText: xhr.responseText,
+                error: error
             });
-        }
+            
+            let errorMessage = 'Gagal memuat data absensi';
+            if (xhr.status === 404) {
+                errorMessage = 'Endpoint tidak ditemukan';
+            } else if (xhr.status === 500) {
+                errorMessage = 'Terjadi kesalahan server';
+            } else if (xhr.status === 403) {
+                errorMessage = 'Akses ditolak';
+            }
+            
+            swal('Error', errorMessage, 'error');
+        },
+        timeout: 10000
+    });
+}
+
+// PERBAIKAN: Update fungsi updateAttendanceTable
+function updateAttendanceTable(students, daysInMonth, monthName) {
+    // JANGAN update month name lagi di sini karena sudah benar
+    // $('#selectedMonth').text(monthName); // HAPUS BARIS INI
+    
+    console.log('Updating table for:', monthName); // DEBUG
+    console.log('Days in month:', daysInMonth); // DEBUG
+    console.log('Students data:', students); // DEBUG
+    
+    // Rebuild header tabel dengan benar
+    const thead = $('#attendanceTable thead tr');
+    
+    let newHeader = `
+        <th width="50">No</th>
+        <th width="200">Nama Siswa</th>
+    `;
+    
+    // Tambahkan kolom untuk setiap hari dalam bulan
+    for(let day = 1; day <= daysInMonth; day++) {
+        newHeader += `<th width="80">${day}</th>`;
+    }
+    
+    // Tambahkan kolom summary
+    newHeader += `
+        <th width="100">Hadir</th>
+        <th width="100">Sakit</th>
+        <th width="100">Izin</th>
+        <th width="100">Alpha</th>
+        <th width="100">Persentase</th>
+    `;
+    
+    // Replace header dengan yang baru
+    thead.html(newHeader);
+    
+    // Clear existing table body
+    const tbody = $('#attendanceTableBody');
+    tbody.empty();
+    
+    // Populate table body
+    if (students && students.length > 0) {
+        students.forEach((studentData, index) => {
+            let row = `
+                <tr>
+                    <td class="text-center">${index + 1}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-small mr-2">
+                                ${studentData.student.name.charAt(0).toUpperCase()}
+                            </div>
+                            <span class="font-weight-medium">${studentData.student.name}</span>
+                        </div>
+                    </td>
+            `;
+            
+            // Add daily attendance
+            for(let day = 1; day <= daysInMonth; day++) {
+                const status = studentData.daily_attendance[day] || '-';
+                row += `
+                    <td class="text-center">
+                        <span class="attendance-status attendance-${status.toLowerCase()}">
+                            ${status}
+                        </span>
+                    </td>
+                `;
+            }
+            
+            // Add summary columns
+            row += `
+                    <td class="text-center">
+                        <span class="badge badge-success">${studentData.present_count}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-warning">${studentData.sick_count}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-info">${studentData.permit_count}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-danger">${studentData.absent_count}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge ${studentData.percentage >= 80 ? 'badge-success' : (studentData.percentage >= 70 ? 'badge-warning' : 'badge-danger')}">
+                            ${studentData.percentage}%
+                        </span>
+                    </td>
+                </tr>
+            `;
+            
+            tbody.append(row);
+        });
+    } else {
+        // No data message
+        const totalColumns = 2 + daysInMonth + 5;
+        tbody.html(`
+            <tr>
+                <td colspan="${totalColumns}" class="text-center py-4">
+                    <div class="text-muted">Tidak ada data siswa untuk ditampilkan</div>
+                </td>
+            </tr>
+        `);
+    }
+}
 
         function exportAttendance() {
             swal({
@@ -742,54 +957,7 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
-
-        /* .card-stats {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .card-stats:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        }
-
-        .card-stats .icon-big {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-
-        .card-stats .numbers {
-            text-align: right;
-        }
-
-        .card-stats .card-category {
-            font-size: 0.8rem;
-            color: #6c757d;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-
-        .card-stats .card-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin: 0;
-        }
-
-        .card-modern {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        } */
-
+        
         .nav-pills .nav-link {
             border-radius: 25px;
             font-weight: 500;
@@ -1001,6 +1169,47 @@
         .font-weight-medium {
             font-weight: 500;
         }
+        
+        .attendance-l {
+            background-color: #6f42c1; /* Purple untuk libur */
+            color: white;
+        }
+
+        .attendance-- {
+            background-color: #e9ecef; /* Light gray untuk belum absen */
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+        }
+
+        /* Update existing attendance status styles untuk konsistensi */
+        .attendance-status {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: white;
+        }
+
+        .attendance-h {
+            background-color: #28a745; /* Green untuk hadir */
+        }
+
+        .attendance-s {
+            background-color: #ffc107; /* Yellow untuk sakit */
+            color: #212529;
+        }
+
+        .attendance-i {
+            background-color: #17a2b8; /* Cyan untuk izin */
+        }
+
+        .attendance-a {
+            background-color: #dc3545; /* Red untuk alpha */
+        }
 
         /* Responsive Design */
         @media (max-width: 768px) {
@@ -1032,6 +1241,21 @@
                 height: 20px;
                 line-height: 20px;
                 font-size: 0.7rem;
+            }
+            .attendance-status {
+                width: 20px;
+                height: 20px;
+                line-height: 20px;
+                font-size: 0.7rem;
+            }
+            
+            #attendanceTable {
+                font-size: 0.8rem;
+            }
+            
+            #attendanceTable th,
+            #attendanceTable td {
+                padding: 0.3rem;
             }
         }
 

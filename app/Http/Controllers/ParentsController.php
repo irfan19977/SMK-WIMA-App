@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ParentModel;
 use App\Models\Student;
 use App\Models\User;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -13,11 +14,12 @@ use Illuminate\Support\Str;
 
 class ParentsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    use AuthorizesRequests;
+
     public function index(Request $request)
     {
+        $this->authorize('parents.index');
+
         $query = ParentModel::with(['user', 'user.roles', 'student']);
         
         // Filter pencarian

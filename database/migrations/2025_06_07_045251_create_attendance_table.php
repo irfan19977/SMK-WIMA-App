@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('attendance', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('student_id');
-            $table->uuid('class_id');
-            $table->date('date');
+            $table->uuid('student_id')->nullable();
+            $table->uuid('class_id')->nullable();
+            $table->date('date')->nullable();
             $table->time('check_in')->nullable();
             $table->time('check_out')->nullable();
-            $table->enum('check_in_status', ['tepat', 'terlambat', 'izin', 'sakit', 'alpha'])->default('tepat');
-            $table->enum('check_out_status', ['tepat', 'lebih_awal','tidak_absen', 'izin', 'sakit', 'alpha'])->default('tepat');
+            $table->enum('check_in_status', ['tepat', 'terlambat', 'izin', 'sakit', 'alpha'])->nullable();
+            $table->enum('check_out_status', ['tepat', 'lebih_awal','tidak_absen', 'izin', 'sakit', 'alpha'])->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

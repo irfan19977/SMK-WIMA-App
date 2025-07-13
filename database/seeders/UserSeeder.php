@@ -40,15 +40,15 @@ class UserSeeder extends Seeder
                 'type' => 'administrator',
             ],
             [
-                'email' => 'teacher@gmail.com',
-                'name' => 'Teacher',
+                'email' => 'teacher1@gmail.com',
+                'name' => 'Teacher 1',
                 'phone' => '000',
                 'status' => '1',
                 'type' => 'teacher',
             ],
             [
-                'email' => 'hekel@gmail.com',
-                'name' => 'Hekel',
+                'email' => 'teacher2@gmail.com',
+                'name' => 'Teacher 2',
                 'phone' => '0856',
                 'status' => '1',
                 'type' => 'teacher',
@@ -87,17 +87,6 @@ class UserSeeder extends Seeder
         $role_teacher = Role::create(['name' => 'teacher']);
         $role_parent = Role::create(['name' => 'parent']);
         $role_student = Role::create(['name' => 'student']);
-
-        $permissions = [
-            'create user',
-            'edit user',
-            'delete user',
-            'read user',
-        ];
-
-        foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
-        }
 
         // Assign roles ke semua user berdasarkan type
         

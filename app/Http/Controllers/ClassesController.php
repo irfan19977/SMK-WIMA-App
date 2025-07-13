@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attendance;
 use App\Models\Classes;
 use App\Models\Student;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -12,11 +14,20 @@ use Illuminate\Support\Str;
 
 class ClassesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index(Request $request)
     {
+        if (Auth::user()->hasRole('student')) {
+            $student = \App\Models\Student::where('user_id', Auth::id())->first();
+            $studentClass = $student ? \App\Models\StudentClass::where('student_id', $student->id)->first() : null;
+            
+            if ($studentClass) {
+                return redirect()->route('classes.show', $studentClass->class_id);
+            } else {
+                // Jika student tidak memiliki kelas, redirect dengan pesan error
+                return redirect()->back()->with('error', 'Anda belum terdaftar di kelas manapun.');
+            }
+        }
         $query = Classes::query();
         
         // Search filter
@@ -58,17 +69,11 @@ class ClassesController extends Controller
         return view('classes.index', compact('classes'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return view('classes.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         try {
@@ -97,10 +102,6 @@ class ClassesController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
-
     public function show(string $id)
     {
         try {
@@ -111,10 +112,24 @@ class ClassesController extends Controller
                 $query->where('classes.id', $id);
             })->with('user')->get();
             
-            // Get available students (not in any class or not in this class)
-            $availableStudents = Student::whereDoesntHave('classes', function($query) use ($id) {
-                $query->where('classes.id', $id);
-            })->with('user')->get();
+            // Get available students (siswa yang belum memiliki kelas sama sekali)
+            $availableStudents = Student::whereDoesntHave('classes')->with('user')->get();
+            
+            // Get current month and year
+            $currentMonth = request('month', Carbon::now()->format('Y-m'));
+            $monthDate = Carbon::createFromFormat('Y-m', $currentMonth);
+            $daysInMonth = $monthDate->daysInMonth;
+            
+            // Get attendance data for current month and class
+            $attendanceData = Attendance::whereHas('student.classes', function($query) use ($id) {
+                    $query->where('classes.id', $id);
+                })
+                ->whereYear('date', $monthDate->year)
+                ->whereMonth('date', $monthDate->month)
+                ->get()
+                ->groupBy(['student_id', function($item) {
+                    return Carbon::parse($item->date)->day;
+                }]);
             
             // Return JSON for AJAX requests
             if (request()->ajax() || request()->expectsJson()) {
@@ -148,11 +163,14 @@ class ClassesController extends Controller
                             'nisn' => $student->nisn,
                             'email' => $student->user->email ?? '-',
                         ];
-                    })
+                    }),
+                    'attendance_data' => $attendanceData,
+                    'current_month' => $currentMonth,
+                    'days_in_month' => $daysInMonth
                 ]);
             }
             
-            return view('classes.show', compact('classes', 'students', 'availableStudents'));
+            return view('classes.show', compact('classes', 'students', 'availableStudents', 'attendanceData', 'currentMonth', 'daysInMonth'));
         } catch (\Exception $e) {
             if (request()->ajax() || request()->expectsJson()) {
                 return response()->json([
@@ -165,9 +183,172 @@ class ClassesController extends Controller
         }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    public function getAttendanceData(Request $request, $classId)
+    {
+        try {
+            $month = $request->get('month', Carbon::now()->format('Y-m'));
+            
+            // PERBAIKAN: Pastikan parsing bulan yang benar
+            if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Format bulan tidak valid. Gunakan format YYYY-MM'
+                ], 400);
+            }
+            
+            $monthDate = Carbon::createFromFormat('Y-m', $month);
+            $daysInMonth = $monthDate->daysInMonth;
+            
+            // DEBUG: Log untuk debugging
+            Log::info('Attendance Filter Debug', [
+                'requested_month' => $month,
+                'parsed_month' => $monthDate->format('Y-m'),
+                'month_name' => $monthDate->format('F Y'),
+                'days_in_month' => $daysInMonth,
+                'year' => $monthDate->year,
+                'month_number' => $monthDate->month
+            ]);
+            
+            // Get students in this class
+            $students = Student::whereHas('classes', function($query) use ($classId) {
+                $query->where('classes.id', $classId);
+            })->with('user')->get();
+            
+            // Get attendance data for the selected month and class
+            $attendanceData = Attendance::whereHas('student.classes', function($query) use ($classId) {
+                    $query->where('classes.id', $classId);
+                })
+                ->whereYear('date', $monthDate->year)
+                ->whereMonth('date', $monthDate->month)
+                ->get()
+                ->groupBy(['student_id', function($item) {
+                    return Carbon::parse($item->date)->day;
+                }]);
+            
+            // Calculate attendance summary for each student
+            $studentsWithAttendance = $students->map(function($student) use ($attendanceData, $daysInMonth, $monthDate) {
+                $presentCount = 0;
+                $sickCount = 0;
+                $permitCount = 0;
+                $absentCount = 0;
+                
+                $dailyAttendance = [];
+                
+                for ($day = 1; $day <= $daysInMonth; $day++) {
+                    $attendance = $attendanceData->get($student->id, collect())->get($day);
+                    $checkDate = $monthDate->copy()->day($day);
+                    
+                    if ($attendance && $attendance->first()) {
+                        $status = $this->getAttendanceStatus($attendance->first());
+                        $dailyAttendance[$day] = $status;
+                        
+                        switch($status) {
+                            case 'H': $presentCount++; break;
+                            case 'S': $sickCount++; break;
+                            case 'I': $permitCount++; break;
+                            case 'A': $absentCount++; break;
+                        }
+                    } else {
+                        // Perbaikan logika: cek apakah hari sudah berlalu, weekend, atau masih akan datang
+                        if ($checkDate->isFuture()) {
+                            // Jika tanggal belum tiba, tampilkan sebagai "belum absen"
+                            $dailyAttendance[$day] = '-';
+                        } elseif ($checkDate->isWeekend()) {
+                            // Jika weekend, tampilkan sebagai libur
+                            $dailyAttendance[$day] = 'L'; // L untuk Libur
+                        } else {
+                            // Jika hari sudah berlalu tapi tidak ada data absen, baru tandai Alpha
+                            $dailyAttendance[$day] = 'A';
+                            $absentCount++;
+                        }
+                    }
+                }
+                
+                $totalDays = $presentCount + $sickCount + $permitCount + $absentCount;
+                $percentage = $totalDays > 0 ? round(($presentCount / $totalDays) * 100, 1) : 0;
+                
+                return [
+                    'student' => [
+                        'id' => $student->id,
+                        'name' => $student->name,
+                        'nisn' => $student->nisn,
+                        'email' => $student->user->email ?? '-',
+                    ],
+                    'daily_attendance' => $dailyAttendance,
+                    'present_count' => $presentCount,
+                    'sick_count' => $sickCount,
+                    'permit_count' => $permitCount,
+                    'absent_count' => $absentCount,
+                    'percentage' => $percentage
+                ];
+            });
+            
+            // PERBAIKAN UTAMA: Nama bulan dalam bahasa Indonesia yang konsisten
+            $monthNameIndonesia = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            ];
+            
+            // PERBAIKAN: Pastikan menggunakan month number yang benar dari Carbon
+            $correctMonthName = $monthNameIndonesia[$monthDate->month] . ' ' . $monthDate->year;
+            
+            // DEBUG: Tambahkan log untuk memastikan month number yang benar
+            Log::info('Month Mapping Debug', [
+                'carbon_month' => $monthDate->month,
+                'month_name_mapped' => $monthNameIndonesia[$monthDate->month],
+                'final_month_name' => $correctMonthName
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'students' => $studentsWithAttendance,
+                'days_in_month' => $daysInMonth,
+                'month_name' => $correctMonthName, // Gunakan nama bulan yang benar
+                'debug_info' => [ // Tambahkan info debug (hapus di production)
+                    'requested_month' => $month,
+                    'parsed_date' => $monthDate->format('Y-m-d'),
+                    'month_number' => $monthDate->month,
+                    'year' => $monthDate->year,
+                    'carbon_debug' => $monthDate->toDateString()
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Attendance Data Error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function getAttendanceStatus($attendance)
+    {
+        if (!$attendance) {
+            return 'A';
+        }
+        
+        $status = $attendance->check_in_status ?? $attendance->check_out_status;
+        
+        switch($status) {
+            case 'tepat':
+            case 'terlambat':
+                return 'H'; 
+            case 'sakit':
+                return 'S'; 
+            case 'izin':
+                return 'I'; 
+            case 'alpha':
+            default:
+                return 'A'; 
+        }
+    }
+
     public function edit(string $id)
     {
         $classes = Classes::findOrFail($id);
@@ -175,9 +356,6 @@ class ClassesController extends Controller
         return view('classes.edit', compact('classes'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         $request->validate([
@@ -204,9 +382,6 @@ class ClassesController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         try {
@@ -238,9 +413,6 @@ class ClassesController extends Controller
         }
     }
 
-    /**
-     * Bulk assign students to a class
-     */
     public function bulkAssign(Request $request, string $class)
     {
         try {
@@ -291,62 +463,56 @@ class ClassesController extends Controller
         }
     }
 
-    /**
-     * Remove a student from a class - Updated Method
-     */
-    /**
- * Remove a student from a class - Updated Method
- */
-public function removeStudent(Request $request, $class)
-{
-    try {
-        $request->validate([
-            'student_id' => 'required|exists:student,id',
-        ]);
+    public function removeStudent(Request $request, $class)
+    {
+        try {
+            $request->validate([
+                'student_id' => 'required|exists:student,id',
+            ]);
 
-        $classModel = Classes::findOrFail($class);
+            $classModel = Classes::findOrFail($class);
 
-        // Remove student from class pivot table
-        $deleted = DB::table('student_class')
-            ->where('class_id', $classModel->id)
-            ->where('student_id', $request->student_id)
-            ->delete(); // Tambahkan ->delete() untuk benar-benar menghapus data
+            // Remove student from class pivot table
+            $deleted = DB::table('student_class')
+                ->where('class_id', $classModel->id)
+                ->where('student_id', $request->student_id)
+                ->delete(); // Tambahkan ->delete() untuk benar-benar menghapus data
 
-        if ($deleted) {
-            // Return JSON response for AJAX requests
-            if ($request->ajax() || $request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Siswa berhasil dihapus dari kelas.'
-                ]);
+            if ($deleted) {
+                // Return JSON response for AJAX requests
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Siswa berhasil dihapus dari kelas.'
+                    ]);
+                }
+
+                return redirect()->route('classes.show', $classModel->id)
+                    ->with('success', 'Siswa berhasil dihapus dari kelas.');
+            } else {
+                // Return JSON response for AJAX requests
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Siswa tidak ditemukan di kelas ini.'
+                    ], 404);
+                }
+
+                return redirect()->back()
+                    ->with('error', 'Siswa tidak ditemukan di kelas ini.');
             }
-
-            return redirect()->route('classes.show', $classModel->id)
-                ->with('success', 'Siswa berhasil dihapus dari kelas.');
-        } else {
+        } catch (\Exception $e) {
+            
             // Return JSON response for AJAX requests
             if ($request->ajax() || $request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Siswa tidak ditemukan di kelas ini.'
-                ], 404);
+                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                ], 500);
             }
 
             return redirect()->back()
-                ->with('error', 'Siswa tidak ditemukan di kelas ini.');
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
-    } catch (\Exception $e) {
-        
-        // Return JSON response for AJAX requests
-        if ($request->ajax() || $request->expectsJson()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
-        }
-
-        return redirect()->back()
-            ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-    }
-}
+    }    
 }

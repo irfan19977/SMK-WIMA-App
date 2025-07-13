@@ -67,15 +67,6 @@
             </table>
         </div>
     </div>
-
-    {{-- Pagination --}}
-    @if ($subjects->hasPages())
-    <div class="card-footer text-center">
-        <nav class="d-inline-block">
-            {{ $subjects->appends(request()->query())->links() }}
-        </nav>
-    </div>
-    @endif
 </div>
 
 <!-- Modal untuk Create/Edit -->

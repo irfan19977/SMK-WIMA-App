@@ -7,16 +7,17 @@ use App\Models\Schedule;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ScheduleController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    use AuthorizesRequests;
+
     public function index(Request $request)
     {
+        $this->authorize('schedules.index');
         // Get all classes
         $classes = Classes::with(['students'])->orderBy('name')->get();
         
@@ -67,7 +68,11 @@ class ScheduleController extends Controller
             ]);
         }
         
-        return view('schedules.index', compact('schedules', 'classes', 'selectedClass'));
+        $subjects = Subject::all();
+        $teachers = Teacher::whereHas('user', function($query) {
+            $query->where('status', 1);
+        })->get();
+        return view('schedules.index', compact('schedules', 'classes', 'selectedClass', 'subjects', 'teachers'));
     }
     
     public function getSchedulesByClass(Request $request, $classId)
@@ -113,12 +118,8 @@ class ScheduleController extends Controller
      * Show the form for creating a new resource.
      */
     public function create()
-    {
-        $teachers = Teacher::all();
-        $classes = Classes::all();
-        $subjects = Subject::all();
-
-        return view('schedules.create', compact('teachers', 'classes', 'subjects'));
+    { 
+        // 
     }
 
     /**
@@ -133,8 +134,10 @@ class ScheduleController extends Controller
             'day' => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'academic_year' => 'required|string|max:10',
         ]);
+
+        // Set academic_year default jika tidak ada
+        $validated['academic_year'] = $request->input('academic_year', '2024/2025');
 
         // Cek apakah jadwal bentrok dengan jadwal lain (guru mengajar di kelas lain pada waktu yang sama)
         $conflictingTeacherSchedule = Schedule::where('teacher_id', $request->teacher_id)
@@ -147,6 +150,12 @@ class ScheduleController extends Controller
         })->first();
 
         if ($conflictingTeacherSchedule) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['teacher_id' => ['Guru sudah memiliki jadwal mengajar pada waktu yang sama!']]
+                ], 422);
+            }
             return redirect()->back()
                 ->with('error', 'Guru sudah memiliki jadwal mengajar pada waktu yang sama!')
                 ->withInput();
@@ -163,20 +172,26 @@ class ScheduleController extends Controller
             })->first();
 
         if ($conflictingClassSchedule) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['class_id' => ['Kelas sudah memiliki jadwal pelajaran pada waktu yang sama!']]
+                ], 422);
+            }
             return redirect()->back()
                 ->with('error', 'Kelas sudah memiliki jadwal pelajaran pada waktu yang sama!')
                 ->withInput();
         }
 
-        $schedules = Schedule::create([
-            'subject_id'     => $request->input('subject_id'),
-            'teacher_id'     => $request->input('teacher_id'),
-            'class_id'  => $request->input('class_id'),
-            'day'            => $request->input('day'),
-            'start_time'     => $request->input('start_time'),
-            'end_time'     => $request->input('end_time'),
-            'academic_year'     => $request->input('academic_year'),
-        ]);
+        $schedules = Schedule::create($validated);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data berhasil disimpan',
+                'data' => $schedules
+            ]);
+        }
 
         if ($schedules) {
             return redirect()->route('schedules.index')->with('success', 'Data Berhasil Disimpan');
@@ -196,87 +211,128 @@ class ScheduleController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit($id)
     {
-        $schedules = Schedule::findOrFail($id);
-    
-        // Ambil data untuk dropdown
-        $subjects = Subject::all();
-        $teachers = Teacher::all();
-        $classes = Classes::all();
-        
-        return view('schedules.edit', compact('schedules', 'subjects', 'teachers', 'classes'));
+        try {
+            $schedule = Schedule::with(['classRoom', 'subject', 'teacher'])->findOrFail($id);
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $schedule->id,
+                    'subject_id' => $schedule->subject_id,
+                    'teacher_id' => $schedule->teacher_id,
+                    'class_id' => $schedule->class_id,
+                    'day' => $schedule->day,
+                    'start_time' => $schedule->start_time,
+                    'end_time' => $schedule->end_time,
+                    'academic_year' => $schedule->academic_year ?? (date('n') >= 7 ? date('Y') . '/' . (date('Y') + 1) : (date('Y') - 1) . '/' . date('Y'))
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat data: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
         // Validasi input
         $validated = $request->validate([
             'subject_id' => 'required',
             'teacher_id' => 'required',
             'class_id' => 'required',
-            'day' => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
+            'day' => 'required|in:senin,selasa,rabu,kamis,jumat,sabtu',
             'start_time' => 'required',
             'end_time' => 'required|after:start_time',
-            'academic_year' => 'required|string|max:10',
         ]);
 
-        $schedule = Schedule::findOrFail($id);
-        
-        // Cek apakah jadwal bentrok dengan jadwal lain (guru mengajar di kelas lain pada waktu yang sama)
-        // Kecualikan jadwal yang sedang diedit dari pengecekan
-        $conflictingTeacherSchedule = Schedule::where('teacher_id', $request->teacher_id)
-            ->where('day', $request->day)
-            ->where('id', '!=', $id)
-            ->where(function ($query) use ($request) {
-                $query->where(function($q) use ($request) {
-                    $q->where('start_time', '<', $request->end_time)
-                    ->where('end_time', '>', $request->start_time);
-                });
-            })->first();
+        // Set academic_year default jika tidak ada
+        $validated['academic_year'] = $request->input('academic_year', '2024/2025');
 
-        if ($conflictingTeacherSchedule) {
-            return redirect()->back()
-                ->with('error', 'Guru sudah memiliki jadwal mengajar pada waktu yang sama!')
-                ->withInput();
-        }
+        try {
+            $schedules = Schedule::findOrFail($id);
+            
+            // Cek apakah jadwal bentrok dengan jadwal lain (guru mengajar di kelas lain pada waktu yang sama)
+            // Kecualikan jadwal yang sedang diedit dari pengecekan
+            $conflictingTeacherSchedule = Schedule::where('teacher_id', $request->teacher_id)
+                ->where('day', $request->day)
+                ->where('id', '!=', $id)
+                ->where(function ($query) use ($request) {
+                    $query->where(function($q) use ($request) {
+                        $q->where('start_time', '<', $request->end_time)
+                        ->where('end_time', '>', $request->start_time);
+                    });
+                })->first();
 
-        // Cek apakah kelas sudah memiliki jadwal pada waktu yang sama
-        // Kecualikan jadwal yang sedang diedit dari pengecekan
-        $conflictingClassSchedule = Schedule::where('class_id', $request->class_id)
-            ->where('day', $request->day)
-            ->where('id', '!=', $id)
-            ->where(function ($query) use ($request) {
-                $query->where(function($q) use ($request) {
-                    $q->where('start_time', '<', $request->end_time)
-                    ->where('end_time', '>', $request->start_time);
-                });
-            })->first();
+            if ($conflictingTeacherSchedule) {
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'errors' => ['teacher_id' => ['Guru sudah memiliki jadwal mengajar pada waktu yang sama!']]
+                    ], 422);
+                }
+                return redirect()->back()
+                    ->with('error', 'Guru sudah memiliki jadwal mengajar pada waktu yang sama!')
+                    ->withInput();
+            }
 
-        if ($conflictingClassSchedule) {
-            return redirect()->back()
-                ->with('error', 'Kelas sudah memiliki jadwal pelajaran pada waktu yang sama!')
-                ->withInput();
-        }
+            // Cek apakah kelas sudah memiliki jadwal pada waktu yang sama
+            // Kecualikan jadwal yang sedang diedit dari pengecekan
+            $conflictingClassSchedule = Schedule::where('class_id', $request->class_id)
+                ->where('day', $request->day)
+                ->where('id', '!=', $id)
+                ->where(function ($query) use ($request) {
+                    $query->where(function($q) use ($request) {
+                        $q->where('start_time', '<', $request->end_time)
+                        ->where('end_time', '>', $request->start_time);
+                    });
+                })->first();
 
-        // Update jadwal
-        $updated = $schedule->update([
-            'subject_id'    => $request->input('subject_id'),
-            'teacher_id'    => $request->input('teacher_id'),
-            'class_id'      => $request->input('class_id'),
-            'day'           => $request->input('day'),
-            'start_time'    => $request->input('start_time'),
-            'end_time'      => $request->input('end_time'),
-            'academic_year' => $request->input('academic_year'),
-        ]);
+            if ($conflictingClassSchedule) {
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'errors' => ['class_id' => ['Kelas sudah memiliki jadwal pelajaran pada waktu yang sama!']]
+                    ], 422);
+                }
+                return redirect()->back()
+                    ->with('error', 'Kelas sudah memiliki jadwal pelajaran pada waktu yang sama!')
+                    ->withInput();
+            }
 
-        if ($updated) {
-            return redirect()->route('schedules.index')->with('success', 'Data Berhasil Diperbarui');
-        } else {
-            return redirect()->route('schedules.index')->with('error', 'Data Gagal Diperbarui');
+            // Update jadwal
+            $updated = $schedules->update($validated);
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data berhasil diperbarui',
+                    'data' => $schedules->fresh()
+                ]);
+            }
+
+            if ($updated) {
+                return redirect()->route('schedules.index')->with('success', 'Data Berhasil Diperbarui');
+            } else {
+                return redirect()->route('schedules.index')->with('error', 'Data Gagal Diperbarui');
+            }
+            
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui data: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->route('schedules.index')->with('error', 'Gagal memperbarui data');
         }
     }
 
@@ -286,8 +342,8 @@ class ScheduleController extends Controller
     public function destroy($id)
     {
         try {
-            $schedule = Schedule::findOrFail($id);
-            $schedule->delete();
+            $schedules = Schedule::findOrFail($id);
+            $schedules->delete();
             
             return response()->json([
                 'success' => true,

@@ -22,6 +22,13 @@ class StudentSeeder extends Seeder
             'student3@gmail.com'
         ];
         
+        // Custom card numbers for each student
+        $cardNumbers = [
+            '4340CE11', // untuk student1
+            'B37B49FE', // untuk student2
+            '73CBD907'  // untuk student3
+        ];
+        
         // Get admin user for created_by
         $adminUser = User::where('email', 'administrator@gmail.com')->first();
 
@@ -35,7 +42,7 @@ class StudentSeeder extends Seeder
                     'name' => $studentUser->name,
                     'nisn' => '200' . str_pad($index + 1, 7, '0', STR_PAD_LEFT),
                     'qrcode' => 'STD' . str_pad($index + 1, 6, '0', STR_PAD_LEFT),
-                    'no_card' => 'CARD-STD-' . str_pad($index + 1, 4, '0', STR_PAD_LEFT),
+                    'no_card' => $cardNumbers[$index], // Menggunakan nomor card custom
                     'medical_info' => 'Sehat, tidak ada riwayat penyakit khusus',
                     'birth_place' => 'Kediri',
                     'birth_date' => '2008-0' . ($index + 1) . '-15',

@@ -17,8 +17,8 @@ class TeacherSeeder extends Seeder
     {
         // Get teacher users by email
         $teacherEmails = [
-            'teacher@gmail.com',
-            'hekel@gmail.com'
+            'teacher1@gmail.com',
+            'teacher2@gmail.com'
         ];
         
         // Get admin user for created_by
@@ -26,10 +26,10 @@ class TeacherSeeder extends Seeder
 
         $teacherData = [
             [
-                'name' => 'Teacher',
+                'name' => 'Teacher 1',
                 'nip' => '198001010000001',
                 'qrcode' => 'TCH000001',
-                'no_card' => 'CARD-TCH-0001',
+                'no_card' => '9334A807',
                 'education_level' => 'S1',
                 'education_major' => 'Pendidikan Matematika',
                 'education_institution' => 'Universitas Negeri Jakarta',
@@ -41,10 +41,10 @@ class TeacherSeeder extends Seeder
                 'address' => 'Jl. Pendidikan No. 1, Kediri',
             ],
             [
-                'name' => 'Hekel',
+                'name' => 'Teacher 2',
                 'nip' => '198001010000002',
                 'qrcode' => 'TCH000002',
-                'no_card' => 'CARD-TCH-0002',
+                'no_card' => 'C0AD0458',
                 'education_level' => 'S1',
                 'education_major' => 'Pendidikan Bahasa Inggris',
                 'education_institution' => 'Universitas Negeri Malang',

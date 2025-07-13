@@ -18,7 +18,6 @@
                                     role="tab"
                                     data-class-id="{{ $class->id }}">
                                         <i class="fas fa-school mr-2"></i>{{ $class->name }}
-                                        <span class="badge badge-light ml-2">{{ $class->students->count() }} siswa</span>
                                     </a>
                                 </li>
                                 @endforeach
@@ -44,8 +43,10 @@
                                         <!-- Form search untuk setiap kelas -->
                                         <div class="card-header-action">
                                             <div class="input-group">
-                                                <a href="{{ route('schedules.create') }}?class_id={{ $class->id }}" class="btn btn-primary" data-toggle="tooltip"
-                                                    style="margin-right: 10px;" title="Tambah Jadwal"><i class="fas fa-plus"></i></a>
+                                                <button type="button" class="btn btn-primary btn-add-schedule" data-class-id="{{ $class->id }}" data-toggle="tooltip"
+                                                    style="margin-right: 10px;" title="Tambah Jadwal">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
                                                 <input type="text" class="form-control search-schedule" 
                                                     placeholder="Cari Jadwal (Mata Pelajaran, Guru)" 
                                                     id="searchSchedule-{{ $class->id }}" 
@@ -54,13 +55,6 @@
                                                 <div class="input-group-btn">
                                                     <button type="button" class="btn btn-primary" id="search-button" style="margin-top: 1px;">
                                                         <i class="fas fa-search"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-primary clear-search" 
-                                                        id="clear-search-{{ $class->id }}" 
-                                                        data-class-id="{{ $class->id }}"
-                                                        title="Clear Search" 
-                                                        style="display: none; margin-top: 1px;">
-                                                        <i class="fas fa-times"></i>
                                                     </button>
                                                 </div>
                                             </div>
@@ -110,9 +104,10 @@
                                                             <span class="badge badge-outline-danger">{{ $schedule->end_time }}</span>
                                                         </td>
                                                         <td>
-                                                            <a href="{{ route('schedules.edit', $schedule->id) }}" class="btn btn-primary btn-sm" title="Edit">
+                                                            <button type="button" class="btn btn-primary btn-sm btn-edit-schedule" 
+                                                                data-id="{{ $schedule->id }}" title="Edit">
                                                                 <i class="fas fa-pencil-alt"></i>
-                                                            </a>
+                                                            </button>
                                                             <form id="delete-form-{{ $schedule->id }}" action="{{ route('schedules.destroy', $schedule->id) }}" method="POST" style="display:inline;">
                                                                 @csrf
                                                                 @method('DELETE')
@@ -171,9 +166,297 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="scheduleModal" tabindex="-1" role="dialog" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="scheduleModalLabel">Tambah Jadwal</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="scheduleForm">
+                    @csrf
+                    <input type="hidden" id="schedule_id" name="schedule_id">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="class_id">Kelas <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="class_id" name="class_id" required>
+                                        <option value="">Pilih Kelas</option>
+                                        @foreach($classes as $class)
+                                            <option value="{{ $class->id }}">{{ $class->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="invalid-feedback d-none" id="class_id-error"></div>
+                                    <small class="text-muted">*Kelas Terisi Otomatis</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="day">Hari <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="day" name="day" required>
+                                        <option value="">Pilih Hari</option>
+                                        <option value="senin">Senin</option>
+                                        <option value="selasa">Selasa</option>
+                                        <option value="rabu">Rabu</option>
+                                        <option value="kamis">Kamis</option>
+                                        <option value="jumat">Jumat</option>
+                                        <option value="sabtu">Sabtu</option>
+                                    </select>
+                                    <div class="invalid-feedback d-none" id="day-error"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="subject_id">Mata Pelajaran <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="subject_id" name="subject_id" required>
+                                        <option value="">Pilih Mata Pelajaran</option>
+                                        @foreach($subjects as $subject)
+                                            <option value="{{ $subject->id }}">{{ $subject->code }} - {{ $subject->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="invalid-feedback d-none" id="subject_id-error"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="teacher_id">Guru <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="teacher_id" name="teacher_id" required>
+                                        <option value="">Pilih Guru</option>
+                                        @foreach($teachers as $teacher)
+                                            <option value="{{ $teacher->id }}">{{ $teacher->name }} - {{ $teacher->nip }}</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="invalid-feedback d-none" id="teacher_id-error"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="start_time">Jam Mulai <span class="text-danger">*</span></label>
+                                    <input type="time" class="form-control" id="start_time" name="start_time" required>
+                                    <div class="invalid-feedback d-none" id="start_time-error"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="end_time">Jam Selesai <span class="text-danger">*</span></label>
+                                    <input type="time" class="form-control" id="end_time" name="end_time" required>
+                                    <div class="invalid-feedback d-none" id="end_time-error"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary" id="scheduleSubmitBtn">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
+
+    <script>
+        $(function() {
+            // Open modal for create
+            $(document).on('click', '.btn-add-schedule', function(e) {
+                e.preventDefault();
+                var classId = $(this).data('class-id');
+                
+                $('#scheduleModalLabel').text('Tambah Jadwal');
+                $('#scheduleForm')[0].reset();
+                $('#schedule_id').val('');
+                
+                // Set class_id jika ada - PERBAIKAN: Set setelah reset
+                if (classId) {
+                    $('#class_id').val(classId);
+                }
+                
+                // Clear all error messages
+                $('.invalid-feedback').addClass('d-none').text('');
+                $('.form-control').removeClass('is-invalid');
+                
+                $('#scheduleModal').modal('show');
+            });
+
+            // Open modal for edit - GUNAKAN SELECTOR YANG LEBIH SPESIFIK
+            $(document).on('click', '.btn-edit-schedule', function(e) {
+                e.preventDefault();
+                // console.log('Edit button clicked'); // Debug log
+                
+                var id = $(this).data('id');
+                // console.log('Schedule ID:', id); // Debug log
+                
+                if (!id) {
+                    alert('ID jadwal tidak ditemukan');
+                    return;
+                }
+                
+                // Show loading state
+                $('#scheduleModalLabel').text('Memuat data...');
+                $('#scheduleForm')[0].reset();
+                $('.invalid-feedback').addClass('d-none').text('');
+                $('.form-control').removeClass('is-invalid');
+                $('#scheduleModal').modal('show');
+                
+                $.ajax({
+                    url: '/schedules/' + id + '/edit',
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(res) {
+                        // console.log('AJAX response:', res); // Debug log
+                        
+                        if(res.success) {
+                            $('#scheduleModalLabel').text('Edit Jadwal');
+                            $('#schedule_id').val(res.data.id);
+                            $('#class_id').val(res.data.class_id);
+                            $('#day').val(res.data.day).trigger('change'); // PERBAIKAN: Pastikan ini ter-set
+                            $('#subject_id').val(res.data.subject_id);
+                            $('#teacher_id').val(res.data.teacher_id);
+                            $('#start_time').val(res.data.start_time);
+                            $('#end_time').val(res.data.end_time);
+                            
+                            // TAMBAHAN: Trigger change event untuk memastikan UI terupdate
+                            $('#day').trigger('change');
+                        } else {
+                            alert('Gagal memuat data: ' + (res.message || 'Unknown error'));
+                            $('#scheduleModal').modal('hide');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', xhr.responseText); // Debug log
+                        console.error('Status:', status);
+                        console.error('Error:', error);
+                        
+                        var errorMessage = 'Terjadi kesalahan saat memuat data';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        } else if (xhr.status === 404) {
+                            errorMessage = 'Data jadwal tidak ditemukan';
+                        } else if (xhr.status === 500) {
+                            errorMessage = 'Kesalahan server internal';
+                        }
+                        
+                        alert(errorMessage);
+                        $('#scheduleModal').modal('hide');
+                    }
+                });
+            });
+
+            // Submit form (create or update)
+            $('#scheduleForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                var id = $('#schedule_id').val();
+                var url = id ? '/schedules/' + id : '/schedules';
+                var method = id ? 'PUT' : 'POST';
+                var formData = $(this).serialize();
+                
+                // Add method override for PUT requests
+                if (method === 'PUT') {
+                    formData += '&_method=PUT';
+                }
+
+                $('#scheduleSubmitBtn').prop('disabled', true).text('Menyimpan...');
+                
+                // Clear previous errors
+                $('.invalid-feedback').addClass('d-none').text('');
+                $('.form-control').removeClass('is-invalid');
+
+                $.ajax({
+                    url: url,
+                    method: 'POST', // Always use POST for Laravel
+                    data: formData,
+                    dataType: 'json',
+                    success: function(res) {
+                        if(res.success) {
+                            $('#scheduleModal').modal('hide');
+                            
+                            // Show success message
+                            swal({
+                                title: "Berhasil!",
+                                text: res.message || "Data berhasil disimpan.",
+                                icon: "success",
+                                timer: 3000,
+                                buttons: false
+                            });
+                            
+                            // Reload current class schedules
+                            var currentClassId = $('.nav-link.active[data-class-id]').data('class-id');
+                            if(currentClassId && typeof loadClassSchedules === 'function') {
+                                loadClassSchedules(currentClassId);
+                            } else {
+                                // Fallback: reload page
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 1500);
+                            }
+                        } else {
+                            if (res.errors) {
+                                showErrors(res.errors);
+                            } else {
+                                alert('Gagal menyimpan data: ' + (res.message || 'Unknown error'));
+                            }
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('AJAX Error:', xhr);
+                        
+                        if(xhr.status === 422) {
+                            // Validation errors
+                            var errors = xhr.responseJSON?.errors || {};
+                            showErrors(errors);
+                        } else if(xhr.status === 500) {
+                            alert('Terjadi kesalahan server. Silakan coba lagi.');
+                        } else {
+                            alert('Terjadi kesalahan: ' + (xhr.responseJSON?.message || 'Network error'));
+                        }
+                    },
+                    complete: function() {
+                        $('#scheduleSubmitBtn').prop('disabled', false).text('Simpan');
+                    }
+                });
+            });
+
+            function showErrors(errors) {
+                $('.invalid-feedback').addClass('d-none').text('');
+                $('.form-control').removeClass('is-invalid');
+                
+                $.each(errors, function(key, val) {
+                    var errorElement = $('#' + key + '-error');
+                    var inputElement = $('#' + key);
+                    
+                    if (errorElement.length > 0) {
+                        errorElement.removeClass('d-none').text(Array.isArray(val) ? val[0] : val);
+                        inputElement.addClass('is-invalid');
+                    } else {
+                        // Fallback: show in console if error element not found
+                        console.warn('Error element not found for:', key, val);
+                    }
+                });
+            }
+            
+            // Clear form when modal is closed
+            $('#scheduleModal').on('hidden.bs.modal', function () {
+                $('#scheduleForm')[0].reset();
+                $('#schedule_id').val('');
+                $('.invalid-feedback').addClass('d-none').text('');
+                $('.form-control').removeClass('is-invalid');
+            });
+        });
+    </script>
     <script>
         $(document).ready(function() {
             // Global variables
@@ -190,12 +473,12 @@
                 }
             }
 
-            // Tab click handler
+            // Tab click handler - PERBAIKAN: Simpan currentClassId saat tab berubah
             $('.nav-link[data-class-id]').on('click', function(e) {
                 e.preventDefault();
                 
                 const classId = $(this).data('class-id');
-                currentClassId = classId;
+                currentClassId = classId; // Set global variable
                 currentPage = 1;
                 
                 // Clear search when switching tabs
@@ -213,6 +496,36 @@
                 // Show corresponding tab content
                 $('.tab-pane').removeClass('show active');
                 $('#class-' + classId).addClass('show active');
+            });
+
+            // PERBAIKAN: Modifikasi tombol tambah jadwal untuk auto-fill class_id
+            $(document).on('click', '.btn-add-schedule', function(e) {
+                e.preventDefault();
+                var classId = $(this).data('class-id');
+                
+                // Jika tidak ada class-id dari button, ambil dari tab yang aktif
+                if (!classId) {
+                    classId = $('.nav-link.active[data-class-id]').data('class-id');
+                }
+                
+                $('#scheduleModalLabel').text('Tambah Jadwal');
+                $('#scheduleForm')[0].reset();
+                $('#schedule_id').val('');
+                
+                // Set class_id otomatis
+                if (classId) {
+                    $('#class_id').val(classId);
+                    // PERBAIKAN: Gunakan readonly instead of disabled
+                    $('#class_id').prop('readonly', true).addClass('');
+                } else {
+                    $('#class_id').prop('readonly', false).removeClass('');
+                }
+                
+                // Clear all error messages
+                $('.invalid-feedback').addClass('d-none').text('');
+                $('.form-control').removeClass('is-invalid');
+                
+                $('#scheduleModal').modal('show');
             });
 
             // Search functionality
@@ -389,9 +702,11 @@
                             '<span class="badge badge-outline-danger">' + endTime + '</span>' +
                         '</td>' +
                         '<td>' +
-                            '<a href="/schedules/' + schedule.id + '/edit" class="btn btn-primary btn-sm" title="Edit">' +
+                            // PERBAIKAN: Gunakan button dengan class dan data-id yang konsisten
+                            '<button type="button" class="btn btn-primary btn-sm btn-edit-schedule" ' +
+                                'data-id="' + schedule.id + '" title="Edit">' +
                                 '<i class="fas fa-pencil-alt"></i>' +
-                            '</a>' +
+                            '</button> ' +
                             '<form id="delete-form-' + schedule.id + '" action="/schedules/' + schedule.id + '" method="POST" style="display:inline;">' +
                                 '<input type="hidden" name="_token" value="' + getCsrfToken() + '">' +
                                 '<input type="hidden" name="_method" value="DELETE">' +
@@ -402,7 +717,7 @@
                         '</td>' +
                     '</tr>';
                 });
-                
+
                 tableBody.html(html);
             }
 
@@ -496,8 +811,13 @@
                 loadClassSchedules(classId, searchTerm, 1);
             };
 
-            // Global function to be called from onclick (not needed anymore)
+            // Global function to be called from onclick
             window.loadClassSchedules = loadClassSchedules;
+
+            // PERBAIKAN: Re-enable class select saat modal ditutup
+            $('#scheduleModal').on('hidden.bs.modal', function () {
+                $('#class_id').prop('disabled', false);
+            });
         });
 
         // Delete confirmation function (global scope)
@@ -566,6 +886,7 @@
                 }
             });
         }
+
         function renumberTableRows() {
             // Find the currently active schedule table
             const activeTable = document.querySelector('.tab-pane.show.active table tbody');
@@ -573,8 +894,8 @@
             const rows = activeTable.querySelectorAll('tr');
             
             // Use the currentPage and perPage from the schedules paginator if available, otherwise default to 1 and 10
-            const currentPage = {{ isset($schedules) && method_exists($schedules, 'currentPage') ? $schedules->currentPage() : 1 }};
-            const perPage = {{ isset($schedules) && method_exists($schedules, 'perPage') ? $schedules->perPage() : 10 }};
+            const currentPage = 1; // You may need to get this from a global variable
+            const perPage = 10;
             
             rows.forEach((row, index) => {
                 const numberCell = row.querySelector('td:first-child');

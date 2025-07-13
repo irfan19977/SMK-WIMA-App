@@ -3,15 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Subject;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
 class SubjectController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
+        $this->authorize('subjects.index');
         $query = Subject::query();
 
         // Filter pencarian berdasarkan nama dan code
