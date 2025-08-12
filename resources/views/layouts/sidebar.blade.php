@@ -128,7 +128,7 @@
             <ul class="dropdown-menu">
                 @can('leasson.index')
                 <li class="dropdown {{ Request::is('leasson*') ? 'active' : ''}}">
-                    <a href="#" class="nav-link">
+                    <a href="{{ route('lesson-attendances.index') }}" class="nav-link">
                         <i class="fas fa-calendar-check"></i><span>Absensi Harian</span>
                     </a>
                 </li>

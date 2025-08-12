@@ -131,7 +131,7 @@ class ScheduleController extends Controller
             'subject_id' => 'required',
             'teacher_id' => 'required',
             'class_id' => 'required',
-            'day' => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
+            'day' => 'required|in:senin,selasa,rabu,kamis,jumat,sabtu',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
         ]);

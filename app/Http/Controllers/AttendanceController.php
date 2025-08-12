@@ -19,83 +19,83 @@ class AttendanceController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-{
-    $this->authorize('attendances.index');
-    
-    $query = $request->get('q');
-    $user = Auth::user();
-    
-    // Query untuk menggabungkan data check_in dan check_out dalam satu baris
-    $attendancesQuery = DB::table('attendance as a1')
-        ->select([
-            'a1.id as attendance_id',
-            'a1.student_id',
-            'a1.class_id', 
-            'a1.date',
-            's.name as student_name',
-            'c.name as class_name',
-            // Data check in
-            'a1.check_in',
-            'a1.check_in_status',
-            // Data check out
-            'a2.check_out',
-            'a2.check_out_status',
-            'a2.id as checkout_id'
-        ])
-        ->leftJoin('attendance as a2', function($join) {
-            $join->on('a1.student_id', '=', 'a2.student_id')
-                 ->on('a1.class_id', '=', 'a2.class_id')
-                 ->on('a1.date', '=', 'a2.date')
-                 ->whereNotNull('a2.check_out');
-        })
-        ->join('student as s', 'a1.student_id', '=', 's.id')
-        ->join('classes as c', 'a1.class_id', '=', 'c.id')
-        ->whereNotNull('a1.check_in')
-        ->whereNull('a1.deleted_at')
-        ->whereNull('s.deleted_at')
-        ->whereNull('c.deleted_at');
-    
-    // Jika user adalah parent, batasi hanya data anak mereka
-    if ($user->hasRole('parent')) {
-        $parent = DB::table('parent')
-            ->where('user_id', $user->id)
-            ->whereNull('deleted_at')
-            ->first();
+    {
+        $this->authorize('attendances.index');
         
-        if ($parent && $parent->student_id) {
-            $attendancesQuery->where('a1.student_id', $parent->student_id);
-        } else {
-            // Jika parent tidak memiliki student_id, return empty collection
-            $attendances = collect();
+        $query = $request->get('q');
+        $user = Auth::user();
+        
+        // Query untuk menggabungkan data check_in dan check_out dalam satu baris
+        $attendancesQuery = DB::table('attendance as a1')
+            ->select([
+                'a1.id as attendance_id',
+                'a1.student_id',
+                'a1.class_id', 
+                'a1.date',
+                's.name as student_name',
+                'c.name as class_name',
+                // Data check in
+                'a1.check_in',
+                'a1.check_in_status',
+                // Data check out
+                'a2.check_out',
+                'a2.check_out_status',
+                'a2.id as checkout_id'
+            ])
+            ->leftJoin('attendance as a2', function($join) {
+                $join->on('a1.student_id', '=', 'a2.student_id')
+                    ->on('a1.class_id', '=', 'a2.class_id')
+                    ->on('a1.date', '=', 'a2.date')
+                    ->whereNotNull('a2.check_out');
+            })
+            ->join('student as s', 'a1.student_id', '=', 's.id')
+            ->join('classes as c', 'a1.class_id', '=', 'c.id')
+            ->whereNotNull('a1.check_in')
+            ->whereNull('a1.deleted_at')
+            ->whereNull('s.deleted_at')
+            ->whereNull('c.deleted_at');
+        
+        // Jika user adalah parent, batasi hanya data anak mereka
+        if ($user->hasRole('parent')) {
+            $parent = DB::table('parent')
+                ->where('user_id', $user->id)
+                ->whereNull('deleted_at')
+                ->first();
+            
+            if ($parent && $parent->student_id) {
+                $attendancesQuery->where('a1.student_id', $parent->student_id);
+            } else {
+                // Jika parent tidak memiliki student_id, return empty collection
+                $attendances = collect();
+            }
+            
+            // Parent tidak bisa melakukan pencarian
+            $query = null;
         }
         
-        // Parent tidak bisa melakukan pencarian
-        $query = null;
+        // Jika bukan parent, bisa melakukan pencarian
+        if (!$user->hasRole('parent') && $query) {
+            $attendancesQuery->where(function($subQuery) use ($query) {
+                $subQuery->where('s.name', 'LIKE', "%{$query}%")
+                        ->orWhere('c.name', 'LIKE', "%{$query}%")
+                        ->orWhere('a1.date', 'LIKE', "%{$query}%");
+            });
+        }
+        
+        $attendances = isset($attendances) ? $attendances : $attendancesQuery
+            ->orderBy('a1.date', 'desc')
+            ->orderBy('a1.check_in', 'asc')
+            ->get();
+        
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'attendances' => $attendances
+            ]);
+        }
+        
+        return view('attendances.index', compact('attendances'));
     }
-    
-    // Jika bukan parent, bisa melakukan pencarian
-    if (!$user->hasRole('parent') && $query) {
-        $attendancesQuery->where(function($subQuery) use ($query) {
-            $subQuery->where('s.name', 'LIKE', "%{$query}%")
-                    ->orWhere('c.name', 'LIKE', "%{$query}%")
-                    ->orWhere('a1.date', 'LIKE', "%{$query}%");
-        });
-    }
-    
-    $attendances = isset($attendances) ? $attendances : $attendancesQuery
-        ->orderBy('a1.date', 'desc')
-        ->orderBy('a1.check_in', 'asc')
-        ->get();
-    
-    if ($request->ajax()) {
-        return response()->json([
-            'success' => true,
-            'attendances' => $attendances
-        ]);
-    }
-    
-    return view('attendances.index', compact('attendances'));
-}
 
     public function create()
     {

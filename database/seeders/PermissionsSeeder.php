@@ -31,6 +31,7 @@ class PermissionsSeeder extends Seeder
             'settings.index', 'settings.create', 'settings.edit',
             'roles.index', 'roles.create', 'roles.edit',
             'permissions.index', 'permissions.create', 'permissions.edit',
+            'lesson_attendances.index', 'lesson_attendances.create', 'lesson_attendances.edit',
         ];
 
         // Buat semua permissions
@@ -57,6 +58,7 @@ class PermissionsSeeder extends Seeder
                 'settings.index', 'settings.create', 'settings.edit',
                 'roles.index', 'roles.create', 'roles.edit',
                 'permissions.index', 'permissions.create', 'permissions.edit',
+                'lesson_attendances.index', 'lesson_attendances.create', 'lesson_attendances.edit',
             ],
             
             'teacher' => [

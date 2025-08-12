@@ -8,9 +8,7 @@
                     <th>Tanggal</th>
                     <th>Nama Siswa</th>
                     <th>Kelas</th>
-                    {{-- <th>Absen Kedatangan</th> --}}
                     <th>Status Masuk</th>
-                    {{-- <th>Absen Kepulangan</th> --}}
                     <th>Status Pulang</th>
                     <th>Aksi</th>
                 </tr>
@@ -23,17 +21,6 @@
                     <td>{{ \Carbon\Carbon::parse($attendance->date)->format('d F Y') }}</td>
                     <td>{{ $attendance->student_name }}</td>
                     <td>{{ $attendance->class_name }}</td>
-                    
-                    <!-- Absen Kedatangan -->
-                    {{-- <td>
-                        @if($attendance->check_in)
-                            {{ \Carbon\Carbon::parse($attendance->check_in)->format('H:i') }}
-                        @else
-                            <span class="text-muted">-</span>
-                        @endif
-                    </td> --}}
-                    
-                    <!-- Status Masuk -->
                     <td>
                         @if($attendance->check_in_status)
                             @php
@@ -60,17 +47,6 @@
                             <span class="text-muted">-</span>
                         @endif
                     </td>
-                    
-                    <!-- Absen Kepulangan -->
-                    {{-- <td>
-                        @if($attendance->check_out)
-                            {{ \Carbon\Carbon::parse($attendance->check_out)->format('H:i') }}
-                        @else
-                            <span class="text-muted">Belum Absen</span>
-                        @endif
-                    </td> --}}
-                    
-                    <!-- Status Pulang -->
                     <td>
                         @if($attendance->check_out_status)
                             @php

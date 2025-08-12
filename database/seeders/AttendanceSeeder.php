@@ -9,6 +9,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class AttendanceSeeder extends Seeder
@@ -20,202 +21,141 @@ class AttendanceSeeder extends Seeder
     {
         // Get admin user for created_by
         $adminUser = User::where('email', 'administrator@gmail.com')->first();
-
-        // Define specific assignments based on student emails and class codes
-        $studentAssignments = [
-            'student1@gmail.com' => 'XA',
-            'student2@gmail.com' => 'XIB',
-            'student3@gmail.com' => 'XIIA',
-        ];
-
-        // Get all students with their classes
-        $studentsWithClasses = [];
-        foreach ($studentAssignments as $studentEmail => $classCode) {
-            $studentUser = User::where('email', $studentEmail)->first();
-            if (!$studentUser) continue;
-
-            $student = Student::where('user_id', $studentUser->id)->first();
-            if (!$student) continue;
-
-            $class = Classes::where('code', $classCode)->first();
-            if (!$class) continue;
-
-            $studentsWithClasses[] = [
-                'student' => $student,
-                'class' => $class
-            ];
+        
+        if (!$adminUser) {
+            $this->command->error('Admin user not found. Please run UserSeeder first.');
+            return;
         }
 
-        // Generate attendance for June 2024 (assuming current year)
-        $startDate = Carbon::create(2024, 6, 1);
-        $endDate = Carbon::create(2024, 6, 30);
+        // Get all students from student_class relationships
+        $studentClasses = DB::table('student_class')
+            ->join('student', 'student_class.student_id', '=', 'student.id')
+            ->join('classes', 'student_class.class_id', '=', 'classes.id')
+            ->whereNull('student_class.deleted_at')
+            ->whereNull('student.deleted_at')
+            ->whereNull('classes.deleted_at')
+            ->select(
+                'student.id as student_id',
+                'student.name as student_name',
+                'classes.id as class_id',
+                'classes.name as class_name'
+            )
+            ->get();
 
-        // Loop through each day in June
-        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
-            // Skip weekends (Saturday = 6, Sunday = 0)
-            if ($date->dayOfWeek == 0 || $date->dayOfWeek == 6) {
-                continue;
+        if ($studentClasses->isEmpty()) {
+            $this->command->error('No student-class relationships found. Please run ClassesSeeder first.');
+            return;
+        }
+
+        // Define date range from July 1, 2025 to August 7, 2025 (excluding weekends)
+        $startDate = Carbon::create(2025, 7, 1);
+        $endDate = Carbon::create(2025, 8, 7);
+        
+        // Get school schedule (Monday-Saturday)
+        $schoolDays = [];
+        $current = $startDate->copy();
+        
+        while ($current->lte($endDate)) {
+            // Add weekdays including Saturday (Monday = 1, Saturday = 6)
+            if ($current->dayOfWeek >= 1 && $current->dayOfWeek <= 6) {
+                $schoolDays[] = $current->copy();
             }
+            $current->addDay();
+        }
 
-            foreach ($studentsWithClasses as $studentData) {
-                $student = $studentData['student'];
-                $class = $studentData['class'];
+        $this->command->info('Generating attendance for ' . count($schoolDays) . ' school days from July 1 - August 7, 2025...');
 
-                // Random chance for different attendance scenarios
-                $scenario = $this->getRandomScenario();
+        // Define possible check-in statuses with probabilities
+        $checkInStatuses = [
+            'tepat' => 70,        // 70% hadir tepat waktu
+            'terlambat' => 20,    // 20% terlambat
+            'izin' => 5,          // 5% izin
+            'sakit' => 3,         // 3% sakit
+            'alpha' => 2          // 2% alpha
+        ];
 
-                $checkIn = null;
-                $checkOut = null;
-                $checkInStatus = null;
-                $checkOutStatus = null;
-
-                switch ($scenario) {
-                    case 'normal':
-                        // Normal attendance
-                        $checkIn = $this->generateCheckInTime();
-                        $checkOut = $this->generateCheckOutTime();
-                        $checkInStatus = $checkIn <= '07:00:00' ? 'tepat' : 'terlambat';
-                        $checkOutStatus = $checkOut >= '16:00:00' ? 'tepat' : 'lebih_awal';
-                        break;
-
-                    case 'late_in':
-                        // Late check in
-                        $checkIn = $this->generateLateCheckInTime();
-                        $checkOut = $this->generateCheckOutTime();
-                        $checkInStatus = 'terlambat';
-                        $checkOutStatus = $checkOut >= '16:00:00' ? 'tepat' : 'lebih_awal';
-                        break;
-
-                    case 'early_out':
-                        // Early check out
-                        $checkIn = $this->generateCheckInTime();
-                        $checkOut = $this->generateEarlyCheckOutTime();
-                        $checkInStatus = $checkIn <= '07:00:00' ? 'tepat' : 'terlambat';
-                        $checkOutStatus = 'lebih_awal';
-                        break;
-
-                    case 'no_checkout':
-                        // No check out
-                        $checkIn = $this->generateCheckInTime();
-                        $checkOut = '17:00:00'; // Default check out time
-                        $checkInStatus = $checkIn <= '07:00:00' ? 'tepat' : 'terlambat';
-                        $checkOutStatus = 'tidak_absen';
-                        break;
-
-                    case 'izin':
-                        // Permission (izin)
-                        $checkIn = '07:00:00';
-                        $checkOut = '07:00:00';
-                        $checkInStatus = 'izin';
-                        $checkOutStatus = 'izin';
-                        break;
-
-                    case 'sakit':
-                        // Sick leave
-                        $checkIn = '17:00:00';
-                        $checkOut = '17:00:00';
-                        $checkInStatus = 'sakit';
-                        $checkOutStatus = 'sakit';
-                        break;
-
-                    case 'alpha':
-                        // Absent without permission
-                        $checkIn = null;
-                        $checkOut = null;
-                        $checkInStatus = 'alpha';
-                        $checkOutStatus = 'alpha';
-                        break;
+        foreach ($studentClasses as $studentClass) {
+            foreach ($schoolDays as $date) {
+                // Random check-in status based on probability
+                $checkInStatus = $this->getRandomStatus($checkInStatuses);
+                
+                // Generate check-in time based on status
+                $checkInTime = null;
+                if (in_array($checkInStatus, ['tepat', 'terlambat'])) {
+                    if ($checkInStatus === 'tepat') {
+                        // Check-in between 06:30 - 06:59 (sebelum jam 07:00)
+                        $checkInTime = $this->generateRandomTime('06:30', '06:59');
+                    } else {
+                        // Check-in between 07:00 - 08:30 (jam 07:00 ke atas untuk terlambat)
+                        $checkInTime = $this->generateRandomTime('07:00', '08:30');
+                    }
                 }
 
+                // Set created_at to match the date and check_in time
+                if ($checkInTime) {
+                    $createdAt = Carbon::createFromFormat('Y-m-d H:i:s', 
+                        $date->format('Y-m-d') . ' ' . $checkInTime . ':00',
+                        'Asia/Jakarta'
+                    );
+                } else {
+                    // If no check_in, set created_at to 8 AM on that date
+                    $createdAt = Carbon::createFromFormat('Y-m-d H:i:s', 
+                        $date->format('Y-m-d') . ' 08:00:00',
+                        'Asia/Jakarta'
+                    );
+                }
+
+                // Create attendance record for check-in only
                 Attendance::create([
                     'id' => Str::uuid(),
-                    'student_id' => $student->id,
-                    'class_id' => $class->id,
+                    'student_id' => $studentClass->student_id,
+                    'class_id' => $studentClass->class_id,
                     'date' => $date->format('Y-m-d'),
-                    'check_in' => $checkIn,
-                    'check_out' => $checkOut,
+                    'check_in' => $checkInTime,
+                    'check_out' => null, // Tidak ada check_out di record ini
                     'check_in_status' => $checkInStatus,
-                    'check_out_status' => $checkOutStatus,
-                    'created_by' => $adminUser->id ?? null,
+                    'check_out_status' => null, // Tidak ada status check_out
+                    'created_by' => $adminUser->id,
                     'updated_by' => null,
+                    'created_at' => $createdAt,
+                    'updated_at' => $createdAt,
                 ]);
             }
         }
+
+        $totalRecords = count($studentClasses) * count($schoolDays);
+        $this->command->info("Successfully created {$totalRecords} attendance records (check-in only) from July 1 - August 7, 2025.");
+        $this->command->info("Total: " . count($studentClasses) . " students × " . count($schoolDays) . " school days = {$totalRecords} records");
     }
 
     /**
-     * Get random attendance scenario
+     * Get random status based on probability weights
      */
-    private function getRandomScenario(): string
+    private function getRandomStatus(array $statuses): string
     {
-        $scenarios = [
-            'normal' => 50,      // 50% normal attendance
-            'late_in' => 15,     // 15% late check in
-            'early_out' => 10,   // 10% early check out
-            'no_checkout' => 5,  // 5% no check out
-            'izin' => 8,         // 8% permission
-            'sakit' => 7,        // 7% sick
-            'alpha' => 5,        // 5% absent without permission
-        ];
-
         $random = rand(1, 100);
         $cumulative = 0;
-
-        foreach ($scenarios as $scenario => $percentage) {
-            $cumulative += $percentage;
+        
+        foreach ($statuses as $status => $probability) {
+            $cumulative += $probability;
             if ($random <= $cumulative) {
-                return $scenario;
+                return $status;
             }
         }
-
-        return 'normal';
+        
+        return array_key_first($statuses);
     }
 
     /**
-     * Generate random check in time (between 06:00 and 08:00)
+     * Generate random time between two time ranges
      */
-    private function generateCheckInTime(): string
+    private function generateRandomTime(string $startTime, string $endTime): string
     {
-        $hour = rand(6, 7);
-        $minute = rand(0, 59);
-        $second = rand(0, 59);
-
-        return sprintf('%02d:%02d:%02d', $hour, $minute, $second);
-    }
-
-    /**
-     * Generate random late check in time (between 07:01 and 09:00)
-     */
-    private function generateLateCheckInTime(): string
-    {
-        $hour = rand(7, 8);
-        $minute = $hour == 7 ? rand(1, 59) : rand(0, 59);
-        $second = rand(0, 59);
-
-        return sprintf('%02d:%02d:%02d', $hour, $minute, $second);
-    }
-
-    /**
-     * Generate random check out time (between 15:00 and 17:00)
-     */
-    private function generateCheckOutTime(): string
-    {
-        $hour = rand(15, 17);
-        $minute = rand(0, 59);
-        $second = rand(0, 59);
-
-        return sprintf('%02d:%02d:%02d', $hour, $minute, $second);
-    }
-
-    /**
-     * Generate random early check out time (between 13:00 and 15:59)
-     */
-    private function generateEarlyCheckOutTime(): string
-    {
-        $hour = rand(13, 15);
-        $minute = rand(0, 59);
-        $second = rand(0, 59);
-
-        return sprintf('%02d:%02d:%02d', $hour, $minute, $second);
+        $start = Carbon::createFromFormat('H:i', $startTime);
+        $end = Carbon::createFromFormat('H:i', $endTime);
+        
+        $randomMinutes = rand(0, $end->diffInMinutes($start));
+        
+        return $start->addMinutes($randomMinutes)->format('H:i');
     }
 }

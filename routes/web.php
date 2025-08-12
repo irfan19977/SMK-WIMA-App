@@ -4,6 +4,7 @@ use App\Http\Controllers\API\RFIDController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ClassesController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LessonAttendanceController;
 use App\Http\Controllers\ParentsController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
@@ -16,8 +17,23 @@ use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return view('home.index');
+})->name('/');
+Route::get('/profile-sekolah', function () {
+    return view('home.profile');
+})->name('profile-sekolah.index');
+
+Route::get('/berita', function () {
+    return view('home.berita');
+})->name('berita.index');
+
+Route::get('/detail', function () {
+    return view('home.detail');
+})->name('berita.detail');
+
+Route::get('/pendaftaran', function () {
+    return view('home.pendaftaran');
+})->name('pendaftaran');
 
     Route::post('/rfid-detect', [RFIDController::class, 'detectRFID']);
     Route::get('/get-latest-rfid', [RFIDController::class, 'getLatestRFID'])->name('get.latest.rfid');
@@ -25,9 +41,11 @@ Route::get('/', function () {
 
 Route::group(['middleware' => 'auth'], function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/attendance-data', [DashboardController::class, 'getAttendanceData'])->name('dashboard.attendance-data');
     
     Route::resource('students', StudentController::class);
     Route::post('/students/{userId}/toggle-active', [StudentController::class, 'toggleActive'])->name('students.toggle-active');
+    Route::post('students/recognize-face', [StudentController::class, 'recognizeFace'])->name('students.recognize-face');
 
     Route::resource('teachers', TeacherController::class);
     Route::post('/teachers/{teacherId}/toggle-active', [TeacherController::class, 'toggleActive'])->name('teachers.toggle-active');
@@ -50,8 +68,18 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::resource('attendances', AttendanceController::class);
     Route::get('/students/find-by-nisn/{nisn}', [AttendanceController::class, 'findByNisn']);
+    
+    Route::resource('lesson-attendances', LessonAttendanceController::class);
+    // Additional routes for lesson attendance
+    Route::get('lesson-attendances/find-by-nisn/{nisn}', [LessonAttendanceController::class, 'findByNisn'])
+        ->name('lesson-attendances.find-by-nisn');
+    
+    Route::get('lesson-attendances/get-subjects-by-class/{classId}', [LessonAttendanceController::class, 'getSubjectsByClass'])
+        ->name('lesson-attendances.get-subjects-by-class');
 
     Route::resource('permissions', PermissionController::class);
+
+    // Route baru untuk face recognition
 
     Route::resource('roles', RoleController::class);
 });

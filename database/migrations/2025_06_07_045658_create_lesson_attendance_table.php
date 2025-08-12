@@ -18,7 +18,7 @@ return new class extends Migration
             $table->uuid('subject_id');
             $table->date('date');
             $table->time('check_in')->nullable();
-            $table->enum('check_in_status', ['tepat', 'terlambat', 'izin', 'sakit', 'alpha'])->default('tepat');
+            $table->enum('check_in_status', ['hadir', 'terlambat', 'izin', 'sakit', 'alpha'])->default('hadir');
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

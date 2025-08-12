@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             ScheduleSeeder::class,
             SettingScheduleSeeder::class,
             PermissionsSeeder::class,
+            AttendanceSeeder::class,
         ]);
     }
 }

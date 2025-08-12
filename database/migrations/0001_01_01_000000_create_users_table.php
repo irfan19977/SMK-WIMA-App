@@ -18,7 +18,8 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('phone')->nullable();
-            $table->string('photo')->nullable();
+            $table->text('face_descriptor')->nullable();
+            $table->string('photo_path')->nullable();
             $table->boolean('status')->default(true);
             $table->string('join_date')->nullable();
             $table->rememberToken();
