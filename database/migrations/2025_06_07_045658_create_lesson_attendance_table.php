@@ -19,6 +19,8 @@ return new class extends Migration
             $table->date('date');
             $table->time('check_in')->nullable();
             $table->enum('check_in_status', ['hadir', 'terlambat', 'izin', 'sakit', 'alpha'])->default('hadir');
+            $table->string('academic_year')->nullable();
+            $table->enum('semester', ['ganjil', 'genap'])->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

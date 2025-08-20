@@ -31,4 +31,9 @@ class Classes extends Model
                     ->withTimestamps()
                     ->withPivot('created_by', 'updated_by', 'deleted_by');
     }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class, 'class_id');
+    }
 }

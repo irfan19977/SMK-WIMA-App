@@ -16,7 +16,7 @@ class SubjectSeeder extends Seeder
     public function run(): void
     {
         // Get admin user for created_by
-        $adminUser = User::where('email', 'administrator@gmail.com')->first();
+        $adminUser = User::where('email', 'superadmin@gmail.com')->first();
 
         $subjects = [
             ['name' => 'Matematika', 'code' => 'MTK'],

@@ -12,10 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('student', function (Blueprint $table) {
-            $table->text('face_encoding')->nullable()->comment('Face encoding data untuk recognition');
-            $table->string('face_photo')->nullable()->comment('Path foto wajah siswa');
-            $table->timestamp('face_registered_at')->nullable()->comment('Waktu registrasi wajah');
-            $table->boolean('face_recognition_enabled')->default(false)->comment('Status aktif face recognition');
+            $table->text('face_encoding')->nullable()->comment('Face encoding data untuk recognition')->after('address');
+            $table->string('face_photo')->nullable()->comment('Path foto wajah siswa')->after('face_encoding');
+            $table->timestamp('face_registered_at')->nullable()->comment('Waktu registrasi wajah')->after('face_photo');
         });
     }
 

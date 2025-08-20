@@ -62,45 +62,45 @@
             </a>
             <ul class="dropdown-menu">
                 @can('classes.index')
-                    @if(auth()->user()->hasRole('student'))
-                        {{-- Untuk role students - tampilkan kelas yang diikuti siswa --}}
-                        @php
-                            $student = \App\Models\Student::where('user_id', auth()->id())->first();
-                            $studentClass = $student ? \App\Models\StudentClass::where('student_id', $student->id)->first() : null;
-                        @endphp
+                @if(auth()->user()->hasRole('student'))
+                {{-- Untuk role students - tampilkan kelas yang diikuti siswa --}}
+                @php
+                $student = \App\Models\Student::where('user_id', auth()->id())->first();
+                $studentClass = $student ? \App\Models\StudentClass::where('student_id', $student->id)->first() : null;
+                @endphp
 
-                        @if($studentClass)
-                            <li class="dropdown {{ Request::is('classes*') ? 'active' : ''}}">
-                                <a href="{{ route('classes.show', $studentClass->class_id) }}" class="nav-link">
-                                    <i class="fas fa-door-open"></i><span>Kelas Saya</span>
-                                </a>
-                            </li>
-                        @endif
-                    @elseif(auth()->user()->hasRole('parent'))
-                        {{-- Untuk role parent - tampilkan kelas dari anak --}}
-                        @php
-                            $parent = \App\Models\ParentModel::where('user_id', auth()->id())->first();
-                            $student = $parent && $parent->student_id ? \App\Models\Student::find($parent->student_id) : null;
-                            $studentClass = $student ? \App\Models\StudentClass::where('student_id', $student->id)->first() : null;
-                        @endphp
+                @if($studentClass)
+                <li class="dropdown {{ Request::is('classes*') ? 'active' : ''}}">
+                    <a href="{{ route('classes.show', $studentClass->class_id) }}" class="nav-link">
+                        <i class="fas fa-door-open"></i><span>Kelas Saya</span>
+                    </a>
+                </li>
+                @endif
+                @elseif(auth()->user()->hasRole('parent'))
+                {{-- Untuk role parent - tampilkan kelas dari anak --}}
+                @php
+                $parent = \App\Models\ParentModel::where('user_id', auth()->id())->first();
+                $student = $parent && $parent->student_id ? \App\Models\Student::find($parent->student_id) : null;
+                $studentClass = $student ? \App\Models\StudentClass::where('student_id', $student->id)->first() : null;
+                @endphp
 
-                        @if($studentClass)
-                            <li class="dropdown {{ Request::is('classes*') ? 'active' : ''}}">
-                                <a href="{{ route('classes.show', $studentClass->class_id) }}" class="nav-link">
-                                    <i class="fas fa-door-open"></i><span>Kelas Anak</span>
-                                </a>
-                            </li>
-                        @endif
-                    @else
-                        {{-- Untuk role selain students/parent (admin, teacher, dll) - tampilkan semua kelas --}}
-                        @can('classes.index')
-                            <li class="dropdown {{ Request::is('classes*') && !Request::is('classes/my-class*') ? 'active' : ''}}">
-                                <a href="{{ route('classes.index') }}" class="nav-link">
-                                    <i class="fas fa-door-open"></i><span>Kelas</span>
-                                </a>
-                            </li>
-                        @endcan
-                    @endif
+                @if($studentClass)
+                <li class="dropdown {{ Request::is('classes*') ? 'active' : ''}}">
+                    <a href="{{ route('classes.show', $studentClass->class_id) }}" class="nav-link">
+                        <i class="fas fa-door-open"></i><span>Kelas Anak</span>
+                    </a>
+                </li>
+                @endif
+                @else
+                {{-- Untuk role selain students/parent (admin, teacher, dll) - tampilkan semua kelas --}}
+                @can('classes.index')
+                <li class="dropdown {{ Request::is('classes*') && !Request::is('classes/my-class*') ? 'active' : ''}}">
+                    <a href="{{ route('classes.index') }}" class="nav-link">
+                        <i class="fas fa-door-open"></i><span>Kelas</span>
+                    </a>
+                </li>
+                @endcan
+                @endif
                 @endcan
                 @can('subjects.index')
                 <li class="dropdown {{ Request::is('subjects*') ? 'active' : ''}}">
@@ -116,36 +116,72 @@
                     </a>
                 </li>
                 @endcan
+                @can('student-grades.index')
+                <li class="dropdown {{ Request::is('student-grades*') ? 'active' : ''}}">
+                    <a href="{{ route('student-grades.index') }}" class="nav-link">
+                        <i class="fas fa-calendar-alt"></i><span>Input Nilai</span>
+                    </a>
+                </li>
+                @endcan
             </ul>
         </li>
         @endcanany
 
-        @canany(['attendances.index', 'leasson.index'])
+        @canany(['attendances.index', 'lesson_attendances.index'])
         <li class="dropdown {{ Request::is('attendance*') ? 'active' : '' }}">
             <a href="#" class="menu-toggle nav-link has-dropdown">
                 <i class="fas fa-clipboard-check"></i><span>Absensi</span>
             </a>
             <ul class="dropdown-menu">
-                @can('leasson.index')
+                @can('lesson_attendances.index')
                 <li class="dropdown {{ Request::is('leasson*') ? 'active' : ''}}">
+                    @if(auth()->user()->hasRole('student'))
+                    <a href="{{ route('face-recognition.index') }}" class="nav-link">
+                        <i class="fas fa-camera"></i><span>Absensi</span>
+                    </a>
+                    @else
                     <a href="{{ route('lesson-attendances.index') }}" class="nav-link">
                         <i class="fas fa-calendar-check"></i><span>Absensi Harian</span>
                     </a>
+                    @endif
                 </li>
                 @endcan
                 @can('attendances.index')
                 <li class="dropdown {{ Request::is('attendances*') ? 'active' : ''}}">
                     @if(auth()->user()->hasRole('parent'))
-                        <a href="{{ route('attendances.index') }}" class="nav-link">
-                            <i class="fas fa-clock"></i><span>Kehadiran In/Out Anak</span>
-                        </a>
+                    <a href="{{ route('attendances.index') }}" class="nav-link">
+                        <i class="fas fa-clock"></i><span>Kehadiran In/Out Anak</span>
+                    </a>
                     @else
-                        <a href="{{ route('attendances.index') }}" class="nav-link">
-                            <i class="fas fa-clock"></i><span>Kehadiran In/Out</span>
-                        </a>
+                    <a href="{{ route('attendances.index') }}" class="nav-link">
+                        <i class="fas fa-clock"></i><span>Kehadiran In/Out</span>
+                    </a>
                     @endif
                 </li>
                 @endcan
+            </ul>
+        </li>
+        @endcanany
+
+        @canany('face_recognition.create')
+        <li class="dropdown {{ Request::is('attendance*') ? 'active' : '' }}">
+            <a href="#" class="menu-toggle nav-link has-dropdown">
+                <i class="fas fa-clipboard-check"></i><span>Manajemen Beometrik</span>
+            </a>
+            <ul class="dropdown-menu">
+                @can('lesson_attendances.index')
+                <li class="dropdown {{ Request::is('leasson*') ? 'active' : ''}}">
+                    <a href="{{ route('face-recognition.index') }}" class="nav-link">
+                        <i class="fas fa-camera"></i><span>Scan Wajah</span>
+                    </a>
+
+                    <a href="{{ route('face-recognition.create') }}" class="nav-link">
+                        <i class="fas fa-calendar-check"></i><span>Data Beometrik</span>
+                    </a>
+
+                </li>
+                @endcan
+                </li>
             </ul>
         </li>
         @endcanany

@@ -26,6 +26,11 @@ class Student extends Model
         });
     }
 
+    protected $casts = [
+        'face_encoding' => 'array',
+        'is_active' => 'boolean',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -41,6 +46,42 @@ class Student extends Model
         return $this->belongsToMany(Classes::class, 'student_class', 'student_id', 'class_id')
                     ->withTimestamps()
                     ->withPivot('created_by', 'updated_by', 'deleted_by');
+    }
+
+    /**
+     * Check if student has face registered
+     */
+    public function hasFaceRegistered()
+    {
+        return !is_null($this->face_encoding) && !is_null($this->face_photo);
+    }
+
+    /**
+     * Get face photo URL
+     */
+    public function getFacePhotoUrlAttribute()
+    {
+        return $this->face_photo ? asset('storage/' . $this->face_photo) : null;
+    }
+
+    /**
+     * Scope for students without face registration
+     */
+    public function scopeWithoutFaceRegistration($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('face_encoding')
+              ->orWhereNull('face_photo');
+        });
+    }
+
+    /**
+     * Scope for students with face registration
+     */
+    public function scopeWithFaceRegistration($query)
+    {
+        return $query->whereNotNull('face_encoding')
+                    ->whereNotNull('face_photo');
     }
 
 }

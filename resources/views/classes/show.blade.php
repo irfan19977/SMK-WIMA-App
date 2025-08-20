@@ -258,8 +258,8 @@
                                             <td class="text-center">{{ $index + 1 }}</td>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    @if($student->photo && file_exists(public_path('foto/student/' . $student->photo)))
-                                                        <img src="{{ asset('foto/student/' . $student->photo) }}" alt="{{ $student->name }}" class="avatar-modern mr-3" style="object-fit:cover;">
+                                                    @if($student->face_photo && Storage::disk('public')->exists($student->face_photo))
+                                                        <img src="{{ asset('storage/' . $student->face_photo) }}" alt="{{ $student->name }}" class="avatar-modern mr-3" style="object-fit:cover;">
                                                     @else
                                                         <div class="avatar-modern mr-3">
                                                             {{ strtoupper(substr($student->name, 0, 1)) }}
@@ -398,10 +398,16 @@
                                                             <td class="text-center">{{ $index + 1 }}</td>
                                                             <td>
                                                                 <div class="d-flex align-items-center">
-                                                                    <div class="avatar-small mr-2">
-                                                                        {{ strtoupper(substr($student->name, 0, 1)) }}
+                                                                    @if($student->face_photo && Storage::disk('public')->exists($student->face_photo))
+                                                                        <img src="{{ asset('storage/' . $student->face_photo) }}" alt="{{ $student->name }}" class="avatar-modern mr-3" style="object-fit:cover;">
+                                                                    @else
+                                                                        <div class="avatar-modern mr-3">
+                                                                            {{ strtoupper(substr($student->name, 0, 1)) }}
+                                                                        </div>
+                                                                    @endif
+                                                                    <div>
+                                                                        <div class="font-weight-bold">{{ $student->name }}</div>
                                                                     </div>
-                                                                    <span class="font-weight-medium">{{ $student->name }}</span>
                                                                 </div>
                                                             </td>
                                                             @for($day = 1; $day <= $totalDaysInMonth; $day++)

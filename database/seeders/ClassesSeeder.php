@@ -18,7 +18,7 @@ class ClassesSeeder extends Seeder
     public function run(): void
     {
         // Get admin user for created_by
-        $adminUser = User::where('email', 'administrator@gmail.com')->first();
+        $adminUser = User::where('email', 'superadmin@gmail.com')->first();
 
         $classes = [
             [
@@ -44,10 +44,8 @@ class ClassesSeeder extends Seeder
             ],
         ];
 
-        $createdClasses = [];
-
         foreach ($classes as $class) {
-            $createdClass = Classes::create([
+            Classes::create([
                 'id' => Str::uuid(),
                 'name' => $class['name'],
                 'code' => $class['code'],
@@ -58,68 +56,6 @@ class ClassesSeeder extends Seeder
                 'updated_by' => null,
                 'deleted_by' => null,
             ]);
-            
-            $createdClasses[] = $createdClass;
-        }
-
-        // Get students for assignment
-        $students = Student::whereHas('user', function($query) {
-            $query->whereIn('email', [
-                'student1@gmail.com',
-                'student2@gmail.com',
-                'student3@gmail.com'
-            ]);
-        })->with('user')->get();
-
-        // Assign students to classes
-        if ($students->count() > 0 && count($createdClasses) > 0) {
-            // Assign student1 to Kelas VII
-            $student1 = $students->filter(function($student) {
-                return $student->user->email === 'student1@gmail.com';
-            })->first();
-            
-            if ($student1 && isset($createdClasses[0])) {
-                StudentClass::create([
-                    'id' => Str::uuid(),
-                    'class_id' => $createdClasses[0]->id, // Kelas VII
-                    'student_id' => $student1->id,
-                    'created_by' => $adminUser->id ?? null,
-                    'updated_by' => null,
-                    'deleted_by' => null,
-                ]);
-            }
-
-            // Assign student2 to Kelas X
-            $student2 = $students->filter(function($student) {
-                return $student->user->email === 'student2@gmail.com';
-            })->first();
-            
-            if ($student2 && isset($createdClasses[1])) {
-                StudentClass::create([
-                    'id' => Str::uuid(),
-                    'class_id' => $createdClasses[1]->id, // Kelas X
-                    'student_id' => $student2->id,
-                    'created_by' => $adminUser->id ?? null,
-                    'updated_by' => null,
-                    'deleted_by' => null,
-                ]);
-            }
-
-            // Assign student3 to Kelas XI
-            $student3 = $students->filter(function($student) {
-                return $student->user->email === 'student3@gmail.com';
-            })->first();
-            
-            if ($student3 && isset($createdClasses[2])) {
-                StudentClass::create([
-                    'id' => Str::uuid(),
-                    'class_id' => $createdClasses[2]->id, // Kelas XI
-                    'student_id' => $student3->id,
-                    'created_by' => $adminUser->id ?? null,
-                    'updated_by' => null,
-                    'deleted_by' => null,
-                ]);
-            }
         }
     }
 }

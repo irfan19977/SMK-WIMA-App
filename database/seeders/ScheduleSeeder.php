@@ -21,9 +21,9 @@ class ScheduleSeeder extends Seeder
     {
         try {
             // Get admin user for created_by
-            $adminUser = User::where('email', 'administrator@gmail.com')->first();
+            $adminUser = User::where('email', 'superadmin@gmail.com')->first();
             if (!$adminUser) {
-                $this->command->error('Admin user not found: administrator@gmail.com');
+                $this->command->error('Admin user not found: superadmin@gmail.com');
                 return;
             }
             

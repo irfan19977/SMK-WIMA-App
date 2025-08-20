@@ -16,7 +16,7 @@ class AdministratorSeeder extends Seeder
     public function run(): void
     {
         // Get admin user by email
-        $adminUser = User::where('email', 'administrator@gmail.com')->first();
+        $adminUser = User::where('email', 'superadmin@gmail.com')->first();
 
         if ($adminUser) {
             Administrator::create([

@@ -32,6 +32,8 @@ class PermissionsSeeder extends Seeder
             'roles.index', 'roles.create', 'roles.edit',
             'permissions.index', 'permissions.create', 'permissions.edit',
             'lesson_attendances.index', 'lesson_attendances.create', 'lesson_attendances.edit',
+            'face_recognition.index', 'face_recognition.create', 'face_recognition.edit',
+            'student-grades.index', 'student-grades.create', 'student-grades.edit',
         ];
 
         // Buat semua permissions
@@ -59,6 +61,8 @@ class PermissionsSeeder extends Seeder
                 'roles.index', 'roles.create', 'roles.edit',
                 'permissions.index', 'permissions.create', 'permissions.edit',
                 'lesson_attendances.index', 'lesson_attendances.create', 'lesson_attendances.edit',
+                'face_recognition.index', 'face_recognition.create', 'face_recognition.edit',
+                'student-grades.index', 'student-grades.create', 'student-grades.edit',
             ],
             
             'teacher' => [
@@ -68,13 +72,17 @@ class PermissionsSeeder extends Seeder
                 'schedules.index',
                 'attendances.index', 'attendances.create', 'attendances.edit',
                 'parents.index', // hanya bisa melihat data orang tua
+                'face_recognition.index',
+                'student-grades.index', 'student-grades.create', 'student-grades.edit',
             ],
             
             'student' => [
                 // Student hanya bisa melihat data tertentu
                 'announcements.index',
-                'schedules.index',
-                'attendances.index', // hanya melihat absensi sendiri
+                'classes.index', 
+                'attendances.index',
+                'lesson_attendances.index', // hanya melihat absensi harian
+                'face_recognition.index', // hanya melihat data biometrik
             ],
             
             'parent' => [

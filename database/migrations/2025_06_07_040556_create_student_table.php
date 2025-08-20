@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('student', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('user_id')->unique();
+            $table->string('no_absen')->nullable();
             $table->string('name');
             $table->string('nisn')->unique();
             $table->string('qrcode')->unique();

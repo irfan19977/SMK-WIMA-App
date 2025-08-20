@@ -110,10 +110,12 @@ class ClassesController extends Controller
             // Get students in this class through pivot table
             $students = Student::whereHas('classes', function($query) use ($id) {
                 $query->where('classes.id', $id);
-            })->with('user')->get();
+            })->with('user')
+            ->orderByRaw('CAST(no_absen AS UNSIGNED) ASC')
+            ->get();
             
             // Get available students (siswa yang belum memiliki kelas sama sekali)
-            $availableStudents = Student::whereDoesntHave('classes')->with('user')->get();
+            $availableStudents = Student::whereDoesntHave('classes')->with('user')->orderByRaw('CAST(no_absen AS UNSIGNED) ASC')->get();
             
             // Get current month and year
             $currentMonth = request('month', Carbon::now()->format('Y-m'));
@@ -212,7 +214,7 @@ class ClassesController extends Controller
             // Get students in this class
             $students = Student::whereHas('classes', function($query) use ($classId) {
                 $query->where('classes.id', $classId);
-            })->with('user')->get();
+            })->with('user')->orderByRaw('CAST(no_absen AS UNSIGNED) ASC')->get();
             
             // Get attendance data for the selected month and class
             $attendanceData = Attendance::whereHas('student.classes', function($query) use ($classId) {

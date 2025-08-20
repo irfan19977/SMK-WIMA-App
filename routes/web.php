@@ -4,6 +4,7 @@ use App\Http\Controllers\API\RFIDController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ClassesController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FaceRecognitionController;
 use App\Http\Controllers\LessonAttendanceController;
 use App\Http\Controllers\ParentsController;
 use App\Http\Controllers\PermissionController;
@@ -14,6 +15,8 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\StudentGradesController;
+use App\Models\Student;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -60,6 +63,23 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/classes/{class}/attendance-data', [ClassesController::class, 'getAttendanceData'])->name('classes.attendance-data');
 
     Route::resource('subjects', SubjectController::class);
+
+    // Student Grades Routes - CUSTOM ROUTES MUST COME FIRST!
+    Route::get('student-grades/get-students', [StudentGradesController::class, 'getStudents'])
+        ->name('student-grades.get-students');
+    
+    Route::get('student-grades/get-grades', [StudentGradesController::class, 'getGrades'])
+        ->name('student-grades.get-grades');
+    
+    Route::post('student-grades/bulk-update', [StudentGradesController::class, 'bulkUpdate'])
+        ->name('student-grades.bulk-update');
+    
+    Route::get('student-grades/statistics', [StudentGradesController::class, 'getStatistics'])
+        ->name('student-grades.statistics');
+    Route::get('student-grades/get-subjects-by-class', [StudentGradesController::class, 'getSubjectsByClass'])->name('student-grades.get-subjects-by-class');
+
+    // Resource routes AFTER custom routes
+    Route::resource('student-grades', StudentGradesController::class);
     
     Route::resource('schedules', ScheduleController::class);
     Route::get('schedules/class/{classId}', [ScheduleController::class, 'getSchedulesByClass'])->name('schedules.by-class');
@@ -79,9 +99,23 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::resource('permissions', PermissionController::class);
 
-    // Route baru untuk face recognition
-
     Route::resource('roles', RoleController::class);
+
+    // Face Recognition Routes
+    Route::prefix('face-recognition')->group(function () {
+        Route::get('/', [FaceRecognitionController::class, 'index'])->name('face-recognition.index');
+        Route::get('/create', [FaceRecognitionController::class, 'create'])
+            ->name('face-recognition.create');
+            Route::post('/store', [FaceRecognitionController::class, 'store'])->name('face-recognition.store');
+        Route::get('/Student', [FaceRecognitionController::class, 'getRegisteredStudents'])->name('face-recognition.students');
+        Route::post('/record-attendance', [FaceRecognitionController::class, 'recordAttendance'])
+            ->name('face-recognition.record-attendance');
+        Route::post('/identify', [FaceRecognitionController::class, 'identifyFace'])->name('face-recognition.identify');
+
+        // Route untuk attendance otomatis via face recognition
+        Route::post('/auto-attendance', [FaceRecognitionController::class, 'autoAttendance'])->name('auto-attendance');
+        Route::get('/students/{studentId}/class', [FaceRecognitionController::class, 'getStudentClass'])->name('student-class');
+    });
 });
 
 

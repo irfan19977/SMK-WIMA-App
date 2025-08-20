@@ -15,6 +15,11 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('class_id');
             $table->uuid('student_id');
+            $table->string('academic_year'); // 2023/2024
+            $table->enum('semester', ['ganjil', 'genap']);
+            $table->date('start_date');
+            $table->date('end_date')->nullable();
+            $table->enum('status', ['active', 'completed', 'moved', 'dropped']);
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->string('deleted_by')->nullable();

@@ -167,6 +167,8 @@
   <!-- Custom JS File -->
   <script src="{{ asset('backend/assets/js/custom.js') }}"></script>
   <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+  <!-- Load face-api library -->
+  <script src="{{ asset('js/face-api.min.js') }}"></script>
 
   <script>
     @if (session('success'))
