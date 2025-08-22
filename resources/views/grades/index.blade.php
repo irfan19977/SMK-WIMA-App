@@ -613,7 +613,7 @@
                     const calculatedValues = calculateGradeValues(grade);
                     
                     const row = [
-                        grade.no_absen || '-',  // Ubah dari: index + 1
+                        grade.no_absen || '-',
                         grade.student_name,
                         grade.student_nisn,
                         formatGrade(grade.h1),
@@ -631,10 +631,19 @@
                     ];
                     
                     const addedRow = table.row.add(row);
-                    $(addedRow.node()).data('student-id', grade.student_id);
+                    
+                    // CRITICAL: Store student_id as data attribute
+                    const rowNode = addedRow.node();
+                    $(rowNode).data('student-id', grade.student_id);
+                    $(rowNode).attr('data-student-id', grade.student_id); // Backup attribute
+                    
+                    console.log('Added row for student:', grade.student_id, 'Row data:', $(rowNode).data('student-id'));
                 });
                 
                 table.draw();
+                
+                // Verify student IDs are stored
+                console.log('Total rows with student IDs:', $('#mainTable tbody tr[data-student-id]').length);
             }
 
             // New function to calculate P, K, and Nilai based on the correct logic
@@ -728,12 +737,12 @@
 
             // Function to calculate inline grades for bulk editing
             function calculateInlineGrades(row) {
-                // Get H values from the row
-                const h1 = parseFloat(row.find('td:eq(4)').text()) || 0;
-                const h2 = parseFloat(row.find('td:eq(5)').text()) || 0;
-                const h3 = parseFloat(row.find('td:eq(6)').text()) || 0;
+                // Get H values from the row (columns 3, 4, 5)
+                const h1 = getNumericValue(row.find('td:eq(3)').text()) || 0;
+                const h2 = getNumericValue(row.find('td:eq(4)').text()) || 0;
+                const h3 = getNumericValue(row.find('td:eq(5)').text()) || 0;
                 
-                // Calculate P
+                // Calculate P (average of H values that are > 0)
                 let pValue = 0;
                 let hCount = 0;
                 if (h1 > 0) { pValue += h1; hCount++; }
@@ -741,12 +750,12 @@
                 if (h3 > 0) { pValue += h3; hCount++; }
                 pValue = hCount > 0 ? (pValue / hCount) : 0;
                 
-                // Get K values from the row
-                const k1 = parseFloat(row.find('td:eq(7)').text()) || 0;
-                const k2 = parseFloat(row.find('td:eq(8)').text()) || 0;
-                const k3 = parseFloat(row.find('td:eq(9)').text()) || 0;
+                // Get K values from the row (columns 6, 7, 8)
+                const k1 = getNumericValue(row.find('td:eq(6)').text()) || 0;
+                const k2 = getNumericValue(row.find('td:eq(7)').text()) || 0;
+                const k3 = getNumericValue(row.find('td:eq(8)').text()) || 0;
                 
-                // Calculate K
+                // Calculate K (average of K values that are > 0)
                 let kValue = 0;
                 let kCount = 0;
                 if (k1 > 0) { kValue += k1; kCount++; }
@@ -754,17 +763,26 @@
                 if (k3 > 0) { kValue += k3; kCount++; }
                 kValue = kCount > 0 ? (kValue / kCount) : 0;
                 
-                // Calculate final grade
+                // Calculate final grade (average of P and K if both > 0)
                 let finalGrade = 0;
                 let finalCount = 0;
                 if (pValue > 0) { finalGrade += pValue; finalCount++; }
                 if (kValue > 0) { finalGrade += kValue; finalCount++; }
                 finalGrade = finalCount > 0 ? (finalGrade / finalCount) : 0;
                 
-                // Update P, K, and Nilai columns (they should not be editable)
-                row.find('td:eq(11)').text(pValue > 0 ? pValue.toFixed(2) : '-'); // P column
-                row.find('td:eq(12)').text(kValue > 0 ? kValue.toFixed(2) : '-'); // K column
-                row.find('td:eq(14)').html(finalGrade > 0 ? formatGrade(finalGrade, true) : formatGrade(null, true)); // Nilai column
+                // Update P column (10)
+                row.find('td:eq(10)').text(pValue > 0 ? pValue.toFixed(2) : '-');
+                
+                // Update K column (11) 
+                row.find('td:eq(11)').text(kValue > 0 ? kValue.toFixed(2) : '-');
+                
+                // Update Nilai column (13) with badge
+                const nilaiCell = row.find('td:eq(13)');
+                if (finalGrade > 0) {
+                    nilaiCell.html(formatGrade(finalGrade, true));
+                } else {
+                    nilaiCell.html('<span class="badge badge-secondary">-</span>');
+                }
             }
 
             function formatGrade(value, isFinal = false) {
@@ -836,26 +854,58 @@
             }
 
             function makeTableEditable() {
-                // Add editable class only to H1-H3, K1-K3, CK, and Aktif columns
-                // Exclude P (11), K (12), and Nilai (14) columns as they are auto-calculated
                 $('#mainTable tbody tr').each(function() {
                     const row = $(this);
-                    // H1, H2, H3 (columns 4-6)
-                    row.find('td:eq(4), td:eq(5), td:eq(6)').addClass('editable-cell').attr('contenteditable', 'true');
-                    // K1, K2, K3 (columns 7-9)
-                    row.find('td:eq(7), td:eq(8), td:eq(9)').addClass('editable-cell').attr('contenteditable', 'true');
-                    // CK (column 10)
-                    row.find('td:eq(10)').addClass('editable-cell').attr('contenteditable', 'true');
-                    // Aktif (column 13)
-                    row.find('td:eq(13)').addClass('editable-cell').attr('contenteditable', 'true');
+                    
+                    // Store original values as data attributes for comparison
+                    row.find('td:eq(3)').attr('data-original', row.find('td:eq(3)').text()); // H1
+                    row.find('td:eq(4)').attr('data-original', row.find('td:eq(4)').text()); // H2
+                    row.find('td:eq(5)').attr('data-original', row.find('td:eq(5)').text()); // H3
+                    row.find('td:eq(6)').attr('data-original', row.find('td:eq(6)').text()); // K1
+                    row.find('td:eq(7)').attr('data-original', row.find('td:eq(7)').text()); // K2
+                    row.find('td:eq(8)').attr('data-original', row.find('td:eq(8)').text()); // K3
+                    row.find('td:eq(9)').attr('data-original', row.find('td:eq(9)').text()); // CK
+                    row.find('td:eq(12)').attr('data-original', row.find('td:eq(12)').text()); // Aktif
+                    
+                    // Make specific columns editable (H1-H3, K1-K3, CK, Aktif)
+                    row.find('td:eq(3), td:eq(4), td:eq(5), td:eq(6), td:eq(7), td:eq(8), td:eq(9), td:eq(12)')
+                    .addClass('editable-cell')
+                    .attr('contenteditable', 'true')
+                    .css({
+                        'background-color': '#fff3cd',
+                        'cursor': 'text',
+                        'border': '1px dashed #ffeaa7'
+                    });
                     
                     // Make P, K, Nilai non-editable but visually distinct
-                    row.find('td:eq(11), td:eq(12), td:eq(14)').addClass('auto-calculated').css('background-color', '#f8f9fa');
+                    row.find('td:eq(10), td:eq(11), td:eq(13)')
+                    .addClass('auto-calculated')
+                    .css({
+                        'background-color': '#f8f9fa',
+                        'color': '#6c757d',
+                        'font-style': 'italic'
+                    });
                 });
+                
+                updateStatus('Mode Edit - Anda dapat mengubah nilai dengan mengklik pada sel');
             }
 
             function makeTableReadonly() {
-                $('#mainTable tbody td').removeClass('editable-cell editing auto-calculated').attr('contenteditable', 'false').css('background-color', '');
+                $('#mainTable tbody td')
+                    .removeClass('editable-cell editing auto-calculated')
+                    .attr('contenteditable', 'false')
+                    .css({
+                        'background-color': '',
+                        'cursor': '',
+                        'border': '',
+                        'color': '',
+                        'font-style': ''
+                    });
+                
+                const className = $('#kelasFilter').find('option:selected').data('name');
+                const subjectName = $('#matpelFilter').find('option:selected').data('name'); 
+                const monthName = $('#bulanFilter').find('option:selected').text();
+                updateStatus(`${className} - ${subjectName} - ${monthName} - Mode CRUD aktif`);
             }
 
             function openGradeModal(gradeData = null) {
@@ -953,75 +1003,201 @@
 
             function saveAllGrades() {
                 const gradesData = [];
+                let hasChanges = false;
                 
                 $('#mainTable tbody tr').each(function() {
                     const row = $(this);
                     const studentId = row.data('student-id');
                     
-                    if (!studentId) return; // Skip if no student ID
+                    if (!studentId) {
+                        console.log('No student ID found for row');
+                        return; // Skip if no student ID
+                    }
+                    
+                    // Get values from table cells (using correct column indices)
+                    const h1 = getNumericValue(row.find('td:eq(3)').text()); // H1 column
+                    const h2 = getNumericValue(row.find('td:eq(4)').text()); // H2 column  
+                    const h3 = getNumericValue(row.find('td:eq(5)').text()); // H3 column
+                    const k1 = getNumericValue(row.find('td:eq(6)').text()); // K1 column
+                    const k2 = getNumericValue(row.find('td:eq(7)').text()); // K2 column
+                    const k3 = getNumericValue(row.find('td:eq(8)').text()); // K3 column
+                    const ck = getNumericValue(row.find('td:eq(9)').text()); // CK column
+                    const aktif = getNumericValue(row.find('td:eq(12)').text()); // Aktif column
+                    
+                    // Check if there are any actual grade values (not just null/empty)
+                    const hasGradeValues = [h1, h2, h3, k1, k2, k3, ck, aktif].some(val => val !== null && val !== undefined && val > 0);
+                    
+                    if (!hasGradeValues) {
+                        console.log('No grade values for student:', studentId);
+                        return; // Skip if no grades entered
+                    }
+                    
+                    hasChanges = true;
+                    
+                    // Determine semester based on month
+                    let semester = 'ganjil';
+                    const month = parseInt(currentFilters.month);
+                    if (month >= 1 && month <= 6) {
+                        semester = 'genap';
+                    } else if (month >= 7 && month <= 12) {
+                        semester = 'ganjil';
+                    }
                     
                     const gradeData = {
                         student_id: studentId,
                         class_id: currentFilters.class_id,
                         subject_id: currentFilters.subject_id,
-                        month: currentFilters.month,
-                        academic_year: currentFilters.academic_year || '{{ date("Y") }}/{{ date("Y") + 1 }}',
-                        semester: 'ganjil'
+                        month: month,
+                        academic_year: currentFilters.academic_year || new Date().getFullYear() + '/' + (new Date().getFullYear() + 1),
+                        semester: semester,
+                        h1: h1,
+                        h2: h2, 
+                        h3: h3,
+                        k1: k1,
+                        k2: k2,
+                        k3: k3,
+                        ck: ck,
+                        aktif: aktif
+                        // DO NOT send p, k, nilai - they will be calculated in backend
                     };
                     
-                    // Get values from editable cells only
-                    gradeData.h1 = getNumericValue(row.find('td:eq(4)').text());
-                    gradeData.h2 = getNumericValue(row.find('td:eq(5)').text());
-                    gradeData.h3 = getNumericValue(row.find('td:eq(6)').text());
-                    gradeData.k1 = getNumericValue(row.find('td:eq(7)').text());
-                    gradeData.k2 = getNumericValue(row.find('td:eq(8)').text());
-                    gradeData.k3 = getNumericValue(row.find('td:eq(9)').text());
-                    gradeData.ck = getNumericValue(row.find('td:eq(10)').text());
-                    gradeData.aktif = getNumericValue(row.find('td:eq(13)').text());
-                    
-                    // P, K, and Nilai are calculated automatically, no need to send them
-                    
+                    console.log('Adding grade data:', gradeData);
                     gradesData.push(gradeData);
+                });
+                
+                if (!hasChanges || gradesData.length === 0) {
+                    Swal.fire('Perhatian', 'Tidak ada perubahan data untuk disimpan', 'warning');
+                    return;
+                }
+                
+                console.log('Final grades data to send:', gradesData);
+                
+                // Show loading
+                Swal.fire({
+                    title: 'Menyimpan Data...',
+                    text: `Menyimpan ${gradesData.length} data nilai`,
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
                 });
 
                 $.ajax({
-                    url: '{{ route("student-grades.bulk-update") }}',
+                    url: window.location.origin + '/student-grades/bulk-update',
                     method: 'POST',
                     data: {
                         grades: gradesData,
                         _token: $('meta[name="csrf-token"]').attr('content')
                     },
-                    success: function(response) {
-                        Swal.fire('Berhasil', 'Semua nilai berhasil disimpan', 'success');
-                        toggleEditMode(); // Switch back to view mode
-                        loadGrades();
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    error: function() {
-                        Swal.fire('Error', 'Gagal menyimpan nilai', 'error');
+                    success: function(response) {
+                        Swal.close();
+                        
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: response.message || 'Semua nilai berhasil disimpan',
+                                icon: 'success',
+                                confirmButtonText: 'OK',
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            
+                            // Switch back to view mode and reload grades
+                            toggleEditMode();
+                            loadGrades();
+                        } else {
+                            throw new Error(response.message || 'Unknown error');
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.close();
+                        
+                        console.error('Bulk update error:', xhr);
+                        console.error('Response text:', xhr.responseText);
+                        
+                        let errorMessage = 'Gagal menyimpan nilai';
+                        
+                        try {
+                            const errorResponse = JSON.parse(xhr.responseText);
+                            console.error('Parsed error response:', errorResponse);
+                            
+                            if (errorResponse.message) {
+                                errorMessage = errorResponse.message;
+                            }
+                            
+                            if (errorResponse.errors) {
+                                errorMessage += '\n\nDetail error:';
+                                Object.keys(errorResponse.errors).forEach(key => {
+                                    const errors = Array.isArray(errorResponse.errors[key]) 
+                                        ? errorResponse.errors[key] 
+                                        : [errorResponse.errors[key]];
+                                    errorMessage += `\n- ${key}: ${errors.join(', ')}`;
+                                });
+                            }
+                            
+                            if (errorResponse.error) {
+                                errorMessage += '\n\nTechnical error: ' + errorResponse.error;
+                            }
+                            
+                        } catch (parseError) {
+                            console.error('Error parsing response:', parseError);
+                            errorMessage += '\n\nRaw error: ' + xhr.responseText;
+                        }
+                        
+                        Swal.fire({
+                            title: 'Error',
+                            text: errorMessage,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
                     }
                 });
             }
 
             function getNumericValue(text) {
-                const value = text.trim();
-                return (value === '-' || value === '') ? null : parseFloat(value) || null;
+                if (!text) return null;
+                
+                // Convert to string and clean
+                const cleaned = text.toString().trim();
+                
+                // Return null for empty, dash, or zero values
+                if (cleaned === '-' || cleaned === '' || cleaned === '0' || cleaned === '0.00') {
+                    return null;
+                }
+                
+                // Parse as float
+                const numValue = parseFloat(cleaned);
+                
+                // Return null if not a valid number or if it's 0
+                if (isNaN(numValue) || numValue <= 0) {
+                    return null;
+                }
+                
+                // Return the numeric value
+                return numValue;
             }
 
             // Event delegation for dynamic buttons
             $(document).on('click', '.btn-edit', function() {
-    try {
-        const gradeDataStr = $(this).attr('data-grade');
-        console.log('Raw grade data string:', gradeDataStr); // Debug log
-        
-        const gradeData = JSON.parse(gradeDataStr);
-        console.log('Parsed grade data:', gradeData); // Debug log
-        
-        openGradeModal(gradeData);
-    } catch (error) {
-        console.error('Error parsing grade data:', error);
-        Swal.fire('Error', 'Gagal memuat data nilai', 'error');
-    }
-});
+                try {
+                    const gradeDataStr = $(this).attr('data-grade');
+                    console.log('Raw grade data string:', gradeDataStr); // Debug log
+                    
+                    const gradeData = JSON.parse(gradeDataStr);
+                    console.log('Parsed grade data:', gradeData); // Debug log
+                    
+                    openGradeModal(gradeData);
+                } catch (error) {
+                    console.error('Error parsing grade data:', error);
+                    Swal.fire('Error', 'Gagal memuat data nilai', 'error');
+                }
+            });
 
             $(document).on('click', '.btn-delete', function() {
                 const gradeId = $(this).data('id');
@@ -1133,6 +1309,14 @@
                     value = '100';
                 }
                 
+                // Limit decimal places to 2
+                if (value.includes('.')) {
+                    const [integer, decimal] = value.split('.');
+                    if (decimal.length > 2) {
+                        value = integer + '.' + decimal.substring(0, 2);
+                    }
+                }
+                
                 // Update the cell if value changed
                 if ($(this).text() !== value) {
                     $(this).text(value);
@@ -1144,6 +1328,11 @@
                     range.collapse(false);
                     sel.removeAllRanges();
                     sel.addRange(range);
+                }
+                
+                // Auto-calculate P, K, and Nilai for the current row
+                if (currentMode === 'edit') {
+                    calculateInlineGrades($(this).closest('tr'));
                 }
             });
 

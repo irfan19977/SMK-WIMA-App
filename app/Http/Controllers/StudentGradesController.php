@@ -799,9 +799,8 @@ class StudentGradesController extends Controller
                 'grades.*.k2' => 'nullable|numeric|min:0|max:100',
                 'grades.*.k3' => 'nullable|numeric|min:0|max:100',
                 'grades.*.ck' => 'nullable|numeric|min:0|max:100',
-                'grades.*.p' => 'nullable|numeric|min:0|max:100',
-                'grades.*.k' => 'nullable|numeric|min:0|max:100',
-                'grades.*.aktif' => 'nullable|numeric|min:0|max:100'
+                'grades.*.aktif' => 'nullable|numeric|min:0|max:100',
+                // Remove p, k, nilai from validation as they are calculated
             ]);
 
             if ($validator->fails()) {
@@ -814,7 +813,7 @@ class StudentGradesController extends Controller
 
             $user = Auth::user();
             
-            // Jika user adalah teacher, validasi akses untuk setiap grade
+            // Teacher access validation
             if ($user->hasRole('teacher')) {
                 $teacherId = $user->teacher->id ?? null;
                 
@@ -825,7 +824,7 @@ class StudentGradesController extends Controller
                     ], 403);
                 }
                 
-                // Validasi akses untuk setiap kombinasi kelas-mata pelajaran
+                // Validate access for each class-subject combination
                 $uniqueCombinations = collect($request->grades)
                     ->map(function($grade) {
                         return [
@@ -867,17 +866,36 @@ class StudentGradesController extends Controller
             $created = 0;
 
             foreach ($request->grades as $gradeData) {
-                // Calculate final grade
-                $gradeValues = array_filter([
-                    $gradeData['h1'], $gradeData['h2'], $gradeData['h3'],
-                    $gradeData['k1'], $gradeData['k2'], $gradeData['k3'],
-                    $gradeData['ck'], $gradeData['p'], $gradeData['k'], $gradeData['aktif']
+                // Calculate P (average of H1, H2, H3 that are not null/0)
+                $hValues = array_filter([
+                    $gradeData['h1'] ?? null, 
+                    $gradeData['h2'] ?? null, 
+                    $gradeData['h3'] ?? null
                 ], function($value) {
-                    return $value !== null && $value !== '';
+                    return $value !== null && $value !== '' && $value > 0;
                 });
+                
+                $pValue = count($hValues) > 0 ? array_sum($hValues) / count($hValues) : null;
+                
+                // Calculate K (average of K1, K2, K3 that are not null/0)
+                $kValuesArray = array_filter([
+                    $gradeData['k1'] ?? null, 
+                    $gradeData['k2'] ?? null, 
+                    $gradeData['k3'] ?? null
+                ], function($value) {
+                    return $value !== null && $value !== '' && $value > 0;
+                });
+                
+                $kValue = count($kValuesArray) > 0 ? array_sum($kValuesArray) / count($kValuesArray) : null;
+                
+                // Calculate final grade (average of P and K if both exist)
+                $finalGradeValues = array_filter([$pValue, $kValue], function($value) {
+                    return $value !== null && $value > 0;
+                });
+                
+                $finalGrade = count($finalGradeValues) > 0 ? array_sum($finalGradeValues) / count($finalGradeValues) : null;
 
-                $finalGrade = count($gradeValues) > 0 ? array_sum($gradeValues) / count($gradeValues) : null;
-
+                // Find existing grade
                 $existingGrade = StudentGrades::where([
                     'student_id' => $gradeData['student_id'],
                     'subject_id' => $gradeData['subject_id'],
@@ -886,28 +904,34 @@ class StudentGradesController extends Controller
                     'month' => $gradeData['month']
                 ])->first();
 
+                // Prepare update data
                 $updateData = [
-                    'h1' => $gradeData['h1'] ?: null,
-                    'h2' => $gradeData['h2'] ?: null,
-                    'h3' => $gradeData['h3'] ?: null,
-                    'k1' => $gradeData['k1'] ?: null,
-                    'k2' => $gradeData['k2'] ?: null,
-                    'k3' => $gradeData['k3'] ?: null,
-                    'ck' => $gradeData['ck'] ?: null,
-                    'p' => $gradeData['p'] ?: null,
-                    'k' => $gradeData['k'] ?: null,
-                    'aktif' => $gradeData['aktif'] ?: null,
+                    'h1' => $gradeData['h1'] ?? null,
+                    'h2' => $gradeData['h2'] ?? null,
+                    'h3' => $gradeData['h3'] ?? null,
+                    'k1' => $gradeData['k1'] ?? null,
+                    'k2' => $gradeData['k2'] ?? null,
+                    'k3' => $gradeData['k3'] ?? null,
+                    'ck' => $gradeData['ck'] ?? null,
+                    'p' => $pValue,
+                    'k' => $kValue,
+                    'aktif' => $gradeData['aktif'] ?? null,
                     'nilai' => $finalGrade
                 ];
 
                 if ($existingGrade) {
+                    // Update existing grade
                     $existingGrade->update(array_merge($updateData, [
                         'updated_by' => Auth::id()
                     ]));
                     $updated++;
                 } else {
-                    // Only create if there's at least one grade value
-                    if (array_filter($updateData, function($value) { return $value !== null; })) {
+                    // Create new grade only if there's at least one grade value
+                    $hasValues = array_filter($updateData, function($value) { 
+                        return $value !== null && $value !== '' && $value > 0; 
+                    });
+                    
+                    if (count($hasValues) > 0) {
                         StudentGrades::create(array_merge($updateData, [
                             'id' => Str::uuid(),
                             'student_id' => $gradeData['student_id'],
@@ -928,18 +952,26 @@ class StudentGradesController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Successfully updated {$updated} and created {$created} grades",
+                'message' => "Berhasil memperbarui {$updated} data dan membuat {$created} data nilai baru",
                 'stats' => [
                     'updated' => $updated,
-                    'created' => $created
+                    'created' => $created,
+                    'total_processed' => count($request->grades)
                 ]
             ]);
 
         } catch (\Exception $e) {
             DB::rollback();
+            
+            // Log the error for debugging
+            \Log::error('Bulk update grades error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to bulk update grades',
+                'message' => 'Gagal memperbarui nilai siswa',
                 'error' => $e->getMessage()
             ], 500);
         }

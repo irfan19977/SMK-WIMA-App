@@ -38,8 +38,11 @@
                                     <tr data-student='{"id":"{{ $student->id ?? $index + 1 }}","nisn":"{{ $student->nisn ?? sprintf('%03d', $index + 1) }}","name":"{{ $student->name ?? 'Student ' . ($index + 1) }}","class":"{{ $student->class ?? 'X-A' }}","birthDate":"{{ $student->birth_date ?? '15 Januari 2008' }}","gender":"{{ $student->gender ?? 'Laki-laki' }}","address":"{{ $student->address ?? 'Jakarta' }}","status":"{{ $student->face_registered_at ? 'registered' : 'unregistered' }}","photo":"https://via.placeholder.com/50x50/007bff/ffffff?text={{ substr($student->name ?? 'ST', 0, 2) }}"}'>
                                         <td>{{ $index + 1 }}</td>
                                         <td>
-                                            <img src="https://via.placeholder.com/50x50/007bff/ffffff?text={{ substr($student->name ?? 'ST', 0, 2) }}" 
-                                                 class="rounded-circle" width="50" height="50" alt="{{ $student->name ?? 'Student' }}">
+                                            @if($student->face_photo && Storage::disk('public')->exists($student->face_photo))
+                                                <figure class="avatar mr-2"> <img src="{{ asset('storage/' . $student->face_photo) }}" alt="{{ $student->name }}"></figure>    
+                                            @else
+                                                <figure class="avatar mr-2 bg-success text-white" data-initial="{{ strtoupper(substr($student->name, 0, 2)) }}"></figure>
+                                            @endif
                                         </td>
                                         <td>{{ $student->name ?? 'Student ' . ($index + 1) }}</td>
                                         <td>{{ $student->nisn ?? sprintf('%03d', $index + 1) }}</td>
@@ -64,86 +67,8 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <!-- Sample data jika tidak ada data siswa -->
-                                    <tr data-student='{"id":"1","nisn":"001","name":"Ahmad Rizki","class":"X-A","birthDate":"15 Januari 2008","gender":"Laki-laki","address":"Jl. Merdeka No. 123, Jakarta","status":"unregistered","photo":"https://via.placeholder.com/50x50/007bff/ffffff?text=AR"}'>
-                                        <td>1</td>
-                                        <td>
-                                            <img src="https://via.placeholder.com/50x50/007bff/ffffff?text=AR" 
-                                                 class="rounded-circle" width="50" height="50" alt="Ahmad Rizki">
-                                        </td>
-                                        <td>Ahmad Rizki</td>
-                                        <td>001</td>
-                                        <td>X-A</td>
-                                        <td><span class="badge badge-success">Belum Terdaftar</span></td>
-                                        <td>
-                                            <button class="btn btn-primary btn-sm select-student">
-                                                <i class="fas fa-user-plus"></i> Pilih
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr data-student='{"id":"2","nisn":"002","name":"Siti Nurhaliza","class":"X-A","birthDate":"20 Februari 2008","gender":"Perempuan","address":"Jl. Sudirman No. 456, Jakarta","status":"registered","photo":"https://via.placeholder.com/50x50/28a745/ffffff?text=SN"}'>
-                                        <td>2</td>
-                                        <td>
-                                            <img src="https://via.placeholder.com/50x50/28a745/ffffff?text=SN" 
-                                                 class="rounded-circle" width="50" height="50" alt="Siti Nurhaliza">
-                                        </td>
-                                        <td>Siti Nurhaliza</td>
-                                        <td>002</td>
-                                        <td>X-A</td>
-                                        <td><span class="badge badge-warning">Sudah Terdaftar</span></td>
-                                        <td>
-                                            <button class="btn btn-warning btn-sm select-student">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr data-student='{"id":"3","nisn":"003","name":"Budi Santoso","class":"XI-A","birthDate":"10 Maret 2007","gender":"Laki-laki","address":"Jl. Gatot Subroto No. 789, Jakarta","status":"unregistered","photo":"https://via.placeholder.com/50x50/dc3545/ffffff?text=BS"}'>
-                                        <td>3</td>
-                                        <td>
-                                            <img src="https://via.placeholder.com/50x50/dc3545/ffffff?text=BS" 
-                                                 class="rounded-circle" width="50" height="50" alt="Budi Santoso">
-                                        </td>
-                                        <td>Budi Santoso</td>
-                                        <td>003</td>
-                                        <td>XI-A</td>
-                                        <td><span class="badge badge-success">Belum Terdaftar</span></td>
-                                        <td>
-                                            <button class="btn btn-primary btn-sm select-student">
-                                                <i class="fas fa-user-plus"></i> Pilih
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr data-student='{"id":"4","nisn":"004","name":"Maya Sari","class":"XI-B","birthDate":"25 April 2007","gender":"Perempuan","address":"Jl. Thamrin No. 321, Jakarta","status":"unregistered","photo":"https://via.placeholder.com/50x50/ffc107/000000?text=MS"}'>
-                                        <td>4</td>
-                                        <td>
-                                            <img src="https://via.placeholder.com/50x50/ffc107/000000?text=MS" 
-                                                 class="rounded-circle" width="50" height="50" alt="Maya Sari">
-                                        </td>
-                                        <td>Maya Sari</td>
-                                        <td>004</td>
-                                        <td>XI-B</td>
-                                        <td><span class="badge badge-success">Belum Terdaftar</span></td>
-                                        <td>
-                                            <button class="btn btn-primary btn-sm select-student">
-                                                <i class="fas fa-user-plus"></i> Pilih
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr data-student='{"id":"5","nisn":"005","name":"Dodi Setiawan","class":"XII-A","birthDate":"5 Mei 2006","gender":"Laki-laki","address":"Jl. Kebon Jeruk No. 654, Jakarta","status":"unregistered","photo":"https://via.placeholder.com/50x50/6f42c1/ffffff?text=DS"}'>
-                                        <td>5</td>
-                                        <td>
-                                            <img src="https://via.placeholder.com/50x50/6f42c1/ffffff?text=DS" 
-                                                 class="rounded-circle" width="50" height="50" alt="Dodi Setiawan">
-                                        </td>
-                                        <td>Dodi Setiawan</td>
-                                        <td>005</td>
-                                        <td>XII-A</td>
-                                        <td><span class="badge badge-success">Belum Terdaftar</span></td>
-                                        <td>
-                                            <button class="btn btn-primary btn-sm select-student">
-                                                <i class="fas fa-user-plus"></i> Pilih
-                                            </button>
-                                        </td>
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">Tidak ada siswa yang ditemukan</td>
                                     </tr>
                                 @endforelse
                             </tbody>

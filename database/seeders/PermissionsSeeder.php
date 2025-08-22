@@ -34,6 +34,7 @@ class PermissionsSeeder extends Seeder
             'lesson_attendances.index', 'lesson_attendances.create', 'lesson_attendances.edit',
             'face_recognition.index', 'face_recognition.create', 'face_recognition.edit',
             'student-grades.index', 'student-grades.create', 'student-grades.edit',
+            'tahfiz.index', 'tahfiz.edit',
         ];
 
         // Buat semua permissions
@@ -63,6 +64,7 @@ class PermissionsSeeder extends Seeder
                 'lesson_attendances.index', 'lesson_attendances.create', 'lesson_attendances.edit',
                 'face_recognition.index', 'face_recognition.create', 'face_recognition.edit',
                 'student-grades.index', 'student-grades.create', 'student-grades.edit',
+                'tahfiz.index', 'tahfiz.edit',
             ],
             
             'teacher' => [

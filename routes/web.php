@@ -16,6 +16,7 @@ use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StudentGradesController;
+use App\Http\Controllers\TahfizController;
 use App\Models\Student;
 use Illuminate\Support\Facades\Route;
 
@@ -80,6 +81,13 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Resource routes AFTER custom routes
     Route::resource('student-grades', StudentGradesController::class);
+
+
+    Route::get('tahfiz/get-students', [TahfizController::class, 'getStudents'])->name('tahfiz.getStudents');
+    Route::get('tahfiz/get-tahfiz-records', [TahfizController::class, 'getTahfizRecords'])->name('tahfiz.getTahfizRecords');
+    Route::post('tahfiz/bulk-update', [TahfizController::class, 'bulkUpdate'])->name('tahfiz.bulkUpdate');
+    Route::get('tahfiz/statistics', [TahfizController::class, 'getStatistics'])->name('tahfiz.getStatistics');
+    Route::resource('tahfiz', TahfizController::class);
     
     Route::resource('schedules', ScheduleController::class);
     Route::get('schedules/class/{classId}', [ScheduleController::class, 'getSchedulesByClass'])->name('schedules.by-class');
