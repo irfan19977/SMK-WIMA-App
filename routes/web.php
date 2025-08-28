@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\RFIDController;
+use App\Http\Controllers\AsramaController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ClassesController;
 use App\Http\Controllers\DashboardController;
@@ -57,37 +58,67 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('parents', ParentsController::class);
     Route::post('/parents/{parentId}/toggle-active', [ParentsController::class, 'toggleActive'])->name('parents.toggle-active');
 
-    Route::resource('classes', ClassesController::class);
-    Route::post('/classes/{class}/assign-student', [ClassesController::class, 'assignStudent'])->name('classes.assign-student');
-    Route::post('/classes/{class}/bulk-assign', [ClassesController::class, 'bulkAssign'])->name('classes.bulk-assign');
-    Route::delete('classes/{class}/remove-student', [ClassesController::class, 'removeStudent'])->name('classes.remove-student');
-    Route::get('/classes/{class}/attendance-data', [ClassesController::class, 'getAttendanceData'])->name('classes.attendance-data');
+    Route::prefix('classes')->name('classes.')->group(function () {
+        // Resource routes
+        Route::resource('/', ClassesController::class);
+        
+        // Custom routes
+        Route::post('{class}/assign-student', [ClassesController::class, 'assignStudent'])
+            ->name('assign-student');
+        
+        Route::post('{class}/bulk-assign', [ClassesController::class, 'bulkAssign'])
+            ->name('bulk-assign');
+        
+        Route::delete('{class}/remove-student', [ClassesController::class, 'removeStudent'])
+            ->name('remove-student');
+        
+        Route::get('{class}/attendance-data', [ClassesController::class, 'getAttendanceData'])
+            ->name('attendance-data');
+    });
 
     Route::resource('subjects', SubjectController::class);
 
-    // Student Grades Routes - CUSTOM ROUTES MUST COME FIRST!
-    Route::get('student-grades/get-students', [StudentGradesController::class, 'getStudents'])
-        ->name('student-grades.get-students');
-    
-    Route::get('student-grades/get-grades', [StudentGradesController::class, 'getGrades'])
-        ->name('student-grades.get-grades');
-    
-    Route::post('student-grades/bulk-update', [StudentGradesController::class, 'bulkUpdate'])
-        ->name('student-grades.bulk-update');
-    
-    Route::get('student-grades/statistics', [StudentGradesController::class, 'getStatistics'])
-        ->name('student-grades.statistics');
-    Route::get('student-grades/get-subjects-by-class', [StudentGradesController::class, 'getSubjectsByClass'])->name('student-grades.get-subjects-by-class');
+    // Student Grades Routes
+    Route::prefix('student-grades')->name('student-grades.')->group(function () {
+        // Custom routes first
+        Route::get('get-students', [StudentGradesController::class, 'getStudents'])
+            ->name('get-students');
+        
+        Route::get('get-grades', [StudentGradesController::class, 'getGrades'])
+            ->name('get-grades');
+        
+        Route::post('bulk-update', [StudentGradesController::class, 'bulkUpdate'])
+            ->name('bulk-update');
+        
+        Route::get('statistics', [StudentGradesController::class, 'getStatistics'])
+            ->name('statistics');
+            
+        Route::get('get-subjects-by-class', [StudentGradesController::class, 'getSubjectsByClass'])
+            ->name('get-subjects-by-class');
 
-    // Resource routes AFTER custom routes
-    Route::resource('student-grades', StudentGradesController::class);
+        // Resource routes AFTER custom routes
+        Route::resource('/', StudentGradesController::class);
+    });
 
+    Route::prefix('tahfiz')->name('tahfiz.')->group(function () {
+        // Custom routes first
+        Route::get('get-students', [TahfizController::class, 'getStudents'])
+            ->name('getStudents');
+        
+        Route::get('get-tahfiz-records', [TahfizController::class, 'getTahfizRecords'])
+            ->name('getTahfizRecords');
+        
+        Route::post('bulk-update', [TahfizController::class, 'bulkUpdate'])
+            ->name('bulkUpdate');
+        
+        Route::get('statistics', [TahfizController::class, 'getStatistics'])
+            ->name('getStatistics');
 
-    Route::get('tahfiz/get-students', [TahfizController::class, 'getStudents'])->name('tahfiz.getStudents');
-    Route::get('tahfiz/get-tahfiz-records', [TahfizController::class, 'getTahfizRecords'])->name('tahfiz.getTahfizRecords');
-    Route::post('tahfiz/bulk-update', [TahfizController::class, 'bulkUpdate'])->name('tahfiz.bulkUpdate');
-    Route::get('tahfiz/statistics', [TahfizController::class, 'getStatistics'])->name('tahfiz.getStatistics');
-    Route::resource('tahfiz', TahfizController::class);
+        // Resource routes AFTER custom routes
+        Route::resource('/', TahfizController::class);
+    });
+
+    Route::resource('asrama', AsramaController::class);
     
     Route::resource('schedules', ScheduleController::class);
     Route::get('schedules/class/{classId}', [ScheduleController::class, 'getSchedulesByClass'])->name('schedules.by-class');
