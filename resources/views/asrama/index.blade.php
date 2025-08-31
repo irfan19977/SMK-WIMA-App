@@ -31,6 +31,7 @@
                     <tr class="text-center">
                         <th>No.</th>
                         <th>Nama Asrama</th>
+                        <th>Pengurus</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -38,7 +39,8 @@
                     @forelse ($asramas as $asrama)
                     <tr class="text-center">
                         <td class="text-center">{{ ($asramas->currentPage() - 1) * $asramas->perPage() + $loop->iteration }}</td>
-                        <td>{{ $asrama->name }}</td>
+                        <td><a href="{{ route('asrama.show', $asrama->id) }}" class="text-secondery font-weight-bold">{{ $asrama->name }}</a></td>
+                        <td>{{ $asrama->teacher ? $asrama->teacher->name : '-' }}</td>
                         <td>
                             <button class="btn btn-primary btn-action mr-1 btn-edit"
                                 data-id="{{ $asrama->id }}" data-toggle="tooltip" title="Edit">
@@ -85,6 +87,17 @@
                         <input type="text" class="form-control" id="name" name="name" required>
                         <div class="invalid-feedback d-none" id="name-error"></div>
                     </div>
+                    {{-- buatkan untuk memilih guru --}}
+                    <div class="form-group">
+                        <label for="teacher_id">Pengurus Asrama <span class="text-danger">*</span></label>
+                        <select class="form-control select2" id="teacher_id" name="teacher_id" required>
+                            <option value="">-- Pilih Pengurus --</option>
+                            @foreach($teachers as $teacher)
+                                <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>
+                            @endforeach
+                        </select>
+                        <div class="invalid-feedback d-none" id="teacher_id-error"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
@@ -117,6 +130,7 @@
                     const form = document.getElementById(`delete-form-${id}`);
                     const url = form.action;
 
+                    // Opsi 1: Menggunakan FormData (Recommended)
                     const formData = new FormData();
                     formData.append('_method', 'DELETE');
                     formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
@@ -153,7 +167,6 @@
                         }
                     })
                     .catch(error => {
-                        console.error('Error:', error);
                         swal("Gagal", "Terjadi kesalahan saat menghapus data.", "error");
                     });
                 }
@@ -206,7 +219,6 @@
                     updateTable(data.asramas, data.currentPage, data.perPage);
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Terjadi kesalahan saat mencari data</td></tr>';
                 });
             }
@@ -214,17 +226,27 @@
             // Fungsi untuk update tabel
             function updateTable(asramas, currentPage = 1, perPage = 10) {
                 if (asramas.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada data asrama</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Tidak ada data asrama</td></tr>';
                     return;
                 }
 
                 let html = '';
                 asramas.forEach((asrama, index) => {
                     const number = (currentPage - 1) * perPage + index + 1;
+                    
+                    // Handle teacher name dengan fallback
+                    let teacherName = '-';
+                    if (asrama.teacher && asrama.teacher.name) {
+                        teacherName = asrama.teacher.name;
+                    } else if (asrama.teacher && asrama.teacher.user && asrama.teacher.user.name) {
+                        teacherName = asrama.teacher.user.name;
+                    }
+                    
                     html += `
                         <tr class="text-center">
                             <td>${number}</td>
-                            <td>${asrama.name}</td>
+                            <td><a href="/asrama/${asrama.id}" class="text-secondery font-weight-bold">${asrama.name}</a></td>
+                            <td>${teacherName}</td>
                             <td>
                                 <button class="btn btn-primary btn-action mr-1 btn-edit"
                                     data-id="${asrama.id}" data-toggle="tooltip" title="Edit">
@@ -314,6 +336,14 @@
             const modalTitle = document.getElementById('asramaModalLabel');
             const submitBtn = document.getElementById('submitBtn');
 
+            // Initialize Select2 after modal is shown
+            modal.on('shown.bs.modal', function() {
+                $('.select2').select2({
+                    dropdownParent: $('#asramaModal'),
+                    width: '100%'
+                });
+            });
+
             // Create button event
             document.getElementById('btn-create').addEventListener('click', function() {
                 resetForm();
@@ -363,7 +393,6 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     swal("Error", "Gagal memuat data", "error");
                 });
             }
@@ -397,14 +426,14 @@
                     if (data.success) {
                         modal.modal('hide');
                         swal({
-                            title: "Berhasil!",
-                            text: isEditMode ? "Data berhasil diperbarui." : "Data berhasil ditambahkan.",
-                            icon: "success",
-                            timer: 3000,
-                            buttons: false
+                        title: "Berhasil!",
+                        text: isEditMode ? "Data berhasil diperbarui." : "Data berhasil ditambahkan.",
+                        icon: "success",
+                        timer: 3000,
+                        buttons: false
                         }).then(() => {
-                            // Reload table data
-                            window.performSearch(document.getElementById('search-input').value);
+                        // Reload table data
+                        window.performSearch(document.getElementById('search-input').value);
                         });
                     } else {
                         // Handle validation errors
@@ -424,7 +453,6 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
                     swal("Error", "Terjadi kesalahan pada server", "error");
                 })
                 .finally(() => {

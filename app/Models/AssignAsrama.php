@@ -3,15 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Asrama extends Model
+class AssignAsrama extends Model
 {
-    use SoftDeletes;
-
     protected $keyType = 'string';
     public $incrementing = false;
-    protected $table = 'asrama';
+    protected $table = 'assign_asrama';
     protected $guarded = [];
 
     protected static function boot()
@@ -25,8 +22,24 @@ class Asrama extends Model
         });
     }
 
+    public function student()
+    {
+        return $this->belongsTo(Student::class, 'student_id');
+    }
+
+    /**
+     * Get the teacher that belongs to this assignment.
+     */
     public function teacher()
     {
         return $this->belongsTo(Teacher::class, 'teacher_id');
+    }
+
+    /**
+     * Get the asrama that belongs to this assignment.
+     */
+    public function asrama()
+    {
+        return $this->belongsTo(Asrama::class, 'asrama_id');
     }
 }

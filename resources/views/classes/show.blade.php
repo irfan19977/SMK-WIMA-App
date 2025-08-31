@@ -370,7 +370,7 @@
                                     <div class="table-responsive">
                                         <table class="table table-hover table-modern mb-0" id="attendanceTable">
                                             <thead class="thead-light">
-                                                <tr>
+                                                <tr style="text-align: center">
                                                     <th width="50">No</th>
                                                     <th width="200">Nama Siswa</th>
                                                     @for($day = 1; $day <= ($daysInMonth ?? 30); $day++)
@@ -400,10 +400,6 @@
                                                                 <div class="d-flex align-items-center">
                                                                     @if($student->face_photo && Storage::disk('public')->exists($student->face_photo))
                                                                         <img src="{{ asset('storage/' . $student->face_photo) }}" alt="{{ $student->name }}" class="avatar-modern mr-3" style="object-fit:cover;">
-                                                                    @else
-                                                                        <div class="avatar-modern mr-3">
-                                                                            {{ strtoupper(substr($student->name, 0, 1)) }}
-                                                                        </div>
                                                                     @endif
                                                                     <div>
                                                                         <div class="font-weight-bold">{{ $student->name }}</div>
@@ -416,6 +412,7 @@
                                                                     $attendanceForDay = $attendanceData->get($student->id, collect())->get($day);
                                                                     $checkDate = $currentMonthData->copy()->day($day);
                                                                     $status = '-'; // Default to belum absen
+                                                                    $badgeClass = 'badge-light'; // Default color
                                                                     
                                                                     if ($attendanceForDay) {
                                                                         $attendance = $attendanceForDay->first();
@@ -425,19 +422,23 @@
                                                                             case 'tepat':
                                                                             case 'terlambat':
                                                                                 $status = 'H';
+                                                                                $badgeClass = 'badge-success'; // Hijau
                                                                                 $presentCount++;
                                                                                 break;
                                                                             case 'sakit':
                                                                                 $status = 'S';
+                                                                                $badgeClass = 'badge-warning'; // Warning/Kuning
                                                                                 $sickCount++;
                                                                                 break;
                                                                             case 'izin':
                                                                                 $status = 'I';
+                                                                                $badgeClass = 'badge-info'; // Info/Biru
                                                                                 $permitCount++;
                                                                                 break;
                                                                             case 'alpha':
                                                                             default:
                                                                                 $status = 'A';
+                                                                                $badgeClass = 'badge-danger'; // Merah
                                                                                 $absentCount++;
                                                                                 break;
                                                                         }
@@ -446,20 +447,21 @@
                                                                         if ($checkDate->isFuture()) {
                                                                             // Jika tanggal belum tiba
                                                                             $status = '-';
+                                                                            $badgeClass = 'badge-light'; // Abu-abu
                                                                         } elseif ($checkDate->isWeekend()) {
                                                                             // Jika weekend/libur
                                                                             $status = 'L';
+                                                                            $badgeClass = 'badge-light'; // Abu-abu
                                                                         } else {
                                                                             // Jika hari sudah berlalu tapi tidak ada absen
                                                                             $status = 'A';
+                                                                            $badgeClass = 'badge-danger'; // Merah
                                                                             $absentCount++;
                                                                         }
                                                                     }
                                                                 @endphp
                                                                 <td class="text-center">
-                                                                    <span class="attendance-status attendance-{{ strtolower($status) }}">
-                                                                        {{ $status }}
-                                                                    </span>
+                                                                    <span class="badge {{ $badgeClass }} rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">{{ $status }}</span>
                                                                 </td>
                                                             @endfor
                                                             <td class="text-center">
@@ -937,333 +939,4 @@ function updateAttendanceTable(students, daysInMonth, monthName) {
             });
         }
     </script>
-@endpush
-
-@push('styles')
-    <style>
-        /* Modern Design Styles */
-        .header-section {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-shadow {
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            border: none;
-            border-radius: 8px;
-            padding: 0.5rem 1.5rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-shadow:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-        
-        .nav-pills .nav-link {
-            border-radius: 25px;
-            font-weight: 500;
-            /* padding: 0.75rem 1.5rem; */
-            margin-right: 0.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .nav-pills .nav-link.active {
-            background-color: #007bff;
-            border: none;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .bg-gradient-info {
-            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-        }
-
-        .bg-gradient-success {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        }
-
-        .btn-modern {
-            border-radius: 25px;
-            font-weight: 500;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-modern:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .avatar-modern {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-
-        .avatar-small {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .table-modern {
-            border: none;
-        }
-
-        .table-modern thead th {
-            border: none;
-            background-color: #f8f9fa;
-            font-weight: 600;
-            color: #495057;
-            padding: 1rem;
-        }
-
-        .table-modern tbody tr {
-            transition: all 0.3s ease;
-        }
-
-        .table-modern tbody tr:hover {
-            background-color: #f8f9fa;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .table-modern td {
-            padding: 1rem;
-            border: none;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .badge-outline-info {
-            color: #17a2b8;
-            border: 1px solid #17a2b8;
-            background: transparent;
-        }
-
-        .badge-outline-primary {
-            color: #007bff;
-            border: 1px solid #007bff;
-            background: transparent;
-        }
-
-        .badge-outline-pink {
-            color: #e83e8c;
-            border: 1px solid #e83e8c;
-            background: transparent;
-        }
-
-        .badge-outline-danger {
-            color: #dc3545;
-            border: 1px solid #dc3545;
-            background: transparent;
-        }
-
-        .badge-lg {
-            font-size: 0.9rem;
-            padding: 0.5rem 1rem;
-        }
-
-        .search-box {
-            width: 300px;
-        }
-
-        .search-box .form-control {
-            border-radius: 25px;
-            padding-left: 0;
-        }
-
-        .search-box .input-group-text {
-            border-radius: 25px 0 0 25px;
-        }
-
-        .empty-state {
-            padding: 3rem 2rem;
-        }
-
-        .empty-state-icon {
-            font-size: 4rem;
-            color: #dee2e6;
-        }
-
-        .empty-state-title {
-            color: #6c757d;
-            font-weight: 600;
-        }
-
-        .empty-state-text {
-            margin-bottom: 2rem;
-        }
-
-        .students-list {
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 0.5rem;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-        }
-
-        /* Attendance Styles */
-        .attendance-status {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 24px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: white;
-        }
-
-        .attendance-h {
-            background-color: #28a745;
-        }
-
-        .attendance-s {
-            background-color: #ffc107;
-            color: #212529;
-        }
-
-        .attendance-i {
-            background-color: #17a2b8;
-        }
-
-        .attendance-a {
-            background-color: #dc3545;
-        }
-
-        #attendanceTable {
-            font-size: 0.9rem;
-        }
-
-        #attendanceTable th {
-            text-align: center;
-            padding: 0.5rem;
-            white-space: nowrap;
-        }
-
-        #attendanceTable td {
-            padding: 0.5rem;
-            text-align: center;
-        }
-
-        .font-weight-medium {
-            font-weight: 500;
-        }
-        
-        .attendance-l {
-            background-color: #6f42c1; /* Purple untuk libur */
-            color: white;
-        }
-
-        .attendance-- {
-            background-color: #e9ecef; /* Light gray untuk belum absen */
-            color: #6c757d;
-            border: 1px solid #dee2e6;
-        }
-
-        /* Update existing attendance status styles untuk konsistensi */
-        .attendance-status {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 24px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: white;
-        }
-
-        .attendance-h {
-            background-color: #28a745; /* Green untuk hadir */
-        }
-
-        .attendance-s {
-            background-color: #ffc107; /* Yellow untuk sakit */
-            color: #212529;
-        }
-
-        .attendance-i {
-            background-color: #17a2b8; /* Cyan untuk izin */
-        }
-
-        .attendance-a {
-            background-color: #dc3545; /* Red untuk alpha */
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header-section {
-                padding: 1.5rem;
-            }
-
-            .search-box {
-                width: 100%;
-                margin-top: 1rem;
-            }
-
-            .card-stats .numbers {
-                text-align: left;
-                margin-top: 1rem;
-            }
-
-            .btn-modern {
-                padding: 0.5rem 1rem;
-                font-size: 0.9rem;
-            }
-
-            #attendanceTable {
-                font-size: 0.8rem;
-            }
-
-            .attendance-status {
-                width: 20px;
-                height: 20px;
-                line-height: 20px;
-                font-size: 0.7rem;
-            }
-            .attendance-status {
-                width: 20px;
-                height: 20px;
-                line-height: 20px;
-                font-size: 0.7rem;
-            }
-            
-            #attendanceTable {
-                font-size: 0.8rem;
-            }
-            
-            #attendanceTable th,
-            #attendanceTable td {
-                padding: 0.3rem;
-            }
-        }
-
-    </style>
 @endpush

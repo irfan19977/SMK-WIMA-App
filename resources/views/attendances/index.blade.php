@@ -212,7 +212,7 @@
         findBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mencari...';
         findBtn.disabled = true;
 
-        fetch(`/students/find-by-nisn/${nisn}`, {
+        fetch(`/attendances/find-by-nisn/${nisn}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',

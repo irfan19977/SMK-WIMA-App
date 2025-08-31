@@ -35,6 +35,7 @@ class PermissionsSeeder extends Seeder
             'face_recognition.index', 'face_recognition.create', 'face_recognition.edit',
             'student-grades.index', 'student-grades.create', 'student-grades.edit',
             'tahfiz.index', 'tahfiz.edit',
+            'asrama.index', 'asrama.create', 'asrama.edit',
         ];
 
         // Buat semua permissions
@@ -65,6 +66,7 @@ class PermissionsSeeder extends Seeder
                 'face_recognition.index', 'face_recognition.create', 'face_recognition.edit',
                 'student-grades.index', 'student-grades.create', 'student-grades.edit',
                 'tahfiz.index', 'tahfiz.edit',
+                'asrama.index', 'asrama.create', 'asrama.edit',
             ],
             
             'teacher' => [

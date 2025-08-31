@@ -2,9 +2,9 @@
 
 @section('content')
 <div class="row">
-    <div class="col-xl-3 col-lg-6">
-        <div class="card">
-            <div class="card-body card-type-3">
+    <div class="col-xl-3 col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body card-type-3 d-flex flex-column">
                 <div class="row">
                     <div class="col">
                         <h6 class="text-muted mb-0">Total Siswa Aktif</h6>
@@ -16,16 +16,16 @@
                         </div>
                     </div>
                 </div>
-                <p class="mt-3 mb-0 text-muted text-sm">
+                <p class="mt-auto mb-0 text-muted text-sm">
                     <span class="text-success mr-2"><i class="fa fa-arrow-up"></i></span>
                     <span class="text-nowrap">Aktif saat ini</span>
                 </p>
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-lg-6">
-        <div class="card">
-            <div class="card-body card-type-3">
+    <div class="col-xl-3 col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body card-type-3 d-flex flex-column">
                 <div class="row">
                     <div class="col">
                         <h6 class="text-muted mb-0">Total Guru Aktif</h6>
@@ -37,16 +37,16 @@
                         </div>
                     </div>
                 </div>
-                <p class="mt-3 mb-0 text-muted text-sm">
+                <p class="mt-auto mb-0 text-muted text-sm">
                     <span class="text-success mr-2"><i class="fa fa-arrow-up"></i></span>
                     <span class="text-nowrap">Aktif saat ini</span>
                 </p>
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-lg-6">
-        <div class="card">
-            <div class="card-body card-type-3">
+    <div class="col-xl-3 col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body card-type-3 d-flex flex-column">
                 <div class="row">
                     <div class="col">
                         <h6 class="text-muted mb-0">Total Kelas</h6>
@@ -58,16 +58,16 @@
                         </div>
                     </div>
                 </div>
-                <p class="mt-3 mb-0 text-muted text-sm">
+                <p class="mt-auto mb-0 text-muted text-sm">
                     <span class="text-success mr-2"><i class="fa fa-arrow-up"></i></span>
                     <span class="text-nowrap">Total kelas terdaftar</span>
                 </p>
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-lg-6">
-        <div class="card">
-            <div class="card-body card-type-3">
+    <div class="col-xl-3 col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body card-type-3 d-flex flex-column">
                 <div class="row">
                     <div class="col">
                         <h6 class="text-muted mb-0">Total Mapel</h6>
@@ -79,7 +79,7 @@
                         </div>
                     </div>
                 </div>
-                <p class="mt-3 mb-0 text-muted text-sm">
+                <p class="mt-auto mb-0 text-muted text-sm">
                     <span class="text-success mr-2"><i class="fa fa-arrow-up"></i></span>
                     <span class="text-nowrap">Total mapel terdaftar</span>
                 </p>

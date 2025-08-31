@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('assign_asrama', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->uuid('asrama_id');
             $table->uuid('student_id');
-            $table->uuid('teacher_id');
             $table->string('name');
 
             $table->uuid('created_by')->nullable();
@@ -23,8 +23,11 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
+            $table->foreign('asrama_id')->references('id')->on('asrama')->onDelete('cascade');
             $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
-            $table->foreign('teacher_id')->references('id')->on('teacher')->onDelete('cascade');
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('deleted_by')->references('id')->on('users')->onDelete('set null');
         });
     }
 

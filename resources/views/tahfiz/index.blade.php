@@ -54,7 +54,7 @@
                         <button type="button" id="resetFilters" class="btn btn-secondary">
                             <i class="fas fa-sync-alt"></i> Reset Filter
                         </button>
-                        @can('tahfiz.create')
+                        @can('tahfiz.edit')
                             <button type="button" id="editModeBtn" class="btn btn-warning" style="display: none;">
                                 <i class="fas fa-edit"></i> Mode Edit
                             </button>

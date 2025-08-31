@@ -45,96 +45,86 @@ Route::get('/pendaftaran', function () {
     Route::post('/clear-rfid-cache', [RFIDController::class, 'clearRFIDCache'])->name('clear.rfid');
 
 Route::group(['middleware' => 'auth'], function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard/attendance-data', [DashboardController::class, 'getAttendanceData'])->name('dashboard.attendance-data');
-    
-    Route::resource('students', StudentController::class);
-    Route::post('/students/{userId}/toggle-active', [StudentController::class, 'toggleActive'])->name('students.toggle-active');
-    Route::post('students/recognize-face', [StudentController::class, 'recognizeFace'])->name('students.recognize-face');
 
-    Route::resource('teachers', TeacherController::class);
-    Route::post('/teachers/{teacherId}/toggle-active', [TeacherController::class, 'toggleActive'])->name('teachers.toggle-active');
-    
-    Route::resource('parents', ParentsController::class);
-    Route::post('/parents/{parentId}/toggle-active', [ParentsController::class, 'toggleActive'])->name('parents.toggle-active');
+    // Dashboard Routes
+    Route::prefix('dashboard')->name('dashboard')->group(function() {
+        Route::get('/', [DashboardController::class, 'index']);
+        Route::get('/attendance-data', [DashboardController::class, 'getAttendanceData'])->name('.attendance-data');
+    });
 
+    // Student Management Routes
+    Route::prefix('students')->name('students.')->group(function() {
+        Route::post('/{userId}/toggle-active', [StudentController::class, 'toggleActive'])->name('toggle-active');
+        Route::post('/recognize-face', [StudentController::class, 'recognizeFace'])->name('recognize-face');
+        Route::resource('/', StudentController::class);
+    });
+
+    // Teacher Management Routes
+    Route::prefix('teachers')->name('teachers.')->group(function() {
+        Route::resource('/', TeacherController::class);
+        Route::post('/{teacherId}/toggle-active', [TeacherController::class, 'toggleActive'])->name('toggle-active');
+    });
+    
+    // Parent Management Routes
+    Route::prefix('parents')->name('parents.')->group(function() {
+        Route::resource('/', ParentsController::class);
+        Route::post('/{parentId}/toggle-active', [ParentsController::class, 'toggleActive'])->name('toggle-active');
+    });
+
+    // Class Management Routes
     Route::prefix('classes')->name('classes.')->group(function () {
-        // Resource routes
-        Route::resource('/', ClassesController::class);
-        
-        // Custom routes
-        Route::post('{class}/assign-student', [ClassesController::class, 'assignStudent'])
-            ->name('assign-student');
-        
-        Route::post('{class}/bulk-assign', [ClassesController::class, 'bulkAssign'])
-            ->name('bulk-assign');
-        
-        Route::delete('{class}/remove-student', [ClassesController::class, 'removeStudent'])
-            ->name('remove-student');
-        
-        Route::get('{class}/attendance-data', [ClassesController::class, 'getAttendanceData'])
-            ->name('attendance-data');
+        Route::resource('/', ClassesController::class)->parameters(['' => 'class']);
+        Route::post('{class}/assign-student', [ClassesController::class, 'assignStudent'])->name('assign-student');
+        Route::post('{class}/bulk-assign', [ClassesController::class, 'bulkAssign'])->name('bulk-assign');
+        Route::delete('{class}/remove-student', [ClassesController::class, 'removeStudent'])->name('remove-student');
+        Route::get('{class}/attendance-data', [ClassesController::class, 'getAttendanceData'])->name('attendance-data');
     });
 
     Route::resource('subjects', SubjectController::class);
 
     // Student Grades Routes
     Route::prefix('student-grades')->name('student-grades.')->group(function () {
-        // Custom routes first
-        Route::get('get-students', [StudentGradesController::class, 'getStudents'])
-            ->name('get-students');
-        
-        Route::get('get-grades', [StudentGradesController::class, 'getGrades'])
-            ->name('get-grades');
-        
-        Route::post('bulk-update', [StudentGradesController::class, 'bulkUpdate'])
-            ->name('bulk-update');
-        
-        Route::get('statistics', [StudentGradesController::class, 'getStatistics'])
-            ->name('statistics');
-            
-        Route::get('get-subjects-by-class', [StudentGradesController::class, 'getSubjectsByClass'])
-            ->name('get-subjects-by-class');
-
-        // Resource routes AFTER custom routes
+        Route::get('get-students', [StudentGradesController::class, 'getStudents'])->name('get-students');        
+        Route::get('get-grades', [StudentGradesController::class, 'getGrades'])->name('get-grades');        
+        Route::post('bulk-update', [StudentGradesController::class, 'bulkUpdate'])->name('bulk-update');        
+        Route::get('statistics', [StudentGradesController::class, 'getStatistics'])->name('statistics');            
+        Route::get('get-subjects-by-class', [StudentGradesController::class, 'getSubjectsByClass'])->name('get-subjects-by-class');
         Route::resource('/', StudentGradesController::class);
     });
 
+    // Tahfiz Management Routes
     Route::prefix('tahfiz')->name('tahfiz.')->group(function () {
-        // Custom routes first
-        Route::get('get-students', [TahfizController::class, 'getStudents'])
-            ->name('getStudents');
-        
-        Route::get('get-tahfiz-records', [TahfizController::class, 'getTahfizRecords'])
-            ->name('getTahfizRecords');
-        
-        Route::post('bulk-update', [TahfizController::class, 'bulkUpdate'])
-            ->name('bulkUpdate');
-        
-        Route::get('statistics', [TahfizController::class, 'getStatistics'])
-            ->name('getStatistics');
-
-        // Resource routes AFTER custom routes
+        Route::get('get-students', [TahfizController::class, 'getStudents'])->name('getStudents');
+        Route::get('get-tahfiz-records', [TahfizController::class, 'getTahfizRecords'])->name('getTahfizRecords');
+        Route::post('bulk-update', [TahfizController::class, 'bulkUpdate'])->name('bulkUpdate');
+        Route::get('statistics', [TahfizController::class, 'getStatistics'])->name('getStatistics');
         Route::resource('/', TahfizController::class);
     });
 
     Route::resource('asrama', AsramaController::class);
+    Route::post('asrama/{asrama}/bulk-assign', [AsramaController::class, 'bulkAssign'])->name('asrama.bulk-assign');
+Route::delete('asrama/{asrama}/remove-student', [AsramaController::class, 'removeStudent'])->name('asrama.remove-student');
     
-    Route::resource('schedules', ScheduleController::class);
-    Route::get('schedules/class/{classId}', [ScheduleController::class, 'getSchedulesByClass'])->name('schedules.by-class');
+    // Schedule Management Routes
+    Route::prefix('schedules')->name('schedules.')->group(function() {
+        Route::resource('/', ScheduleController::class);
+        Route::get('/class/{classId}', [ScheduleController::class, 'getSchedulesByClass'])->name('by-class');
+    });
 
     Route::resource('setting-schedule', SettingScheduleController::class);
 
-    Route::resource('attendances', AttendanceController::class);
-    Route::get('/students/find-by-nisn/{nisn}', [AttendanceController::class, 'findByNisn']);
+    // Attendance Management Routes
+    Route::prefix('attendances')-> name('attendances.')->group(function() {
+        Route::resource('/', AttendanceController::class);
+        Route::get('/find-by-nisn/{nisn}', [AttendanceController::class, 'findByNisn']);
+    });
     
-    Route::resource('lesson-attendances', LessonAttendanceController::class);
-    // Additional routes for lesson attendance
-    Route::get('lesson-attendances/find-by-nisn/{nisn}', [LessonAttendanceController::class, 'findByNisn'])
-        ->name('lesson-attendances.find-by-nisn');
-    
-    Route::get('lesson-attendances/get-subjects-by-class/{classId}', [LessonAttendanceController::class, 'getSubjectsByClass'])
-        ->name('lesson-attendances.get-subjects-by-class');
+    // Lesson Attendance Routes
+    Route::prefix('lesson-attendances')->name('lesson-attendances.')->group(function() {
+        Route::resource('/', LessonAttendanceController::class);
+        Route::get('/find-by-nisn/{nisn}', [LessonAttendanceController::class, 'findByNisn'])->name('find-by-nisn');
+        Route::get('/get-subjects-by-class/{classId}', [LessonAttendanceController::class, 'getSubjectsByClass'])->name('get-subjects-by-class');
+    });
 
     Route::resource('permissions', PermissionController::class);
 
