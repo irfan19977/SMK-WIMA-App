@@ -60,7 +60,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="3" class="text-center">Tidak ada data asrama</td>
+                        <td colspan="4" class="text-center">Tidak ada data asrama</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -84,7 +84,7 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="name">Nama Asrama <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="Masukkan nama asrama" required>
                         <div class="invalid-feedback d-none" id="name-error"></div>
                     </div>
                     {{-- buatkan untuk memilih guru --}}

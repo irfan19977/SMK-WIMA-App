@@ -124,6 +124,11 @@
                                 <i class="fas fa-users mr-2"></i>Daftar Siswa
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nilai-tab" data-toggle="pill" href="#nilai" role="tab">
+                                <i class="fas fa-users mr-2"></i>Nilai Siswa
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 <div class="card-body">
@@ -195,6 +200,106 @@
 
                         <!-- Students Tab -->
                         <div class="tab-pane fade" id="students" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">Daftar Siswa ({{ $students->count() }})</h5>
+                                <div class="search-box">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="searchStudent"
+                                        placeholder="Cari nama, email, atau NISN...">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text bg-white">
+                                                <i class="fas fa-search text-muted"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if($students->count() > 0)
+                            <div class="table-responsive">
+                                <table class="table table-hover table-modern" id="studentsTable">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th width="50">No</th>
+                                            <th>Nama Siswa</th>
+                                            <th>Email</th>
+                                            <th>NISN</th>
+                                            <th>Gender</th>
+                                            @can('asrama.edit')
+                                                <th width="100">Aksi</th>
+                                            @endcan
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($assignedStudents as $index => $assignment)
+                                        <tr>
+                                            <td class="text-center">{{ $index + 1 }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if($assignment->student->face_photo && Storage::disk('public')->exists($assignment->student->face_photo))
+                                                        <img src="{{ asset('storage/' . $assignment->student->face_photo) }}" alt="{{ $assignment->student->name }}" class="avatar-modern mr-3" style="object-fit:cover;">
+                                                    @else
+                                                        <div class="avatar-modern mr-3">
+                                                            {{ strtoupper(substr($assignment->student->name, 0, 1)) }}
+                                                        </div>
+                                                    @endif
+                                                    <div>
+                                                        <div class="font-weight-bold">{{ $assignment->student->name }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="text-muted">{{ $assignment->student->user->email ?? '-' }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-outline-info">{{ $assignment->student->nisn }}</span>
+                                            </td>
+                                            <td>
+                                                @if($assignment->student->gender)
+                                                <span
+                                                    class="badge {{ $assignment->student->gender == 'laki-laki' ? 'badge-outline-primary' : 'badge-outline-pink' }}">
+                                                    <i
+                                                        class="fas {{ $assignment->student->gender == 'laki-laki' ? 'fa-mars' : 'fa-venus' }} mr-1"></i>
+                                                    {{ ucfirst($assignment->student->gender) }}
+                                                </span>
+                                                @else
+                                                <span class="text-muted">-</span>
+                                                @endif
+                                            </td>
+                                            @can('asrama.edit')
+                                                <td>
+                                                    <button type="button" class="btn btn-danger"
+                                                        onclick="removeStudent('{{ $assignment->student->id }}', '{{ $assignment->student->name }}')"
+                                                        title="Hapus dari asrama">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            @endcan
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            @else
+                            <div class="empty-state text-center py-5">
+                                <div class="empty-state-icon mb-4">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <h5 class="empty-state-title">Belum ada siswa di asrama ini</h5>
+                                <p class="empty-state-text text-muted">Mulai tambahkan siswa dengan menekan tombol
+                                    "Tambah Siswa"</p>
+                                @if($availableStudents->count() > 0)
+                                <button type="button" class="btn btn-primary btn-modern" data-toggle="modal"
+                                    data-target="#bulkAssignModal">
+                                    <i class="fas fa-user-plus mr-2"></i>Tambah Siswa Pertama
+                                </button>
+                                @endif
+                            </div>
+                            @endif
+                        </div>
+                        
+                        <!-- Nilai Tab -->
+                        <div class="tab-pane fade" id="grades" role="tabpanel">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="mb-0">Daftar Siswa ({{ $students->count() }})</h5>
                                 <div class="search-box">

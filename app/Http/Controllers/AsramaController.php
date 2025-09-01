@@ -19,7 +19,7 @@ class AsramaController extends Controller
      */
     public function index(Request $request)
     {
-        // $this->authorize('asrama.index');
+        $this->authorize('asrama.index');
         $teachers = Teacher::with('user')->get();
         
         // Tambahkan eager loading untuk teacher
@@ -95,6 +95,7 @@ class AsramaController extends Controller
      */
     public function show(string $id)
     {
+        $this->authorize('asrama.show');
         $asrama = Asrama::findOrFail($id);
         
         // Get assigned students for this asrama
