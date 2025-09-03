@@ -32,13 +32,16 @@ return new class extends Migration
             $table->integer('bahasa_arab')->nullable();
             $table->integer('bahasa_inggris')->nullable();
             $table->text('catatan');
+            $table->string('academic_year'); // 2023/2024
+            $table->tinyInteger('month'); // 1-12 (Januari-Desember)
+            $table->string('month_name')->nullable(); // Januari, Februari, dst
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
             $table->foreign('student_id')->references('id')->on('student')->onDelete('cascade');
-            $table->index('student_id');
+            $table->index(['student_id', 'academic_year', 'month']);
         });
     }
 

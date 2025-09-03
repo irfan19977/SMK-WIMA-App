@@ -6,6 +6,91 @@
 <div class="container-fluid">
     <div class="row">
         <!-- Card Kiri - Profil Siswa -->
+        <div class="col-md-5">
+            <!-- Card Scan Wajah -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Scan Wajah</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="camera-container position-relative d-inline-block">
+                            <video id="video" width="320" height="240" autoplay muted class="border rounded bg-light"></video>
+                            <canvas id="overlay" width="320" height="240"
+                                    style="position:absolute; top:0; left:0; pointer-events:none; border-radius:.375rem;"></canvas>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-lg" id="startCamera">
+                            <i class="fas fa-camera"></i> Mulai Scan
+                        </button>
+                        <button class="btn btn-secondary btn-lg" id="stopCamera" disabled>
+                            <i class="fas fa-stop"></i> Stop Scan
+                        </button>
+                        {{-- <button class="btn btn-success btn-lg" id="scanFace" disabled>
+                            <i class="fas fa-search"></i> Scan Wajah
+                        </button>
+                        <button class="btn btn-warning btn-lg" id="clearResult">
+                            <i class="fas fa-eraser"></i> Clear
+                        </button> --}}
+                    </div>
+
+                    <!-- Simple Result Messages -->
+                    <div id="scanMessage" class="mt-3" style="display:none;">
+                        <div id="successMessage" class="alert alert-success" style="display:none;">
+                            <i class="fas fa-check-circle"></i> <span id="successText"></span>
+                        </div>
+                        <div id="errorMessage" class="alert alert-warning" style="display:none;">
+                            <i class="fas fa-times-circle"></i> <span id="errorText"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card Status Deteksi -->
+            {{-- <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Status Deteksi Wajah</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-bold">Status:</label>
+                            <div id="recognitionStatus" class="alert alert-secondary">
+                                <div class="spinner-border text-info" role="status" style="display:none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <i class="fas fa-clock"></i> Menunggu scan wajah...
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Wajah Terdeteksi:</label>
+                            <p class="form-control-plaintext border rounded p-2 bg-light">
+                                <span class="badge bg-secondary" id="faceCount">0</span>
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Status Siap:</label>
+                            <p class="form-control-plaintext border rounded p-2 bg-light">
+                                <span id="recognitionReady" class="badge bg-danger">Belum Siap</span>
+                            </p>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-info" id="toggleAutoScan" style="display:none;">
+                                    <i class="fas fa-sync"></i> Auto-Scan: ON
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> --}}
+        </div>
+        
+        <!-- Card Kanan -->
         <div class="col-md-7">
             <div class="card h-100">
                 <div class="card-header">
@@ -65,91 +150,6 @@
                                 <p class="form-control-plaintext border rounded p-2 bg-light" id="userAddress">
                                     -
                                 </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Card Kanan -->
-        <div class="col-md-5">
-            <!-- Card Scan Wajah -->
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Scan Wajah</h5>
-                </div>
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <div class="camera-container position-relative d-inline-block">
-                            <video id="video" width="320" height="240" autoplay muted class="border rounded bg-light"></video>
-                            <canvas id="overlay" width="320" height="240"
-                                    style="position:absolute; top:0; left:0; pointer-events:none; border-radius:.375rem;"></canvas>
-                        </div>
-                    </div>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-primary btn-lg" id="startCamera">
-                            <i class="fas fa-camera"></i> Mulai Scan
-                        </button>
-                        <button class="btn btn-secondary btn-lg" id="stopCamera" disabled>
-                            <i class="fas fa-stop"></i> Stop Scan
-                        </button>
-                        {{-- <button class="btn btn-success btn-lg" id="scanFace" disabled>
-                            <i class="fas fa-search"></i> Scan Wajah
-                        </button>
-                        <button class="btn btn-warning btn-lg" id="clearResult">
-                            <i class="fas fa-eraser"></i> Clear
-                        </button> --}}
-                    </div>
-
-                    <!-- Simple Result Messages -->
-                    <div id="scanMessage" class="mt-3" style="display:none;">
-                        <div id="successMessage" class="alert alert-success" style="display:none;">
-                            <i class="fas fa-check-circle"></i> <span id="successText"></span>
-                        </div>
-                        <div id="errorMessage" class="alert alert-warning" style="display:none;">
-                            <i class="fas fa-times-circle"></i> <span id="errorText"></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Card Status Deteksi -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Status Deteksi Wajah</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-12 mb-3">
-                            <label class="form-label fw-bold">Status:</label>
-                            <div id="recognitionStatus" class="alert alert-secondary">
-                                <div class="spinner-border text-info" role="status" style="display:none;">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <i class="fas fa-clock"></i> Menunggu scan wajah...
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Wajah Terdeteksi:</label>
-                            <p class="form-control-plaintext border rounded p-2 bg-light">
-                                <span class="badge bg-secondary" id="faceCount">0</span>
-                            </p>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Status Siap:</label>
-                            <p class="form-control-plaintext border rounded p-2 bg-light">
-                                <span id="recognitionReady" class="badge bg-danger">Belum Siap</span>
-                            </p>
-                        </div>
-                        
-                        <div class="col-12">
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-info" id="toggleAutoScan" style="display:none;">
-                                    <i class="fas fa-sync"></i> Auto-Scan: ON
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -289,8 +289,6 @@ $(function() {
     // === EVENT LISTENERS ===
     $('#startCamera').on('click', startCamera);
     $('#stopCamera').on('click', stopCamera);
-    $('#scanFace').on('click', scanFace);
-    $('#clearResult').on('click', clearResult);
 
     // Auto-scan toggle button
     $('#toggleAutoScan').on('click', function() {
@@ -874,33 +872,36 @@ $(function() {
 
     // === PERBAIKAN FUNGSI showUserProfile ===
     function showUserProfile(result){
-        // PERBAIKAN: Cek apakah kamera masih aktif
         if(!currentStream || !isDetecting) {
             console.log('Camera stopped, ignoring profile update');
-            return; // Jangan update profil jika kamera sudah stop
+            return;
         }
         
-        // Clear timer saat ada profil baru yang akan ditampilkan
         if(profileClearTimer) {
             clearTimeout(profileClearTimer);
             profileClearTimer = null;
         }
         
         const student = result.student;
+        const currentPhoto = $('#userPhoto').attr('src');
+        const currentName = $('#userName').text();
         
-        $('#userName').text(student.name || 'Tidak dikenali');
-        $('#userNisn').text(student.nisn || '-');
-        $('#userGender').text(student.gender || '-');
-        $('#userBirthDate').text(student.birth_date || '-');
-        $('#userAddress').text(student.address || '-');
-        $('#userClass').text(student.class || '-');
-        
-        // Handle foto
-        if(student.face_photo_url){
-            $('#userPhoto').attr('src', student.face_photo_url);
-        } else { 
-            $('#userPhoto').attr('src', 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjI0IiBmaWxsPSIjOTk5IiBkeT0iLjNlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gUGhvdG88L3RleHQ+PC9zdmc+');
+        // Only update if it's a different student or first detection
+        if(currentName === 'Belum ada siswa terdeteksi' || currentName !== student.name) {
+            // Update photo only if different
+            if(student.face_photo_url && currentPhoto !== student.face_photo_url) {
+                $('#userPhoto').attr('src', student.face_photo_url);
+            }
+            
+            // Update all fields for new student
+            $('#userName').text(student.name || 'Tidak dikenali');
+            $('#userNisn').text(student.nisn || '-');
+            $('#userGender').text(student.gender || '-');
+            $('#userBirthDate').text(student.birth_date || '-');
+            $('#userAddress').text(student.address || '-');
+            $('#userClass').text(student.class || '-');
         }
+        // If same student, don't update any fields
     }
 
     function resetUserProfile(){
@@ -917,7 +918,7 @@ $(function() {
         $('#userBirthDate').text('-');
         $('#userAddress').text('-');
         $('#userClass').text('-');
-        $('#userPhoto').attr('src', 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjI0IiBmaWxsPSIjOTk5IiBkeT0iLjNlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gUGhvdG88L3RleHQ+PC9zdmc+');
+        $('#userPhoto').attr('src', 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjI0IiBmaWxsPSIjOTk5IiBkeT0iLjNlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gUGhvdG88L3RleHQ+PC9zdmc+');
         
         console.log('Profile reset completed'); // Debug log
     }
@@ -948,14 +949,13 @@ $(function() {
         }, 5000);
     }
 
-    function clearResult(){
-        resetUserProfile();
-        $('#scanMessage').hide();
-        updateStatus('Hasil dibersihkan. Siap untuk scan berikutnya.');
-    }
-
     // === ATTENDANCE HISTORY ===
     function addToAttendanceHistory(student, time, confidence, isMatch, attendanceStatus){
+        // Only add to history if it's a successful attendance or recognized student
+        if (!isMatch || !student || attendanceStatus.toLowerCase().includes('sudah absen')) {
+            return; // Don't add to history
+        }
+        
         const $tbody = $('#attendanceHistory');
         
         // Remove "no history" message if exists
@@ -964,73 +964,51 @@ $(function() {
         }
         
         const rowNumber = $tbody.children().length + 1;
-        const studentName = student ? (student.name || 'Tidak dikenali') : 'Tidak dikenali';
-        const studentNisn = student ? (student.nisn || '-') : '-';
         
-        // SIMPLIFIED: Hanya menggunakan field 'class'
-        const studentClass = student ? (student.class || 'Kelas tidak tersedia') : 'Kelas tidak tersedia';
-        
-        const studentPhoto = student && student.face_photo_url ? 
-            student.face_photo_url : 
-            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiNlZWUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSIxMCIgZmlsbD0iIzk5OSIgZHk9Ii4zZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPk4vQTwvdGV4dD48L3N2Zz4=';
-        
-        let statusBadge;
-        if (!isMatch) {
-            statusBadge = '<span class="badge bg-warning">Tidak dikenali</span>';
-        } else if (attendanceStatus && (attendanceStatus.includes('Berhasil') || attendanceStatus.includes('Masuk') || attendanceStatus.includes('Pulang'))) {
-            statusBadge = '<span class="badge bg-success">Absen Berhasil</span>';
-        } else if (attendanceStatus && (attendanceStatus.toLowerCase().includes('sudah absen') || 
-                                        attendanceStatus.toLowerCase().includes('already') ||
-                                        attendanceStatus.includes('Sudah Absen'))) {
-            statusBadge = '<span class="badge bg-info">Sudah Absen</span>';
-        } else if (attendanceStatus === 'Error Sistem' || attendanceStatus === 'Error Absensi') {
-            statusBadge = '<span class="badge bg-danger">Error Sistem</span>';
-        } else {
-            statusBadge = '<span class="badge bg-secondary">Dikenali</span>';
-        }
-        
-        const confidenceText = isMatch ? `${confidence}%` : 'N/A';
-        const confidenceClass = confidence >= 90 ? 'text-success' : 
-                            confidence >= 80 ? 'text-info' : 
-                            confidence >= 70 ? 'text-warning' : 'text-danger';
-        
-        const newRow = `
-            <tr>
-                <td>${rowNumber}</td>
-                <td>
-                    <img src="${studentPhoto}" 
-                        class="rounded-circle" 
-                        style="width: 40px; height: 40px; object-fit: cover;" 
-                        alt="Foto"
-                        onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiNlZWUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSIxMCIgZmlsbD0iIzk5OSIgZHk9Ii4zZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPk4vQTwvdGV4dD48L3N2Zz4='">
-                </td>
-                <td>${studentName}</td>
-                <td>${studentNisn}</td>
-                <td><span class="badge bg-primary">${studentClass}</span></td>
-                <td>${time}</td>
-                <td>${statusBadge}</td>
-                <td>
-                    <span class="${confidenceClass} fw-bold">${confidenceText}</span>
-                    ${isMatch && confidence > 0 ? `
+        // Create row only for successful attendance
+        if (attendanceStatus.includes('Berhasil') || 
+            attendanceStatus.includes('Masuk') || 
+            attendanceStatus.includes('Pulang')) {
+            
+            const newRow = `
+                <tr>
+                    <td>${rowNumber}</td>
+                    <td>
+                        <img src="${student.face_photo_url || 'default-avatar.png'}" 
+                            class="rounded-circle" 
+                            style="width: 40px; height: 40px; object-fit: cover;" 
+                            alt="Foto">
+                    </td>
+                    <td>${student.name}</td>
+                    <td>${student.nisn || '-'}</td>
+                    <td><span class="badge bg-primary">${student.class || '-'}</span></td>
+                    <td>${time}</td>
+                    <td><span class="badge bg-success">Absen Berhasil</span></td>
+                    <td>
+                        <span class="${confidence >= 90 ? 'text-success' : 
+                                    confidence >= 80 ? 'text-info' : 
+                                    'text-warning'} fw-bold">${confidence}%</span>
                         <div class="progress mt-1" style="height: 4px;">
-                            <div class="progress-bar ${confidence >= 90 ? 'bg-success' : confidence >= 80 ? 'bg-info' : confidence >= 70 ? 'bg-warning' : 'bg-danger'}" 
+                            <div class="progress-bar bg-${confidence >= 90 ? 'success' : 
+                                                        confidence >= 80 ? 'info' : 
+                                                        'warning'}" 
                                 style="width: ${confidence}%"></div>
                         </div>
-                    ` : ''}
-                </td>
-            </tr>
-        `;
-        
-        $tbody.prepend(newRow);
-        
-        // Keep only latest 20 records
-        const rows = $tbody.children();
-        if(rows.length > 20) rows.last().remove();
-        
-        // Update row numbers
-        $tbody.children().each(function(index){
-            $(this).find('td:first').text(index + 1);
-        });
+                    </td>
+                </tr>
+            `;
+            
+            $tbody.prepend(newRow);
+            
+            // Keep only latest 20 records
+            const rows = $tbody.children();
+            if(rows.length > 20) rows.last().remove();
+            
+            // Update row numbers
+            $tbody.children().each(function(index){
+                $(this).find('td:first').text(index + 1);
+            });
+        }
     }
 
     // === UI HELPER FUNCTIONS ===

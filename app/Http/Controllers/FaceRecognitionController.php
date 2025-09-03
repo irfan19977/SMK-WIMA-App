@@ -492,17 +492,38 @@ class FaceRecognitionController extends Controller
                 'confidence' => ['required', 'numeric', 'between:0,1'],
             ]);
 
-            // PERBAIKAN: Validasi minimum confidence untuk auto attendance
+            // Early return if confidence is too low
             $confidencePercentage = $request->confidence * 100;
             if ($confidencePercentage < self::MIN_CONFIDENCE_PERCENTAGE) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Auto-attendance rejected: Confidence too low ({$confidencePercentage}%). Minimum required: " . self::MIN_CONFIDENCE_PERCENTAGE . "%"
+                    'message' => "Auto-attendance rejected: Confidence too low"
                 ], 422);
             }
 
             $student = Student::findOrFail($request->student_id);
+            
+            // Check if already attended today
+            $existingAttendance = DB::table('attendance')
+                ->where('student_id', $student->id)
+                ->whereDate('created_at', Carbon::today())
+                ->first();
 
+            if ($existingAttendance) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sudah absen hari ini',
+                    'student' => [
+                        'id' => $student->id,
+                        'name' => $student->name,
+                        'nisn' => $student->nisn,
+                        'class' => $student->studentClass?->name ?? 'Tidak ada kelas',
+                        'face_photo_url' => $student->face_photo ? Storage::disk('public')->url($student->face_photo) : null
+                    ]
+                ]);
+            }
+
+            // Process new attendance
             // Get student's class from student_class pivot table
             $studentClass = DB::table('student_class')
                 ->join('classes', 'student_class.class_id', '=', 'classes.id')

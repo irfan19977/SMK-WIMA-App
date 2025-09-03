@@ -102,8 +102,7 @@ Route::group(['middleware' => 'auth'], function () {
     });
 
     Route::resource('asrama', AsramaController::class);
-    Route::post('asrama/{asrama}/bulk-assign', [AsramaController::class, 'bulkAssign'])->name('asrama.bulk-assign');
-Route::delete('asrama/{asrama}/remove-student', [AsramaController::class, 'removeStudent'])->name('asrama.remove-student');
+Route::post('asrama/{asrama}/bulk-assign', [AsramaController::class, 'bulkAssign'])->name('asrama.bulk-assign'); Route::delete('asrama/{asrama}/remove-student', [AsramaController::class, 'removeStudent'])->name('asrama.remove-student'); Route::get('asrama/{asrama}/grades', [AsramaController::class, 'getGrades'])->name('asrama.get-grades');     Route::post('asrama/grades', [AsramaController::class, 'storeGrade'])->name('asrama.store-grade');     Route::put('asrama/grades/{grade}', [AsramaController::class, 'updateGrade'])->name('asrama.update-grade');     Route::delete('asrama/grades/{grade}', [AsramaController::class, 'deleteGrade'])->name('asrama.delete-grade');     Route::post('asrama/grades/bulk-update', [AsramaController::class, 'bulkUpdateGrades'])->name('asrama.bulk-update-grades');
     
     // Schedule Management Routes
     Route::prefix('schedules')->name('schedules.')->group(function() {
