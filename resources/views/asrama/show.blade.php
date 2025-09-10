@@ -323,15 +323,11 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label for="academicYearFilter" class="form-label">Tahun Akademik:</label>
-                                    @php
-                                        $yearNow = date('Y');
-                                        $nextYear = $yearNow + 1;
-                                        $defaultAcademicYear = $yearNow . '/' . $nextYear;
-                                    @endphp
                                     <select id="academicYearFilter" class="form-control">
-                                        <option value="{{ $yearNow-1 }}/{{ $yearNow }}" {{ $defaultAcademicYear == ($yearNow-1).'/'.$yearNow ? 'selected' : '' }}>{{ $yearNow-1 }}/{{ $yearNow }}</option>
-                                        <option value="{{ $yearNow }}/{{ $nextYear }}" {{ $defaultAcademicYear == $yearNow.'/'.$nextYear ? 'selected' : '' }}>{{ $yearNow }}/{{ $nextYear }}</option>
-                                        <option value="{{ $nextYear }}/{{ $nextYear+1 }}" {{ $defaultAcademicYear == $nextYear.'/'.($nextYear+1) ? 'selected' : '' }}>{{ $nextYear }}/{{ $nextYear+1 }}</option>
+                                        <option value="">Pilih Tahun Akademik</option>
+                                        @foreach(App\Helpers\AcademicYearHelper::generateAcademicYears(2, 2) as $year)
+                                            <option value="{{ $year }}" {{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() == $year ? 'selected' : '' }}>{{ $year }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-6 d-flex align-items-end">
@@ -721,7 +717,7 @@
     // Set default bulan dan tahun akademik sesuai waktu sekarang
     let currentFilters = {
         month: '{{ date("n") }}',
-        academic_year: '{{ date("Y") }}/{{ date("Y") + 1 }}'
+        academic_year: '{{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}'
     };
 
     $(document).ready(function () {

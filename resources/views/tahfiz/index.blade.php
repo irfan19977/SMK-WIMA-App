@@ -41,9 +41,9 @@
                         <label for="academicYearFilter" class="form-label">Tahun Akademik:</label>
                         <select id="academicYearFilter" class="form-control">
                             <option value="">Pilih Tahun Akademik</option>
-                            <option value="2023/2024">2023/2024</option>
-                            <option value="2024/2025">2024/2025</option>
-                            <option value="2025/2026">2025/2026</option>
+                            @foreach(App\Helpers\AcademicYearHelper::generateAcademicYears(2, 2) as $year)
+                                <option value="{{ $year }}" {{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() == $year ? 'selected' : '' }}>{{ $year }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -981,9 +981,9 @@
     }
 });
 
-            // Initialize with current academic year
-            $('#academicYearFilter').val('{{ date("Y") }}/{{ date("Y") + 1 }}');
-            currentFilters.academic_year = '{{ date("Y") }}/{{ date("Y") + 1 }}';
+            // Initialize with current academic year from helper
+            $('#academicYearFilter').val('{{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}');
+            currentFilters.academic_year = '{{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}';
         });
     </script>
 @endpush
