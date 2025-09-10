@@ -59,6 +59,12 @@ class Student extends Model
     public function asrama()
     {
         return $this->hasOneThrough(Asrama::class, AssignAsrama::class, 'student_id', 'id', 'id', 'asrama_id');
+    } 
+    
+    
+    public function ekstrakurikulerAssign()
+    {
+        return $this->hasMany(EkstrakurikulerAssign::class, 'student_id');
     }
 
     /**

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('ekstrakurikuler_id');
             $table->uuid('student_id');
+            $table->string('name');
             $table->string('academic_year');
             $table->timestamps();
 

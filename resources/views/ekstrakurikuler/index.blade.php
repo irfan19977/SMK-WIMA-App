@@ -4,7 +4,7 @@
 
 <div class="card">
     <div class="card-header">
-        <h4>Daftar Asrama</h4>
+        <h4>Daftar Ekstrakurikuler</h4>
         <div class="card-header-action">
             <div class="input-group">
                 <button class="btn btn-primary" id="btn-create" data-toggle="tooltip"
@@ -30,29 +30,29 @@
                 <thead>
                     <tr class="text-center">
                         <th>No.</th>
-                        <th>Nama Asrama</th>
+                        <th>Nama Ekstrakurikuler</th>
                         <th>Pengurus</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($asramas as $asrama)
+                    @forelse ($ekstrakurikulers as $ekstrakurikuler)
                     <tr class="text-center">
-                        <td class="text-center">{{ ($asramas->currentPage() - 1) * $asramas->perPage() + $loop->iteration }}</td>
-                        <td><a href="{{ route('asrama.show', $asrama->id) }}" class="text-secondery font-weight-bold">{{ $asrama->name }}</a></td>
-                        <td>{{ $asrama->teacher ? $asrama->teacher->name : '-' }}</td>
+                        <td class="text-center">{{ ($ekstrakurikulers->currentPage() - 1) * $ekstrakurikulers->perPage() + $loop->iteration }}</td>
+                        <td><a href="{{ route('ekstrakurikuler.show', $ekstrakurikuler->id) }}" class="text-secondery font-weight-bold">{{ $ekstrakurikuler->name }}</a></td>
+                        <td>{{ $ekstrakurikuler->teacher ? $ekstrakurikuler->teacher->name : '-' }}</td>
                         <td>
                             <button class="btn btn-primary btn-action mr-1 btn-edit"
-                                data-id="{{ $asrama->id }}" data-toggle="tooltip" title="Edit">
+                                data-id="{{ $ekstrakurikuler->id }}" data-toggle="tooltip" title="Edit">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
 
-                            <form id="delete-form-{{ $asrama->id }}" action="{{ route('asrama.destroy', $asrama->id) }}"
+                            <form id="delete-form-{{ $ekstrakurikuler->id }}" action="{{ route('ekstrakurikuler.destroy', $ekstrakurikuler->id) }}"
                                 method="POST" style="display:inline;">
                                 @csrf
                                 @method('DELETE')
                                 <button type="button" class="btn btn-danger btn-action" data-toggle="tooltip"
-                                    title="Delete" onclick="confirmDelete('{{ $asrama->id }}')">
+                                    title="Delete" onclick="confirmDelete('{{ $ekstrakurikuler->id }}')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -60,7 +60,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="4" class="text-center">Tidak ada data asrama</td>
+                        <td colspan="4" class="text-center">Tidak ada data ekstrakurikuler</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -70,28 +70,28 @@
 </div>
 
 <!-- Modal untuk Create/Edit -->
-<div class="modal fade" id="asramaModal" tabindex="-1" role="dialog" aria-labelledby="asramaModalLabel" aria-hidden="true">
+<div class="modal fade" id="ekstrakurikulerModal" tabindex="-1" role="dialog" aria-labelledby="ekstrakurikulerModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="asramaModalLabel">Tambah Asrama</h5>
+                <h5 class="modal-title" id="ekstrakurikulerModalLabel">Tambah Ekstrakurikuler</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form id="asramaForm">
+            <form id="ekstrakurikulerForm">
                 @csrf
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="name">Nama Asrama <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="name" name="name" placeholder="Masukkan nama asrama" required>
+                        <label for="name">Nama Ekstrakurikuler <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="Masukkan nama ekstrakurikuler" required>
                         <div class="invalid-feedback d-none" id="name-error"></div>
                     </div>
                     {{-- buatkan untuk memilih guru --}}
                     <div class="form-group">
-                        <label for="teacher_id">Pengurus Asrama <span class="text-danger">*</span></label>
+                        <label for="teacher_id">Pengajar <span class="text-danger">*</span></label>
                         <select class="form-control select2" id="teacher_id" name="teacher_id" required>
-                            <option value="">-- Pilih Pengurus --</option>
+                            <option value="">-- Pilih Pengajar --</option>
                             @foreach($teachers as $teacher)
                                 <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>
                             @endforeach
@@ -177,8 +177,8 @@
             const tableBody = document.querySelector('#sortable-table tbody');
             const rows = tableBody.querySelectorAll('tr');
             
-            const currentPage = {{ $asramas->currentPage() }};
-            const perPage = {{ $asramas->perPage() }};
+            const currentPage = {{ $ekstrakurikulers->currentPage() }};
+            const perPage = {{ $ekstrakurikulers->perPage() }};
             
             rows.forEach((row, index) => {
                 const numberCell = row.querySelector('td:first-child');
@@ -200,7 +200,7 @@
                 tableBody.innerHTML = '<tr><td colspan="3" class="text-center">Mencari data...</td></tr>';
                 
                 // Kirim request AJAX
-                fetch(`{{ route('asrama.index') }}?q=${encodeURIComponent(query)}`, {
+                fetch(`{{ route('ekstrakurikuler.index') }}?q=${encodeURIComponent(query)}`, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
@@ -216,7 +216,7 @@
                 })
                 .then(data => {
                     // Update tabel dengan data hasil pencarian
-                    updateTable(data.asramas, data.currentPage, data.perPage);
+                    updateTable(data.ekstrakurikulers, data.currentPage, data.perPage);
                 })
                 .catch(error => {
                     tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Terjadi kesalahan saat mencari data</td></tr>';
@@ -224,40 +224,40 @@
             }
 
             // Fungsi untuk update tabel
-            function updateTable(asramas, currentPage = 1, perPage = 10) {
-                if (asramas.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Tidak ada data asrama</td></tr>';
+            function updateTable(ekstrakurikulers, currentPage = 1, perPage = 10) {
+                if (ekstrakurikulers.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Tidak ada data ekstrakurikuler</td></tr>';
                     return;
                 }
 
                 let html = '';
-                asramas.forEach((asrama, index) => {
+                ekstrakurikulers.forEach((ekstrakurikuler, index) => {
                     const number = (currentPage - 1) * perPage + index + 1;
                     
                     // Handle teacher name dengan fallback
                     let teacherName = '-';
-                    if (asrama.teacher && asrama.teacher.name) {
-                        teacherName = asrama.teacher.name;
-                    } else if (asrama.teacher && asrama.teacher.user && asrama.teacher.user.name) {
-                        teacherName = asrama.teacher.user.name;
+                    if (ekstrakurikuler.teacher && ekstrakurikuler.teacher.name) {
+                        teacherName = ekstrakurikuler.teacher.name;
+                    } else if (ekstrakurikuler.teacher && ekstrakurikuler.teacher.user && ekstrakurikuler.teacher.user.name) {
+                        teacherName = ekstrakurikuler.teacher.user.name;
                     }
                     
                     html += `
                         <tr class="text-center">
                             <td>${number}</td>
-                            <td><a href="/asrama/${asrama.id}" class="text-secondery font-weight-bold">${asrama.name}</a></td>
+                            <td><a href="/ekstrakurikuler/${ekstrakurikuler.id}" class="text-secondery font-weight-bold">${ekstrakurikuler.name}</a></td>
                             <td>${teacherName}</td>
                             <td>
                                 <button class="btn btn-primary btn-action mr-1 btn-edit"
-                                    data-id="${asrama.id}" data-toggle="tooltip" title="Edit">
+                                    data-id="${ekstrakurikuler.id}" data-toggle="tooltip" title="Edit">
                                     <i class="fas fa-pencil-alt"></i>
                                 </button>
-                                <form id="delete-form-${asrama.id}" action="/asrama/${asrama.id}"
+                                <form id="delete-form-${ekstrakurikuler.id}" action="/ekstrakurikuler/${ekstrakurikuler.id}"
                                     method="POST" style="display:inline;">
                                     <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').getAttribute('content')}">
                                     <input type="hidden" name="_method" value="DELETE">
                                     <button type="button" class="btn btn-danger btn-action" data-toggle="tooltip"
-                                        title="Delete" onclick="confirmDelete('${asrama.id}')">
+                                        title="Delete" onclick="confirmDelete('${ekstrakurikuler.id}')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
@@ -331,15 +331,15 @@
 
         // Modal functionality
         document.addEventListener('DOMContentLoaded', function() {
-            const modal = $('#asramaModal');
-            const form = document.getElementById('asramaForm');
-            const modalTitle = document.getElementById('asramaModalLabel');
+            const modal = $('#ekstrakurikulerModal');
+            const form = document.getElementById('ekstrakurikulerForm');
+            const modalTitle = document.getElementById('ekstrakurikulerModalLabel');
             const submitBtn = document.getElementById('submitBtn');
 
             // Initialize Select2 after modal is shown
             modal.on('shown.bs.modal', function() {
                 $('.select2').select2({
-                    dropdownParent: $('#asramaModal'),
+                    dropdownParent: $('#ekstrakurikulerModal'),
                     width: '100%'
                 });
             });
@@ -369,7 +369,7 @@
 
             // Load edit data
             function loadEditData(id) {
-                fetch(`/asrama/${id}/edit`, {
+                fetch(`/ekstrakurikuler/${id}/edit`, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
@@ -387,11 +387,11 @@
                         submitBtn.textContent = 'Update';
                         
                         // Fill form with data
-                        document.getElementById('name').value = data.asramas.name;
-
+                        document.getElementById('name').value = data.ekstrakurikulers.name;
+                        
                         const teacherSelect = document.getElementById('teacher_id');
-                        if (data.asramas.teacher_id) {
-                            teacherSelect.value = data.asramas.teacher_id;
+                        if (data.ekstrakurikulers.teacher_id) {
+                            teacherSelect.value = data.ekstrakurikulers.teacher_id;
                             
                             // Trigger change event untuk Select2
                             $(teacherSelect).trigger('change');
@@ -410,7 +410,7 @@
                 e.preventDefault();
                 
                 const formData = new FormData(form);
-                const url = isEditMode ? `/asrama/${editId}` : '/asrama';
+                const url = isEditMode ? `/ekstrakurikuler/${editId}` : '/ekstrakurikuler';
                 const method = 'POST';
                 
                 if (isEditMode) {

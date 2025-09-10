@@ -5,6 +5,7 @@ use App\Http\Controllers\AsramaController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ClassesController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EkstrakurikulerController;
 use App\Http\Controllers\FaceRecognitionController;
 use App\Http\Controllers\LessonAttendanceController;
 use App\Http\Controllers\ParentsController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StudentGradesController;
 use App\Http\Controllers\TahfizController;
+use App\Models\Ekstrakurikuler;
 use App\Models\Student;
 use Illuminate\Support\Facades\Route;
 
@@ -80,8 +82,6 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('{class}/attendance-data', [ClassesController::class, 'getAttendanceData'])->name('attendance-data');
     });
 
-    Route::resource('subjects', SubjectController::class);
-
     // Student Grades Routes
     Route::prefix('student-grades')->name('student-grades.')->group(function () {
         Route::get('get-students', [StudentGradesController::class, 'getStudents'])->name('get-students');        
@@ -101,16 +101,23 @@ Route::group(['middleware' => 'auth'], function () {
         Route::resource('/', TahfizController::class);
     });
 
-    Route::resource('asrama', AsramaController::class);
-Route::post('asrama/{asrama}/bulk-assign', [AsramaController::class, 'bulkAssign'])->name('asrama.bulk-assign'); Route::delete('asrama/{asrama}/remove-student', [AsramaController::class, 'removeStudent'])->name('asrama.remove-student'); Route::get('asrama/{asrama}/grades', [AsramaController::class, 'getGrades'])->name('asrama.get-grades');     Route::post('asrama/grades', [AsramaController::class, 'storeGrade'])->name('asrama.store-grade');     Route::put('asrama/grades/{grade}', [AsramaController::class, 'updateGrade'])->name('asrama.update-grade');     Route::delete('asrama/grades/{grade}', [AsramaController::class, 'deleteGrade'])->name('asrama.delete-grade');     Route::post('asrama/grades/bulk-update', [AsramaController::class, 'bulkUpdateGrades'])->name('asrama.bulk-update-grades');
+    // Asrama Management Routes
+    Route::prefix('asrama')->name('asrama.')->group(function() {
+        Route::resource('/', AsramaController::class)->parameters(['' => 'asrama']);
+        Route::post('/{asrama}/bulk-assign', [AsramaController::class, 'bulkAssign'])->name('bulk-assign'); 
+        Route::delete('/{asrama}/remove-student', [AsramaController::class, 'removeStudent'])->name('remove-student'); 
+        Route::get('/{asrama}/grades', [AsramaController::class, 'getGrades'])->name('get-grades');     
+        Route::post('/grades', [AsramaController::class, 'storeGrade'])->name('store-grade');     
+        Route::put('/grades/{grade}', [AsramaController::class, 'updateGrade'])->name('update-grade');     
+        Route::delete('/grades/{grade}', [AsramaController::class, 'deleteGrade'])->name('delete-grade');     
+        Route::post('/grades/bulk-update', [AsramaController::class, 'bulkUpdateGrades'])->name('bulk-update-grades');
+    });
     
     // Schedule Management Routes
     Route::prefix('schedules')->name('schedules.')->group(function() {
         Route::resource('/', ScheduleController::class);
         Route::get('/class/{classId}', [ScheduleController::class, 'getSchedulesByClass'])->name('by-class');
     });
-
-    Route::resource('setting-schedule', SettingScheduleController::class);
 
     // Attendance Management Routes
     Route::prefix('attendances')-> name('attendances.')->group(function() {
@@ -124,10 +131,6 @@ Route::post('asrama/{asrama}/bulk-assign', [AsramaController::class, 'bulkAssign
         Route::get('/find-by-nisn/{nisn}', [LessonAttendanceController::class, 'findByNisn'])->name('find-by-nisn');
         Route::get('/get-subjects-by-class/{classId}', [LessonAttendanceController::class, 'getSubjectsByClass'])->name('get-subjects-by-class');
     });
-
-    Route::resource('permissions', PermissionController::class);
-
-    Route::resource('roles', RoleController::class);
 
     // Face Recognition Routes
     Route::prefix('face-recognition')->group(function () {
@@ -144,6 +147,23 @@ Route::post('asrama/{asrama}/bulk-assign', [AsramaController::class, 'bulkAssign
         Route::post('/auto-attendance', [FaceRecognitionController::class, 'autoAttendance'])->name('auto-attendance');
         Route::get('/students/{studentId}/class', [FaceRecognitionController::class, 'getStudentClass'])->name('student-class');
     });
+
+    Route::prefix('ekstrakurikuler')->name('ekstrakurikuler.')->group(function() {
+        Route::resource('/', EkstrakurikulerController::class)->parameters(['' => 'ekstrakurikuler']);
+        Route::post('/{ekstrakurikuler}/bulk-assign', [EkstrakurikulerController::class, 'bulkAssign'])->name('bulk-assign'); 
+        Route::delete('/{ekstrakurikuler}/remove-student', [EkstrakurikulerController::class, 'removeStudent'])->name('remove-student'); 
+        Route::get('/{ekstrakurikuler}/grades', [EkstrakurikulerController::class, 'getGrades'])->name('get-grades');     
+        Route::post('/grades', [EkstrakurikulerController::class, 'storeGrade'])->name('store-grade');     
+        Route::put('/grades/{grade}', [EkstrakurikulerController::class, 'updateGrade'])->name('update-grade');     
+        Route::delete('/grades/{grade}', [EkstrakurikulerController::class, 'deleteGrade'])->name('delete-grade');     
+        Route::post('/grades/bulk-update', [EkstrakurikulerController::class, 'bulkUpdateGrades'])->name('bulk-update-grades');
+
+    });
+    Route::resource('subjects', SubjectController::class);
+    Route::resource('setting-schedule', SettingScheduleController::class);
+    Route::resource('permissions', PermissionController::class);
+    Route::resource('roles', RoleController::class);
+
 });
 
 
