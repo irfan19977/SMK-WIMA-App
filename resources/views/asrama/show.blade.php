@@ -1067,14 +1067,8 @@
         }
         
         const numValue = parseInt(value);
-        let badgeClass = '';
-        
-        if (numValue >= 85) badgeClass = 'grade-badge-excellent';
-        else if (numValue >= 75) badgeClass = 'grade-badge-good';
-        else if (numValue >= 65) badgeClass = 'grade-badge-fair';
-        else badgeClass = 'grade-badge-poor';
-        
-        return `<span class="badge ${badgeClass}">${numValue}</span>`;
+
+        return `${numValue}`;
     }
 
     function encodeHtmlAttribute(str) {

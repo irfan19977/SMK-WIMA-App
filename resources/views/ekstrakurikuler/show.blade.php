@@ -355,31 +355,13 @@
                                     <thead class="thead-dark">
                                         <tr>
                                             <th style="width: 40px;">No</th>
-                                            <th style="min-width: 150px;">Nama Siswa</th>
+                                            <th style="min-width: 100px;">Nama Siswa</th>
                                             <th style="width: 100px;">NISN</th>
                                             <!-- Aspek Ibadah -->
-                                            <th style="width: 60px;" title="Sholat Tahajud">Tahajud</th>
-                                            <th style="width: 60px;" title="Sholat Dhuha">Dhuha</th>
-                                            <th style="width: 60px;" title="Sholat Syuruq">Syuruq</th>
-                                            <th style="width: 70px;" title="Sunnah Rawatib">Rawatib</th>
-                                            <th style="width: 60px;" title="Puasa">Puasa</th>
-                                            <th style="width: 70px;" title="Dzikir Pagi & Petang">Dzikir</th>
-                                            <!-- Aspek Akhlaq -->
-                                            <th style="width: 80px;" title="Adab Berbicara">Berbicara</th>
-                                            <th style="width: 80px;" title="Adab Bersikap">Bersikap</th>
-                                            <th style="width: 70px;" title="Kejujuran">Kejujuran</th>
-                                            <!-- Aspek Kedisiplinan -->
-                                            <th style="width: 80px;" title="Waktu Tidur">W.Tidur</th>
-                                            <th style="width: 60px;" title="Pelaksanaan Piket">Piket</th>
-                                            <th style="width: 70px;" title="Kegiatan Mahad">Mahad</th>
-                                            <!-- Aspek Kebersihan -->
-                                            <th style="width: 80px;" title="Jasmani & Penampilan">Jasmani</th>
-                                            <th style="width: 70px;" title="Kerapian Lemari">Lemari</th>
-                                            <th style="width: 70px;" title="Kerapian Ranjang">Ranjang</th>
-                                            <!-- Aspek Bahasa -->
-                                            <th style="width: 70px;" title="Bahasa Arab">Arab</th>
-                                            <th style="width: 70px;" title="Bahasa Inggris">Inggris</th>
-                                            <th style="width: 70px;" title="Catatan">Catatan</th>
+                                            <th style="width: 60px;" title="keaktifan">Keaktifan</th>
+                                            <th style="width: 60px;" title="Keterampilan">Keterampilan</th>
+                                            <th style="width: 60px;" title="Nilai rapor">Nilai Rapor</th>
+                                            <th style="width: 70px;" title="Capaian Kompetensi">Capaian Kompetensi</th>
                                             <th style="width: 100px;">Aksi</th>
                                         </tr>
                                     </thead>
@@ -477,7 +459,7 @@
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="asramaGradeModalTitle">Input Nilai Asrama</h5>
+                <h5 class="modal-title" id="asramaGradeModalTitle">Input Nilai Ekstrakurikuler</h5>
                 <button type="button" class="close" data-dismiss="modal">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -502,191 +484,31 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="row">
-                        <!-- Aspek Ibadah -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header bg-primary text-white">
-                                    <h6 class="mb-0"><i class="fas fa-mosque mr-2"></i>Aspek Ibadah</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Sholat Tahajud</label>
-                                                <input type="number" name="sholat_tahajud" id="sholat_tahajud" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Sholat Dhuha</label>
-                                                <input type="number" name="sholat_dhuha" id="sholat_dhuha" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Sholat Syuruq</label>
-                                                <input type="number" name="sholat_syuruq" id="sholat_syuruq" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Sunnah Rawatib</label>
-                                                <input type="number" name="sunnah_rawatib" id="sunnah_rawatib" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Puasa</label>
-                                                <input type="number" name="puasa" id="puasa" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Dzikir Pagi & Petang</label>
-                                                <input type="number" name="dzikir_pagi_petang" id="dzikir_pagi_petang" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Nilai Keaktifan</label>
+                                <input type="text" id="studentKeaktifan" class="form-control">
                             </div>
                         </div>
-
-                        <!-- Aspek Akhlaq -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header bg-success text-white">
-                                    <h6 class="mb-0"><i class="fas fa-heart mr-2"></i>Aspek Akhlaq</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Adab Berbicara</label>
-                                                <input type="number" name="adab_berbicara" id="adab_berbicara" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Adab Bersikap</label>
-                                                <input type="number" name="adab_bersikap" id="adab_bersikap" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Kejujuran</label>
-                                                <input type="number" name="kejujuran" id="kejujuran" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Nilai Keterampilan</label>
+                                <input type="text" id="studentKeterampilan" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Nilai Rapor</label>
+                                <input type="text" id="studentNilai" class="form-control" readonly>
                             </div>
                         </div>
                     </div>
-
-                    <div class="row mt-3">
-                        <!-- Aspek Kedisiplinan -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header bg-warning text-dark">
-                                    <h6 class="mb-0"><i class="fas fa-clock mr-2"></i>Aspek Kedisiplinan</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Waktu Tidur</label>
-                                                <input type="number" name="waktu_tidur" id="waktu_tidur" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Pelaksanaan Piket</label>
-                                                <input type="number" name="pelaksanaan_piket" id="pelaksanaan_piket" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Kegiatan Mahad</label>
-                                                <input type="number" name="kegiatan_mahad" id="kegiatan_mahad" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Aspek Kebersihan -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header bg-info text-white">
-                                    <h6 class="mb-0"><i class="fas fa-broom mr-2"></i>Aspek Kebersihan</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Jasmani & Penampilan</label>
-                                                <input type="number" name="jasmani_penampilan" id="jasmani_penampilan" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Kerapian Lemari</label>
-                                                <input type="number" name="kerapian_lemari" id="kerapian_lemari" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Kerapian Ranjang</label>
-                                                <input type="number" name="kerapian_ranjang" id="kerapian_ranjang" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row mt-3">
-                        <!-- Aspek Bahasa -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header bg-secondary text-white">
-                                    <h6 class="mb-0"><i class="fas fa-language mr-2"></i>Aspek Bahasa</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Bahasa Arab</label>
-                                                <input type="number" name="bahasa_arab" id="bahasa_arab" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label>Bahasa Inggris</label>
-                                                <input type="number" name="bahasa_inggris" id="bahasa_inggris" class="form-control grade-input" min="0" max="100">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Catatan -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header bg-dark text-white">
-                                    <h6 class="mb-0"><i class="fas fa-sticky-note mr-2"></i>Catatan</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="form-group">
-                                        <label>Catatan Tambahan</label>
-                                        <textarea name="catatan" id="catatan" class="form-control" rows="8" placeholder="Masukkan catatan evaluasi untuk siswa ini..."></textarea>
-                                    </div>
-                                </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Capaian Kompetesi</label>
+                                <textarea id="studentCapaian" class="form-control"></textarea>
                             </div>
                         </div>
                     </div>
@@ -710,7 +532,6 @@
 @endsection
 
 @push('scripts')
-<!-- SweetAlert -->
 <script>
     // Deklarasi global agar bisa diakses semua fungsi
     let currentMode = 'view';
@@ -724,7 +545,8 @@
         // Set default bulan pada filter bulan
         $('#bulanFilter').val('{{ date("n") }}');
         // Set default tahun akademik pada filter tahun
-        $('#academicYearFilter').val('{{ date("Y") }}/{{ date("Y") + 1 }}');
+        $('#academicYearFilter').val('{{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}');
+        
         // Search functionality for available students
         $('#searchAvailableStudent').on('keyup', function () {
             var value = $(this).val().toLowerCase();
@@ -889,14 +711,14 @@
 
         // Make cells editable functionality
         $(document).on('click', '.editable-cell', function() {
-            if (currentMode === 'edit') {
+            if (currentMode === 'edit' && $(this).data('field') !== 'nilai_rapor') {
                 $(this).addClass('editing').focus();
             }
         });
 
         // Clear '-' when cell is focused in edit mode
         $(document).on('focus', '.editable-cell', function() {
-            if (currentMode === 'edit' && $(this).text().trim() === '-') {
+            if (currentMode === 'edit' && $(this).text().trim() === '-' && $(this).data('field') !== 'nilai_rapor') {
                 $(this).text('');
             }
         });
@@ -907,7 +729,7 @@
 
         // Restrict input to numbers only for grade fields (not catatan)
         $(document).on('keypress', '.editable-cell', function(e) {
-            if ($(this).data('field') !== 'catatan') {
+            if ($(this).data('field') !== 'capaian_kompetensi' && $(this).data('field') !== 'nilai_rapor') {
                 const char = String.fromCharCode(e.which);
                 if (!/[0-9]/.test(char) && e.keyCode !== 8 && e.keyCode !== 9 && e.keyCode !== 13 && e.keyCode !== 27) {
                     e.preventDefault();
@@ -922,7 +744,7 @@
         });
 
         $(document).on('input', '.editable-cell', function() {
-            if ($(this).data('field') !== 'catatan') {
+            if ($(this).data('field') !== 'capaian_kompetensi' && $(this).data('field') !== 'nilai_rapor') {
                 let value = parseInt($(this).text()) || 0;
                 if (value > 100) {
                     $(this).text('100');
@@ -930,6 +752,63 @@
             }
             // else: allow any input for catatan
         });
+
+        // Auto-calculation event listeners
+        $(document).on('input blur', '.editable-cell[data-field="keaktifan"], .editable-cell[data-field="keterampilan"]', function() {
+            if (currentMode === 'edit') {
+                const row = $(this).closest('tr');
+                calculateNilaiRapor(row);
+            }
+        });
+    }
+
+    // Function to calculate and update Nilai Rapor
+    function calculateNilaiRapor(row) {
+        const keaktifanCell = row.find('td[data-field="keaktifan"]');
+        const keterampilanCell = row.find('td[data-field="keterampilan"]');
+        const nilaiRaporCell = row.find('td[data-field="nilai_rapor"]');
+        
+        // Get numeric values
+        const keaktifanValue = getNumericValueFromCell(keaktifanCell);
+        const keterampilanValue = getNumericValueFromCell(keterampilanCell);
+        
+        // Calculate average if both values exist
+        if (keaktifanValue !== null && keterampilanValue !== null) {
+            const average = Math.round((keaktifanValue + keterampilanValue) / 2);
+            
+            // Update the cell with formatted value
+            if (currentMode === 'edit') {
+                nilaiRaporCell.text(average);
+            } else {
+                nilaiRaporCell.html(formatGradeValue(average));
+            }
+            
+            // Add visual indicator that this is auto-calculated
+            nilaiRaporCell.addClass('auto-calculated');
+        } else {
+            // If either value is missing, show dash
+            if (currentMode === 'edit') {
+                nilaiRaporCell.text('-');
+            } else {
+                nilaiRaporCell.html('-');
+            }
+            nilaiRaporCell.removeClass('auto-calculated');
+        }
+    }
+
+    // Helper function to get numeric value from cell
+    function getNumericValueFromCell(cell) {
+        const text = cell.text().trim();
+        if (!text || text === '-') return null;
+        
+        // Extract number from badge or plain text
+        const match = text.match(/\d+/);
+        if (match) {
+            const value = parseInt(match[0]);
+            return (value >= 0 && value <= 100) ? value : null;
+        }
+        
+        return null;
     }
 
     function updateStatus(message) {
@@ -940,10 +819,10 @@
     function resetGradesView() {
         currentFilters = {
             month: '{{ date("n") }}',
-            academic_year: '{{ date("Y") }}/{{ date("Y") + 1 }}'
+            academic_year: '{{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}'
         };
         $('#bulanFilter').val('{{ date("n") }}');
-        $('#academicYearFilter').val('{{ date("Y") }}/{{ date("Y") + 1 }}');
+        $('#academicYearFilter').val('{{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}');
         
         $('#statusInfo').hide();
         hideActionButtons();
@@ -1019,29 +898,22 @@
         grades.forEach(function(grade, index) {
             const gradeData = encodeHtmlAttribute(JSON.stringify(grade));
             
+            // Calculate nilai_rapor from keaktifan and keterampilan
+            let calculatedNilaiRapor = '-';
+            if (grade.keaktifan !== null && grade.keterampilan !== null && 
+                grade.keaktifan !== undefined && grade.keterampilan !== undefined) {
+                calculatedNilaiRapor = Math.round((parseInt(grade.keaktifan) + parseInt(grade.keterampilan)) / 2);
+            }
+            
             tableHtml += `
                 <tr data-student-id="${grade.student_id}">
                     <td>${index + 1}</td>
                     <td class="nama-siswa">${grade.student_name}</td>
                     <td>${grade.student_nisn}</td>
-                    <td class="editable-cell" data-field="sholat_tahajud">${formatGradeValue(grade.sholat_tahajud)}</td>
-                    <td class="editable-cell" data-field="sholat_dhuha">${formatGradeValue(grade.sholat_dhuha)}</td>
-                    <td class="editable-cell" data-field="sholat_syuruq">${formatGradeValue(grade.sholat_syuruq)}</td>
-                    <td class="editable-cell" data-field="sunnah_rawatib">${formatGradeValue(grade.sunnah_rawatib)}</td>
-                    <td class="editable-cell" data-field="puasa">${formatGradeValue(grade.puasa)}</td>
-                    <td class="editable-cell" data-field="dzikir_pagi_petang">${formatGradeValue(grade.dzikir_pagi_petang)}</td>
-                    <td class="editable-cell" data-field="adab_berbicara">${formatGradeValue(grade.adab_berbicara)}</td>
-                    <td class="editable-cell" data-field="adab_bersikap">${formatGradeValue(grade.adab_bersikap)}</td>
-                    <td class="editable-cell" data-field="kejujuran">${formatGradeValue(grade.kejujuran)}</td>
-                    <td class="editable-cell" data-field="waktu_tidur">${formatGradeValue(grade.waktu_tidur)}</td>
-                    <td class="editable-cell" data-field="pelaksanaan_piket">${formatGradeValue(grade.pelaksanaan_piket)}</td>
-                    <td class="editable-cell" data-field="kegiatan_mahad">${formatGradeValue(grade.kegiatan_mahad)}</td>
-                    <td class="editable-cell" data-field="jasmani_penampilan">${formatGradeValue(grade.jasmani_penampilan)}</td>
-                    <td class="editable-cell" data-field="kerapian_lemari">${formatGradeValue(grade.kerapian_lemari)}</td>
-                    <td class="editable-cell" data-field="kerapian_ranjang">${formatGradeValue(grade.kerapian_ranjang)}</td>
-                    <td class="editable-cell" data-field="bahasa_arab">${formatGradeValue(grade.bahasa_arab)}</td>
-                    <td class="editable-cell" data-field="bahasa_inggris">${formatGradeValue(grade.bahasa_inggris)}</td>
-                    <td class="editable-cell" data-field="catatan">${grade.catatan ? grade.catatan : '-'}</td>
+                    <td class="editable-cell" data-field="keaktifan">${formatGradeValue(grade.keaktifan)}</td>
+                    <td class="editable-cell" data-field="keterampilan">${formatGradeValue(grade.keterampilan)}</td>
+                    <td class="editable-cell auto-calculated" data-field="nilai_rapor" contenteditable="false" title="Otomatis dihitung dari rata-rata Keaktifan dan Keterampilan">${formatGradeValue(calculatedNilaiRapor)}</td>
+                    <td class="editable-cell" data-field="capaian_kompetensi">${grade.capaian_kompetensi || '-'}</td>
                     <td>
                         <div class="btn-group btn-group-sm">
                             <button type="button" class="btn btn-info btn-edit-grade" 
@@ -1062,19 +934,16 @@
     }
 
     function formatGradeValue(value) {
-        if (value === null || value === undefined || value === '') {
+        if (value === null || value === undefined || value === '' || value === '-') {
             return '-';
         }
         
         const numValue = parseInt(value);
-        let badgeClass = '';
+        if (isNaN(numValue)) {
+            return '-';
+        }
         
-        if (numValue >= 85) badgeClass = 'grade-badge-excellent';
-        else if (numValue >= 75) badgeClass = 'grade-badge-good';
-        else if (numValue >= 65) badgeClass = 'grade-badge-fair';
-        else badgeClass = 'grade-badge-poor';
-        
-        return `<span class="badge ${badgeClass}">${numValue}</span>`;
+        return `${numValue}`;
     }
 
     function encodeHtmlAttribute(str) {
@@ -1087,7 +956,7 @@
             $('#editModeBtn').html('<i class="fas fa-eye"></i> Mode View').removeClass('btn-warning').addClass('btn-info');
             $('#saveAllBtn').show();
             makeGradesTableEditable();
-            updateStatus('Mode Edit - Klik pada sel untuk mengubah nilai (0-100)');
+            updateStatus('Mode Edit - Klik pada sel untuk mengubah nilai (0-100). Nilai Rapor otomatis dihitung.');
         } else {
             currentMode = 'view';
             $('#editModeBtn').html('<i class="fas fa-edit"></i> Mode Edit').removeClass('btn-info').addClass('btn-warning');
@@ -1100,20 +969,33 @@
 
     function makeGradesTableEditable() {
         $('.editable-cell').each(function() {
+            // Don't make nilai_rapor editable as it's auto-calculated
+            if ($(this).data('field') === 'nilai_rapor') {
+                $(this).attr('contenteditable', 'false')
+                       .css({
+                           'background-color': '#f8f9fa',
+                           'cursor': 'not-allowed',
+                           'border': '1px solid #dee2e6',
+                           'font-style': 'italic'
+                       })
+                       .attr('title', 'Otomatis dihitung dari rata-rata Keaktifan dan Keterampilan');
+                return;
+            }
+            
             $(this).attr('contenteditable', 'true')
                    .css({
                        'background-color': '#fff3cd',
                        'cursor': 'text',
                        'border': '1px dashed #ffeaa7'
                    });
+            
             // For catatan, allow multiline and normal text
-            if ($(this).data('field') === 'catatan') {
-                $(this).attr('contenteditable', 'true')
-                       .css({
-                           'background-color': '#e3e3e3',
-                           'cursor': 'text',
-                           'border': '1px dashed #bdbdbd'
-                       });
+            if ($(this).data('field') === 'capaian_kompetensi') {
+                $(this).css({
+                    'background-color': '#e3e3e3',
+                    'cursor': 'text',
+                    'border': '1px dashed #bdbdbd'
+                });
             }
         });
     }
@@ -1123,7 +1005,8 @@
                           .css({
                               'background-color': '',
                               'cursor': '',
-                              'border': ''
+                              'border': '',
+                              'font-style': ''
                           });
     }
 
@@ -1144,73 +1027,165 @@
         $('#asramaGradeModal').modal('show');
     }
 
-    function populateAsramaGradeForm(gradeData) {
-        $('#gradeId').val(gradeData.id || '');
-        $('#studentId').val(gradeData.student_id);
-        $('#studentName').val(gradeData.student_name);
-        $('#studentNisn').val(gradeData.student_nisn);
-        
-        // Populate all grade fields
-        const fields = [
-            'sholat_tahajud', 'sholat_dhuha', 'sholat_syuruq', 'sunnah_rawatib', 
-            'puasa', 'dzikir_pagi_petang', 'adab_berbicara', 'adab_bersikap', 
-            'kejujuran', 'waktu_tidur', 'pelaksanaan_piket', 'kegiatan_mahad',
-            'jasmani_penampilan', 'kerapian_lemari', 'kerapian_ranjang', 
-            'bahasa_arab', 'bahasa_inggris'
-        ];
-        
-        fields.forEach(function(field) {
-            $(`#${field}`).val(gradeData[field] || '');
-        });
-        
-        $('#catatan').val(gradeData.catatan || '');
-    }
-
-    function clearAsramaGradeForm() {
-        $('#asramaGradeForm')[0].reset();
-        $('#gradeId').val('');
-        $('#studentId').val('');
-    }
-
-    function saveAsramaGrade() {
-        const formData = new FormData($('#asramaGradeForm')[0]);
-        formData.append('asrama_id', '{{ $ekstrakurikulers->id }}');
-        formData.append('month', currentFilters.month);
-        formData.append('academic_year', currentFilters.academic_year);
-        
-        const url = $('#gradeId').val() ? 
-            `{{ url('asrama/grades') }}/${$('#gradeId').val()}` : 
-            '{{ route("asrama.store-grade") }}';
-        
-        const method = $('#gradeId').val() ? 'PUT' : 'POST';
-        
-        if (method === 'PUT') {
-            formData.append('_method', 'PUT');
+function populateAsramaGradeForm(gradeData) {
+    $('#gradeId').val(gradeData.id || '');
+    $('#studentId').val(gradeData.student_id);
+    $('#studentName').val(gradeData.student_name);
+    $('#studentNisn').val(gradeData.student_nisn);
+    
+    // Pastikan menggunakan nilai yang benar
+    const keaktifanValue = gradeData.keaktifan || '';
+    const keterampilanValue = gradeData.keterampilan || '';
+    
+    $('#studentKeaktifan').val(keaktifanValue);
+    $('#studentKeterampilan').val(keterampilanValue);
+    
+    // Auto-calculate nilai_rapor dengan validasi yang lebih baik
+    const keaktifanNum = parseInt(keaktifanValue) || 0;
+    const keterampilanNum = parseInt(keterampilanValue) || 0;
+    
+    let nilaiRapor = '';
+    if (keaktifanNum > 0 || keterampilanNum > 0) {
+        // Hitung rata-rata hanya jika minimal salah satu ada nilainya
+        const total = (keaktifanNum > 0 ? keaktifanNum : 0) + (keterampilanNum > 0 ? keterampilanNum : 0);
+        const count = (keaktifanNum > 0 ? 1 : 0) + (keterampilanNum > 0 ? 1 : 0);
+        if (count > 0) {
+            nilaiRapor = Math.round(total / count);
         }
-
-        $.ajax({
-            url: url,
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                $('#asramaGradeModal').modal('hide');
-                swal('Berhasil', response.message || 'Nilai berhasil disimpan', 'success');
-                loadAsramaGrades();
-            },
-            error: function(xhr) {
-                const errors = xhr.responseJSON?.errors || {};
-                let errorMessage = xhr.responseJSON?.message || 'Gagal menyimpan nilai';
-                
-                if (Object.keys(errors).length > 0) {
-                    errorMessage += '\n' + Object.values(errors).flat().join('\n');
-                }
-                
-                swal('Error', errorMessage, 'error');
-            }
-        });
     }
+    
+    $('#studentNilai').val(nilaiRapor);
+    $('#studentCapaian').val(gradeData.capaian_kompetensi || '');
+}
+
+function clearAsramaGradeForm() {
+    $('#asramaGradeForm')[0].reset();
+    $('#gradeId').val('');
+    $('#studentId').val('');
+    $('#studentNilai').prop('readonly', true);
+}
+
+// Auto-calculate in modal when keaktifan or keterampilan changes
+$(document).on('input', '#studentKeaktifan, #studentKeterampilan', function() {
+    const keaktifanVal = $('#studentKeaktifan').val().trim();
+    const keterampilanVal = $('#studentKeterampilan').val().trim();
+    
+    const keaktifan = keaktifanVal ? parseInt(keaktifanVal) : 0;
+    const keterampilan = keterampilanVal ? parseInt(keterampilanVal) : 0;
+    
+    let nilaiRapor = '';
+    
+    if (keaktifan > 0 || keterampilan > 0) {
+        // Hitung rata-rata dari nilai yang tersedia
+        const total = keaktifan + keterampilan;
+        const count = (keaktifan > 0 ? 1 : 0) + (keterampilan > 0 ? 1 : 0);
+        
+        if (count > 0) {
+            nilaiRapor = Math.round(total / count);
+        }
+    }
+    
+    $('#studentNilai').val(nilaiRapor);
+});
+
+function saveAsramaGrade() {
+    // Validasi client-side sebelum mengirim
+    const keaktifan = $('#studentKeaktifan').val().trim();
+    const keterampilan = $('#studentKeterampilan').val().trim();
+    const capaianKompetensi = $('#studentCapaian').val().trim();
+    
+    // Validasi capaian_kompetensi tidak boleh kosong
+    if (!capaianKompetensi) {
+        swal('Perhatian', 'Capaian Kompetensi harus diisi', 'warning');
+        $('#studentCapaian').focus();
+        return;
+    }
+    
+    // Validasi range nilai (0-100)
+    if (keaktifan && (parseInt(keaktifan) < 0 || parseInt(keaktifan) > 100)) {
+        swal('Perhatian', 'Nilai Keaktifan harus antara 0-100', 'warning');
+        $('#studentKeaktifan').focus();
+        return;
+    }
+    
+    if (keterampilan && (parseInt(keterampilan) < 0 || parseInt(keterampilan) > 100)) {
+        swal('Perhatian', 'Nilai Keterampilan harus antara 0-100', 'warning');
+        $('#studentKeterampilan').focus();
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+    
+    // Data utama
+    const gradeId = $('#gradeId').val();
+    const studentId = $('#studentId').val();
+    
+    if (gradeId) {
+        formData.append('_method', 'PUT');
+        formData.append('grade_id', gradeId);
+    }
+    
+    formData.append('student_id', studentId);
+    formData.append('ekstrakurikuler_id', '{{ $ekstrakurikulers->id }}');
+    formData.append('month', currentFilters.month);
+    formData.append('academic_year', currentFilters.academic_year);
+    
+    // Data nilai - kirim sebagai empty string jika kosong, biarkan server handle
+    formData.append('keaktifan', keaktifan || '');
+    formData.append('keterampilan', keterampilan || '');
+    formData.append('nilai_rapor', $('#studentNilai').val() || '');
+    formData.append('capaian_kompetensi', capaianKompetensi);
+    
+    const url = gradeId ? 
+        `{{ url('ekstrakurikuler/grades') }}/${gradeId}` : 
+        '{{ route("ekstrakurikuler.store-grade") }}';
+    
+    // Show loading
+    swal({
+        title: 'Menyimpan...',
+        text: 'Mohon tunggu sebentar',
+        buttons: false,
+        closeOnClickOutside: false,
+        closeOnEsc: false,
+        icon: 'info'
+    });
+
+    $.ajax({
+        url: url,
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            swal.close();
+            $('#asramaGradeModal').modal('hide');
+            swal('Berhasil', response.message || 'Nilai berhasil disimpan', 'success');
+            loadAsramaGrades();
+        },
+        error: function(xhr) {
+            swal.close();
+            
+            let errorMessage = 'Gagal menyimpan nilai';
+            
+            if (xhr.status === 422) {
+                // Validation error
+                const response = xhr.responseJSON;
+                if (response && response.errors) {
+                    const errors = Object.values(response.errors).flat();
+                    errorMessage = errors.join('\n');
+                } else if (response && response.message) {
+                    errorMessage = response.message;
+                }
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            
+            swal('Error', errorMessage, 'error');
+            console.error('Save grade error:', xhr);
+        }
+    });
+}
 
     function saveAllAsramaGrades() {
         const gradesData = [];
@@ -1226,35 +1201,38 @@
                 student_id: studentId,
                 month: parseInt(currentFilters.month),
                 academic_year: currentFilters.academic_year,
-                asrama_id: '{{ $ekstrakurikulers->id }}'
+                ekstrakurikuler_id: '{{ $ekstrakurikulers->id }}'
             };
             
-            // Get all editable fields
-            const fields = [
-                'sholat_tahajud', 'sholat_dhuha', 'sholat_syuruq', 'sunnah_rawatib',
-                'puasa', 'dzikir_pagi_petang', 'adab_berbicara', 'adab_bersikap',
-                'kejujuran', 'waktu_tidur', 'pelaksanaan_piket', 'kegiatan_mahad',
-                'jasmani_penampilan', 'kerapian_lemari', 'kerapian_ranjang',
-                'bahasa_arab', 'bahasa_inggris', 'catatan'
-            ];
+            // Get keaktifan and keterampilan values
+            const keaktifanCell = row.find('td[data-field="keaktifan"]');
+            const keterampilanCell = row.find('td[data-field="keterampilan"]');
             
+            const keaktifanValue = getNumericValueFromCell(keaktifanCell);
+            const keterampilanValue = getNumericValueFromCell(keterampilanCell);
+            
+            // Auto-calculate nilai_rapor
+            let nilaiRaporValue = null;
+            if (keaktifanValue !== null && keterampilanValue !== null) {
+                nilaiRaporValue = Math.round((keaktifanValue + keterampilanValue) / 2);
+            }
+            
+            // Set the calculated values
+            gradeData.keaktifan = keaktifanValue;
+            gradeData.keterampilan = keterampilanValue;
+            gradeData.nilai_rapor = nilaiRaporValue;
+            
+            // Get capaian_kompetensi
+            const capaianCell = row.find('td[data-field="capaian_kompetensi"]');
+            const capaianValue = capaianCell.text().trim();
+            gradeData.capaian_kompetensi = capaianValue === '-' ? '' : capaianValue;
+            
+            // Check if there are any meaningful values
             let hasValues = false;
-            fields.forEach(function(field, index) {
-                const cellIndex = index + 3; // Start from column 3 (after No, Name, NISN)
-                const cell = row.find(`td:eq(${cellIndex})`);
-                let cellValue = cell.text().trim();
-
-                if (field === 'catatan') {
-                    gradeData[field] = cellValue === '-' ? '' : cellValue;
-                    if (cellValue && cellValue !== '-') hasValues = true;
-                } else {
-                    const numValue = parseInt(cellValue) || null;
-                    gradeData[field] = numValue;
-                    if (numValue !== null && numValue > 0) {
-                        hasValues = true;
-                    }
-                }
-            });
+            if (keaktifanValue !== null || keterampilanValue !== null || 
+                (capaianValue && capaianValue !== '-')) {
+                hasValues = true;
+            }
             
             if (hasValues) {
                 gradesData.push(gradeData);
@@ -1270,7 +1248,7 @@
         // Show loading
         swal({
             title: 'Menyimpan Data...',
-            text: `Menyimpan ${gradesData.length} data nilai asrama`,
+            text: `Menyimpan ${gradesData.length} data nilai ekstrakurikuler`,
             buttons: false,
             closeOnClickOutside: false,
             closeOnEsc: false,
@@ -1278,7 +1256,7 @@
         });
 
         $.ajax({
-            url: '{{ route("asrama.bulk-update-grades") }}',
+            url: '{{ route("ekstrakurikuler.bulk-update-grades") }}',
             method: 'POST',
             data: {
                 grades: gradesData,
@@ -1294,7 +1272,7 @@
                 if (response.success) {
                     swal({
                         title: 'Berhasil!',
-                        text: response.message || 'Semua nilai asrama berhasil disimpan',
+                        text: response.message || 'Semua nilai ekstrakurikuler berhasil disimpan',
                         icon: 'success',
                         timer: 3000,
                         buttons: false
@@ -1310,12 +1288,15 @@
                 swal.close();
                 console.error('Bulk update error:', xhr);
                 
-                let errorMessage = 'Gagal menyimpan nilai asrama';
+                let errorMessage = 'Gagal menyimpan nilai ekstrakurikuler';
                 
                 try {
                     const errorResponse = JSON.parse(xhr.responseText);
                     if (errorResponse.message) {
                         errorMessage = errorResponse.message;
+                    }
+                    if (errorResponse.errors) {
+                        console.log('Validation errors:', errorResponse.errors);
                     }
                 } catch (parseError) {
                     console.error('Error parsing response:', parseError);
@@ -1341,7 +1322,7 @@
         }).then((isConfirm) => {
             if (isConfirm) {
                 $.ajax({
-                    url: `{{ url('asrama/grades') }}/${gradeId}`,
+                    url: `{{ url('ekstrakurikuler/grades') }}/${gradeId}`,
                     method: 'DELETE',
                     data: {
                         _token: $('meta[name="csrf-token"]').attr('content')
@@ -1374,7 +1355,7 @@
     // Tab switching handler
     $('#nilai-tab').on('shown.bs.tab', function () {
         if (!currentFilters.academic_year) {
-            currentFilters.academic_year = '{{ date("Y") }}/{{ date("Y") + 1 }}';
+            currentFilters.academic_year = '{{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}';
             $('#academicYearFilter').val(currentFilters.academic_year);
         }
         // Set default bulan saat tab dibuka
