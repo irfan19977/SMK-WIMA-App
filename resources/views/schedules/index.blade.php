@@ -254,6 +254,31 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="semester">Semester <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="semester" name="semester" required>
+                                        <option value="">Pilih Semester</option>
+                                            <option value="Ganjil">Ganjil</option>
+                                            <option value="Genap">Genap</option>
+                                    </select>
+                                    <div class="invalid-feedback d-none" id="semester-error"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="academicYearFilter">Tahun Akademik <span class="text-danger">*</span></label>
+                                    <select id="academicYearFilter" class="form-control">
+                                        <option value="">Pilih Tahun Akademik</option>
+                                        @foreach(App\Helpers\AcademicYearHelper::generateAcademicYears(2, 2) as $year)
+                                            <option value="{{ $year }}" {{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() == $year ? 'selected' : '' }}>{{ $year }}</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="invalid-feedback d-none" id="teacher_id-error"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>

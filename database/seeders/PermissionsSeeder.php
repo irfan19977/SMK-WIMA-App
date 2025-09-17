@@ -36,6 +36,7 @@ class PermissionsSeeder extends Seeder
             'student-grades.index', 'student-grades.create', 'student-grades.edit',
             'tahfiz.index', 'tahfiz.edit',
             'asrama.index', 'asrama.create', 'asrama.edit',
+            'ekstrakurikuler.index', 'ekstrakurikuler.create', 'ekstrakurikuler.edit'
         ];
 
         // Buat semua permissions
@@ -67,6 +68,7 @@ class PermissionsSeeder extends Seeder
                 'student-grades.index', 'student-grades.create', 'student-grades.edit',
                 'tahfiz.index', 'tahfiz.edit',
                 'asrama.index', 'asrama.create', 'asrama.edit',
+                'ekstrakurikuler.index', 'ekstrakurikuler.create', 'ekstrakurikuler.edit',
             ],
             
             'teacher' => [
@@ -92,8 +94,7 @@ class PermissionsSeeder extends Seeder
             'parent' => [
                 // Parent dapat melihat data anak dan pengumuman
                 'announcements.index',
-                'students.index', // hanya melihat data anak sendiri
-                'schedules.index',
+                'classes.index',
                 'attendances.index', // hanya melihat absensi anak sendiri
             ]
         ];

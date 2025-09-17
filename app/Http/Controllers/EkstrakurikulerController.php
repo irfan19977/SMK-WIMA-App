@@ -13,13 +13,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class EkstrakurikulerController extends Controller
 {
     use AuthorizesRequests;
     public function index(Request $request)
     {
-        $this->authorize('asrama.index');
+        $this->authorize('ekstrakurikuler.index');
         $teachers = Teacher::with('user')->get();
         
         // Tambahkan eager loading untuk teacher
@@ -280,7 +281,6 @@ public function getGrades(Request $request, $ekstrakurikulerId)
         ]);
 
     } catch (\Exception $e) {
-        \Log::error('Error loading ekstrakurikuler grades: ' . $e->getMessage());
         
         return response()->json([
             'success' => false,
@@ -339,8 +339,8 @@ public function storeGrade(Request $request)
             'keterampilan' => $request->keterampilan,
             'nilai_rapor' => $request->nilai_rapor,
             'capaian_kompetensi' => $request->capaian_kompetensi,
-            'created_by' => auth()->user()->name ?? 'System',
-            'updated_by' => auth()->user()->name ?? 'System',
+            'created_by' => Auth::user()->name ?? 'System',
+            'updated_by' => Auth::user()->name ?? 'System',
         ];
 
         if ($existingGrade) {
@@ -354,7 +354,7 @@ public function storeGrade(Request $request)
             $message = 'Nilai ekstrakurikuler berhasil diperbarui';
         } else {
             // Create new grade
-            $gradeData['id'] = \Str::uuid();
+            $gradeData['id'] = Str::uuid();
             $gradeData['created_at'] = now();
             $gradeData['updated_at'] = now();
             
@@ -369,7 +369,6 @@ public function storeGrade(Request $request)
         ]);
 
     } catch (\Exception $e) {
-        \Log::error('Error storing ekstrakurikuler grade: ' . $e->getMessage());
         
         return response()->json([
             'success' => false,
@@ -414,7 +413,7 @@ public function updateGrade(Request $request, $gradeId)
             'keterampilan' => $request->keterampilan,
             'nilai_rapor' => $request->nilai_rapor,
             'capaian_kompetensi' => $request->capaian_kompetensi,
-            'updated_by' => auth()->user()->name ?? 'System',
+            'updated_by' => Auth::user()->name ?? 'System',
             'updated_at' => now(),
         ];
 
@@ -427,9 +426,7 @@ public function updateGrade(Request $request, $gradeId)
             'message' => 'Nilai ekstrakurikuler berhasil diperbarui'
         ]);
 
-    } catch (\Exception $e) {
-        \Log::error('Error updating ekstrakurikuler grade: ' . $e->getMessage());
-        
+    } catch (\Exception $e) {        
         return response()->json([
             'success' => false,
             'message' => 'Gagal memperbarui nilai ekstrakurikuler',
@@ -491,7 +488,7 @@ public function bulkUpdateGrades(Request $request)
                 'keterampilan' => $gradeData['keterampilan'] ?? null,
                 'nilai_rapor' => $gradeData['nilai_rapor'] ?? null,
                 'capaian_kompetensi' => $gradeData['capaian_kompetensi'] ?? '',
-                'updated_by' => auth()->user()->name ?? 'System',
+                'updated_by' => Auth::user()->name ?? 'System',
             ];
 
             if ($existingGrade) {
@@ -505,8 +502,8 @@ public function bulkUpdateGrades(Request $request)
                 $updatedCount++;
             } else {
                 // Create new grade
-                $data['id'] = \Str::uuid();
-                $data['created_by'] = auth()->user()->name ?? 'System';
+                $data['id'] = Str::uuid();
+                $data['created_by'] = Auth::user()->name ?? 'System';
                 $data['created_at'] = now();
                 $data['updated_at'] = now();
                 
@@ -530,7 +527,6 @@ public function bulkUpdateGrades(Request $request)
 
     } catch (\Exception $e) {
         DB::rollBack();
-        \Log::error('Error bulk updating ekstrakurikuler grades: ' . $e->getMessage());
         
         return response()->json([
             'success' => false,
@@ -566,7 +562,6 @@ public function deleteGrade($gradeId)
         ]);
 
     } catch (\Exception $e) {
-        \Log::error('Error deleting ekstrakurikuler grade: ' . $e->getMessage());
         
         return response()->json([
             'success' => false,

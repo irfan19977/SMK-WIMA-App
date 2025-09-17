@@ -67,6 +67,11 @@ class Student extends Model
         return $this->hasMany(EkstrakurikulerAssign::class, 'student_id');
     }
 
+    public function lessonAttendances()
+    {
+        return $this->hasMany(Lesson::class, 'student_id');
+    }
+
     /**
      * Check if student has face registered
      */

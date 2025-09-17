@@ -1,640 +1,981 @@
 @extends('layouts.app')
 
 @section('content')
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Manajemen Absensi Mata Pelajaran</h4>
+            </div>
+            <div class="card-body">
+                <!-- Filter Section -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label for="kelasFilter" class="form-label">Filter Kelas:</label>
+                        <select id="kelasFilter" class="form-control">
+                            <option value="">Pilih Kelas</option>
+                            @foreach($classes as $class)
+                                <option value="{{ $class->id }}" data-name="{{ $class->name }}">{{ $class->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="matpelFilter" class="form-label">Filter Mata Pelajaran:</label>
+                        <select id="matpelFilter" class="form-control" disabled>
+                            <option value="">Pilih Mata Pelajaran</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="tanggalFilter" class="form-label">Tanggal:</label>
+                        <input type="date" id="tanggalFilter" class="form-control" disabled value="{{ date('Y-m-d') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="academicYearFilter" class="form-label">Tahun Akademik:</label>
+                        <select id="academicYearFilter" class="form-control">
+                            <option value="">Pilih Tahun Akademik</option>
+                            @foreach(App\Helpers\AcademicYearHelper::generateAcademicYears(2, 2) as $year)
+                                <option value="{{ $year }}" {{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() == $year ? 'selected' : '' }}>{{ $year }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
 
-<div class="card">
-    <div class="card-header">
-        <h4>Absensi Pelajaran</h4>
-        <div class="card-header-action">
-            @can('lesson_attendances.create')    
-                <div class="input-group">
-                    <button class="btn btn-primary" id="btn-create" data-toggle="tooltip"
-                        style="margin-right: 10px;" title="Tambah Data">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                    <input type="text" class="form-control" placeholder="Cari Siswa/Kelas/Pelajaran/Tanggal" 
-                        wire:model.debounce.500ms="search" autocomplete="off">
-                    <div class="input-group-btn">
-                        <button type="button" class="btn btn-primary" style="margin-top: 1px;">
-                            <i class="fas fa-search"></i>
+                <!-- Action Buttons -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <button type="button" id="resetFilters" class="btn btn-secondary">
+                            <i class="fas fa-sync-alt"></i> Reset Filter
+                        </button>
+                        <button type="button" id="editModeBtn" class="btn btn-warning" style="display: none;">
+                            <i class="fas fa-edit"></i> Mode Edit
+                        </button>
+                        <button type="button" id="saveAllBtn" class="btn btn-primary" style="display: none;">
+                            <i class="fas fa-save"></i> Simpan Semua
+                        </button>
+                        <button type="button" id="hadirkanSemuaBtn" class="btn btn-success" style="display: none;">
+                            <i class="fas fa-check-double"></i> Hadirkan Semua
+                        </button>
+                        <button type="button" id="alphakanSemuaBtn" class="btn btn-danger" style="display: none;">
+                            <i class="fas fa-times"></i> Alpha Semua
                         </button>
                     </div>
                 </div>
-            @endcan
+
+                <!-- Status Info -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div id="statusInfo" class="alert alert-info" style="display: none;">
+                            <strong>Status:</strong> <span id="statusText"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table id="mainTable" class="table table-striped table-hover">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th width="8%">No Absen</th>
+                                <th width="25%">Nama Siswa</th>
+                                <th width="15%">NISN</th>
+                                <th width="12%">Jam Masuk</th>
+                                <th width="15%">Status Kehadiran</th>
+                                <th width="15%">Keterangan</th>
+                                <th width="10%">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Data akan dimuat via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div id="loadingIndicator" class="text-center py-4" style="display: none;">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <p class="mt-2">Memuat data...</p>
+                </div>
+
+                <!-- No Data Indicator -->
+                <div id="noDataIndicator" class="text-center py-4" style="display: none;">
+                    <i class="fas fa-inbox fa-3x text-muted"></i>
+                    <p class="mt-2 text-muted">Tidak ada data untuk ditampilkan</p>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="card-body p-0">
-        @livewire('lesson-attendance-table')
     </div>
 </div>
 
-<!-- Modal untuk Create/Edit -->
-<div class="modal fade" id="lessonAttendanceModal" tabindex="-1" role="dialog" aria-labelledby="lessonAttendanceModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+<!-- Modal for Add/Edit Attendance -->
+<div class="modal fade" id="attendanceModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="lessonAttendanceModalLabel">Tambah Data Absensi Pelajaran</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <h5 class="modal-title" id="attendanceModalTitle">Tambah/Edit Absensi</h5>
+                <button type="button" class="close" data-dismiss="modal">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form id="lessonAttendanceForm">
-                @csrf
-                <div class="modal-body">
-                    <!-- NISN Search Section - Only show in create mode -->
-                    <div id="nisn-search-section">
-                        <div class="form-group">
-                            <label for="nisn">NISN <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="nisn" name="nisn" 
-                                       placeholder="Masukkan NISN Siswa" autocomplete="off">
-                                <div class="input-group-append">
-                                    <button type="button" class="btn btn-primary" id="findStudentBtn">
-                                        <i class="fas fa-search"></i> Cari Siswa
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="invalid-feedback d-none" id="nisn-error"></div>
-                            <small class="text-muted">*Masukkan NISN maka nama, kelas, dan mata pelajaran akan terisi otomatis</small>
-                        </div>
-                        <hr>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="student_id">Siswa <span class="text-danger">*</span></label>
-                                <select class="form-control" id="student_id" name="student_id" required>
-                                    <option value="">-- Pilih Siswa --</option>
-                                </select>
-                                <div class="invalid-feedback d-none" id="student_id-error"></div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="class_id">Kelas <span class="text-danger">*</span></label>
-                                <select class="form-control" id="class_id" name="class_id" required>
-                                    <option value="">-- Pilih Kelas --</option>
-                                </select>
-                                <div class="invalid-feedback d-none" id="class_id-error"></div>
-                            </div>
-                        </div>
-                    </div>
-
+            <div class="modal-body">
+                <form id="attendanceForm">
+                    @csrf
+                    <input type="hidden" id="attendanceId" name="attendance_id">
+                    <input type="hidden" id="studentId" name="student_id">
+                    <input type="hidden" id="classId" name="class_id">
+                    <input type="hidden" id="subjectId" name="subject_id">
+                    <input type="hidden" id="attendanceDate" name="date">
+                    <input type="hidden" id="academicYear" name="academic_year">
+                    
                     <div class="form-group">
-                        <label for="subject_id">Mata Pelajaran <span class="text-danger">*</span></label>
-                        <select class="form-control" id="subject_id" name="subject_id" required>
-                            <option value="">-- Pilih Mata Pelajaran --</option>
-                        </select>
-                        <div class="invalid-feedback d-none" id="subject_id-error"></div>
+                        <label>Nama Siswa</label>
+                        <input type="text" id="studentName" class="form-control" readonly>
                     </div>
                     
                     <div class="form-group">
-                        <label for="date">Tanggal <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" id="date" name="date" required>
-                        <div class="invalid-feedback d-none" id="date-error"></div>
+                        <label>NISN</label>
+                        <input type="text" id="studentNisn" class="form-control" readonly>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-12">
-                            <h6 class="text-primary">Absensi Masuk Pelajaran</h6>
-                            <div class="form-group">
-                                <label for="check_in">Jam Masuk Pelajaran</label>
-                                <input type="time" class="form-control" id="check_in" name="check_in">
-                                <div class="invalid-feedback d-none" id="check_in-error"></div>
-                                <small class="text-muted">*Kosongkan jika ingin menggunakan waktu saat ini</small>
-                            </div>
-                            <!-- Status Masuk - Hanya tampil saat edit -->
-                            <div class="form-group">
-                                <label for="check_in_status">Status Masuk</label>
-                                <select class="form-control" id="check_in_status" name="check_in_status">
-                                    <option value="tepat">Tepat Waktu</option>
-                                    <option value="terlambat">Terlambat</option>
-                                    <option value="izin">Izin</option>
-                                    <option value="sakit">Sakit</option>
-                                    <option value="alpha">Alpha</option>
-                                </select>
-                                <div class="invalid-feedback d-none" id="check_in_status-error"></div>
-                            </div>
-                        </div>
+                    <div class="form-group">
+                        <label for="checkIn">Jam Masuk <span class="text-muted">(Opsional)</span></label>
+                        <input type="time" name="check_in" id="checkIn" class="form-control">
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary" id="submitBtn">Simpan</button>
-                </div>
-            </form>
+
+                    <div class="form-group">
+                        <label for="checkInStatus">Status Kehadiran</label>
+                        <select name="check_in_status" id="checkInStatus" class="form-control" required>
+                            <option value="">Pilih Status</option>
+                            <option value="hadir">Hadir</option>
+                            <option value="terlambat">Terlambat</option>
+                            <option value="izin">Izin</option>
+                            <option value="sakit">Sakit</option>
+                            <option value="alpha">Alpha</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" id="saveAttendanceBtn" class="btn btn-primary">Simpan</button>
+            </div>
         </div>
     </div>
 </div>
-
 @endsection
 
-@push('scripts')
-<script>
-    // Global variables
-    let isEditMode = false;
-    let editId = null;
-
-    // Status configuration
-    const statusConfig = {
-        'tepat': { class: 'success', text: 'Tepat Waktu' },
-        'terlambat': { class: 'warning', text: 'Terlambat' },
-        'izin': { class: 'info', text: 'Izin' },
-        'sakit': { class: 'secondary', text: 'Sakit' },
-        'alpha': { class: 'danger', text: 'Alpha' }
-    };
-
-    // Utility functions
-    function formatTime(time) {
-        return time ? new Date(`1970-01-01T${time}`).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'}) : null;
-    }
-
-    function formatDate(date) {
-        const d = new Date(date);
-        return {
-            day: d.toLocaleDateString('id-ID', { weekday: 'long' }),
-            formatted: d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
-        };
-    }
-
-    function showAlert(type, title, message) {
-        swal({
-            title: title,
-            text: message,
-            icon: type,
-            timer: type === 'success' ? 3000 : undefined,
-            buttons: type === 'success' ? false : true
-        });
-    }
-
-    // Function to toggle status fields visibility
-    function toggleStatusFields(show) {
-        const statusFields = document.querySelectorAll('.status-field');
-        statusFields.forEach(field => {
-            field.style.display = show ? 'block' : 'none';
-        });
-    }
-
-    // Function to toggle NISN search section
-    function toggleNisnSearch(show) {
-        const nisnSection = document.getElementById('nisn-search-section');
-        nisnSection.style.display = show ? 'block' : 'none';
-    }
-
-    // Function to load subjects based on class
-    function loadSubjectsByClass(classId) {
-        if (!classId) {
-            const subjectSelect = document.getElementById('subject_id');
-            subjectSelect.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
-            return;
+@push('styles')
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="{{ asset('backend/assets/bundles/datatables/datatables.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('backend/assets/bundles/datatables/DataTables-1.10.16/css/dataTables.bootstrap4.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('backend/assets/bundles/datatables/Select-1.2.4/css/select.bootstrap4.min.css') }}">
+    <style>
+        .status-badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
         }
-
-        fetch(`/lesson-attendances/get-subjects-by-class/${classId}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            const subjectSelect = document.getElementById('subject_id');
-            subjectSelect.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
-            
-            if (data.success && data.subjects) {
-                data.subjects.forEach(subject => {
-                    subjectSelect.innerHTML += `<option value="${subject.id}">${subject.name}</option>`;
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Error loading subjects:', error);
-        });
-    }
-
-    // Function to find student by NISN - Fixed Version
-function findStudentByNisn() {
-    const nisn = document.getElementById('nisn').value.trim();
-    
-    if (!nisn) {
-        showAlert('warning', 'Peringatan', 'Silakan masukkan NISN');
-        return;
-    }
-
-    // Show loading state
-    const findBtn = document.getElementById('findStudentBtn');
-    const originalText = findBtn.innerHTML;
-    findBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mencari...';
-    findBtn.disabled = true;
-
-    // Clear previous selections
-    clearFormSelections();
-
-    fetch(`/lesson-attendances/find-by-nisn/${nisn}`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
-    })
-    .then(response => {
-        // Check if response is ok
-        if (!response.ok) {
-            return response.json().then(errorData => {
-                throw new Error(errorData.message || `HTTP Error: ${response.status}`);
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Response data:', data); // For debugging
+        .status-hadir { background-color: #d4edda; color: #155724; }
+        .status-terlambat { background-color: #fff3cd; color: #856404; }
+        .status-izin { background-color: #cce5ff; color: #004085; }
+        .status-sakit { background-color: #f8d7da; color: #721c24; }
+        .status-alpha { background-color: #f5c6cb; color: #721c24; }
         
-        if (data.success && data.data) {
-            const studentData = data.data;
-            
-            // Populate student select
-            const studentSelect = document.getElementById('student_id');
-            studentSelect.innerHTML = `<option value="${studentData.id}" selected>${studentData.name}</option>`;
-            
-            // Populate class select
-            const classSelect = document.getElementById('class_id');
-            // First try to find existing option
-            let classFound = false;
-            for (let option of classSelect.options) {
-                if (option.value == studentData.class_id) {
-                    option.selected = true;
-                    classFound = true;
-                    break;
-                }
-            }
-            
-            // If class not found in existing options, add it
-            if (!classFound) {
-                const classOption = document.createElement('option');
-                classOption.value = studentData.class_id;
-                classOption.text = studentData.class_name;
-                classOption.selected = true;
-                classSelect.appendChild(classOption);
-            }
-            
-            // Load subjects for the selected class and set the current subject
-            loadSubjectsByClass(studentData.class_id, () => {
-                // Callback to set subject after subjects are loaded
-                const subjectSelect = document.getElementById('subject_id');
-                let subjectFound = false;
+        .editable-cell {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .editable-cell:hover {
+            background-color: #f8f9fa;
+        }
+        .editing {
+            background-color: #fff3cd !important;
+        }
+    </style>
+@endpush
+
+@push('scripts')
+    <!-- DataTables JS -->
+    <script src="{{ asset('backend/assets/bundles/datatables/datatables.min.js') }}"></script>
+    <script src="{{ asset('backend/assets/bundles/datatables/DataTables-1.10.16/js/dataTables.bootstrap4.min.js') }}"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function() {
+            let currentMode = 'view'; // view, edit
+            let currentFilters = {
+                class_id: '',
+                subject_id: '',
+                date: '{{ date("Y-m-d") }}',
+                academic_year: '{{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}'
+            };
+
+            // Initialize DataTable
+            const table = $('#mainTable').DataTable({
+                "responsive": true,
+                "lengthChange": false,
+                "autoWidth": false,
+                "searching": false,
+                "paging": false,
+                "info": false,
+                "ordering": false
+            });
+
+            // Status mapping for display
+            const statusMap = {
+                'hadir': { text: 'Hadir', class: 'status-hadir', icon: 'fas fa-check' },
+                'terlambat': { text: 'Terlambat', class: 'status-terlambat', icon: 'fas fa-clock' },
+                'izin': { text: 'Izin', class: 'status-izin', icon: 'fas fa-hand-paper' },
+                'sakit': { text: 'Sakit', class: 'status-sakit', icon: 'fas fa-thermometer-half' },
+                'alpha': { text: 'Alpha', class: 'status-alpha', icon: 'fas fa-times' }
+            };
+
+            // Auto input shortcut mappings
+            const statusShortcuts = {
+                'a': 'alpha',
+                'h': 'hadir',
+                'i': 'izin',
+                's': 'sakit',
+                't': 'terlambat'
+            };
+
+            // Filter Events
+            $('#kelasFilter').change(function() {
+                const classId = $(this).val();
+                const className = $(this).find('option:selected').data('name');
                 
-                for (let option of subjectSelect.options) {
-                    if (option.value == studentData.subject_id) {
-                        option.selected = true;
-                        subjectFound = true;
-                        break;
+                currentFilters.class_id = classId;
+                
+                // Reset dependent fields when class changes
+                $('#matpelFilter').empty().append('<option value="">Pilih Mata Pelajaran</option>').prop('disabled', true);
+                $('#tanggalFilter').prop('disabled', true).val('{{ date("Y-m-d") }}');
+                currentFilters.subject_id = '';
+                currentFilters.date = '{{ date("Y-m-d") }}';
+                
+                hideActionButtons();
+                clearTable();
+                $('#statusInfo').hide();
+                
+                if (classId) {
+                    updateStatus(`Memuat mata pelajaran untuk kelas: ${className}...`);
+                    loadStudents();
+                    loadSubjectsByClass(classId);
+                } else {
+                    resetView();
+                }
+            });
+
+            $('#matpelFilter').change(function() {
+                const subjectId = $(this).val();
+                const subjectName = $(this).find('option:selected').data('name');
+                
+                currentFilters.subject_id = subjectId;
+                
+                if (subjectId && currentFilters.class_id) {
+                    updateStatus(`Mata pelajaran: ${subjectName} - Tanggal: ${formatDate(currentFilters.date)}`);
+                    $('#tanggalFilter').prop('disabled', false);
+                    
+                    // Trigger logic untuk check apakah semua filter sudah lengkap
+                    checkAndShowButtons();
+                    loadStudents();
+                } else {
+                    $('#tanggalFilter').prop('disabled', true);
+                    hideActionButtons();
+                    if (currentFilters.class_id) {
+                        loadStudents();
                     }
                 }
+            });
+
+            // Tambahkan fungsi helper untuk mengecek kelengkapan filter
+            function checkAndShowButtons() {
+                if (currentFilters.class_id && currentFilters.subject_id && currentFilters.date) {
+                    const className = $('#kelasFilter').find('option:selected').data('name');
+                    const subjectName = $('#matpelFilter').find('option:selected').data('name');
+                    const dateText = formatDate(currentFilters.date);
+                    
+                    updateStatus(`${className} - ${subjectName} - ${dateText} - Mode CRUD aktif`);
+                    showActionButtons();
+                    loadAttendance();
+                }
+            }
+
+            $('#tanggalFilter').change(function() {
+                const date = $(this).val();
+                currentFilters.date = date;
+                checkAndShowButtons();
+            });
+
+            $('#academicYearFilter').change(function() {
+                currentFilters.academic_year = $(this).val();
                 
-                // If subject not found, add it
-                if (!subjectFound) {
-                    const subjectOption = document.createElement('option');
-                    subjectOption.value = studentData.subject_id;
-                    subjectOption.text = studentData.subject_name;
-                    subjectOption.selected = true;
-                    subjectSelect.appendChild(subjectOption);
+                if (currentFilters.class_id) {
+                    loadSubjectsByClass(currentFilters.class_id);
+                    $('#matpelFilter').val('').prop('disabled', true);
+                    $('#tanggalFilter').prop('disabled', true).val('{{ date("Y-m-d") }}');
+                    currentFilters.subject_id = '';
+                    currentFilters.date = '{{ date("Y-m-d") }}';
+                    hideActionButtons();
+                    loadStudents();
+                }
+                
+                if (currentFilters.class_id && currentFilters.subject_id && currentFilters.date) {
+                    loadAttendance();
+                } else if (currentFilters.class_id) {
+                    loadStudents();
                 }
             });
-            
-            // Set current date
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('date').value = today;
-            
-            // Show success message with schedule info
-            const scheduleInfo = studentData.current_schedule;
-            const message = `Siswa ditemukan: ${studentData.name}\n` +
-                          `Kelas: ${studentData.class_name}\n` +
-                          `Mata Pelajaran: ${studentData.subject_name}\n` +
-                          `Guru: ${studentData.teacher_name}\n` +
-                          `Waktu: ${scheduleInfo.start_time} - ${scheduleInfo.end_time}`;
-            
-            showAlert('success', 'Berhasil!', message);
-            
-        } else {
-            throw new Error(data.message || 'Data siswa tidak lengkap');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        clearFormSelections();
-        showAlert('error', 'Tidak Ditemukan', error.message);
-    })
-    .finally(() => {
-        // Restore button state
-        findBtn.innerHTML = originalText;
-        findBtn.disabled = false;
-    });
-}
 
-// Helper function to clear form selections
-function clearFormSelections() {
-    const studentSelect = document.getElementById('student_id');
-    const classSelect = document.getElementById('class_id');
-    const subjectSelect = document.getElementById('subject_id');
-    
-    // Reset to default options
-    studentSelect.innerHTML = '<option value="">-- Pilih Siswa --</option>';
-    classSelect.value = '';
-    subjectSelect.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
-}
-
-// Updated loadSubjectsByClass function with callback support
-function loadSubjectsByClass(classId, callback = null) {
-    if (!classId) {
-        const subjectSelect = document.getElementById('subject_id');
-        subjectSelect.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
-        return;
-    }
-
-    fetch(`/lesson-attendances/get-subjects-by-class/${classId}`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        const subjectSelect = document.getElementById('subject_id');
-        subjectSelect.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
-        
-        if (data.success && data.subjects) {
-            data.subjects.forEach(subject => {
-                const option = document.createElement('option');
-                option.value = subject.id;
-                option.text = subject.name;
-                subjectSelect.appendChild(option);
+            // Reset Filters
+            $('#resetFilters').click(function() {
+                resetView();
             });
-        }
-        
-        // Execute callback if provided
-        if (callback && typeof callback === 'function') {
-            callback();
-        }
-    })
-    .catch(error => {
-        console.error('Error loading subjects:', error);
-        if (callback && typeof callback === 'function') {
-            callback();
-        }
-    });
-}
 
-    // CRUD functions
-    function createLessonAttendance() {
-        isEditMode = false;
-        editId = null;
-        
-        fetch('{{ route("lesson-attendances.create") }}', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('lessonAttendanceModalLabel').textContent = data.title;
-                populateSelects(data.students, data.classes, data.subjects);
-                resetForm();
-                toggleStatusFields(false); // Hide status fields for create
-                toggleNisnSearch(true); // Show NISN search for create
-                $('#lessonAttendanceModal').modal('show');
-            }
-        })
-        .catch(() => showAlert('error', 'Gagal', 'Terjadi kesalahan saat memuat data.'));
-    }
+            // Action Buttons
+            $('#editModeBtn').click(function() {
+                toggleEditMode();
+            });
 
-    function editLessonAttendance(id) {
-        isEditMode = true;
-        editId = id;
-        
-        fetch(`{{ url('lesson-attendances') }}/${id}/edit`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('lessonAttendanceModalLabel').textContent = data.title;
-                populateSelects(data.students, data.classes, data.subjects);
-                fillForm(data.lesson_attendance);
-                toggleStatusFields(true); // Show status fields for edit
-                toggleNisnSearch(false); // Hide NISN search for edit
-                $('#lessonAttendanceModal').modal('show');
-            } else {
-                showAlert('error', 'Gagal', data.message || 'Terjadi kesalahan saat memuat data.');
-            }
-        })
-        .catch(() => showAlert('error', 'Gagal', 'Terjadi kesalahan saat memuat data.'));
-    }
+            $('#saveAllBtn').click(function() {
+                saveAllAttendance();
+            });
 
-    function showLessonAttendanceDetail(id) {
-        fetch(`{{ url('lesson-attendances') }}/${id}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            $('#hadirkanSemuaBtn').click(function() {
+                bulkSetStatus('hadir');
+            });
+
+            $('#alphakanSemuaBtn').click(function() {
+                bulkSetStatus('alpha');
+            });
+
+            // Modal Events
+            $('#saveAttendanceBtn').click(function() {
+                saveAttendance();
+            });
+
+            // Functions
+            function updateStatus(message) {
+                $('#statusInfo').show();
+                $('#statusText').text(message);
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const lessonAttendance = data.lesson_attendance;
-                const dateInfo = formatDate(lessonAttendance.date);
-                const detailHtml = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <strong>Nama Siswa:</strong><br>${lessonAttendance.student_name}<br><br>
-                            <strong>Kelas:</strong><br>${lessonAttendance.class_name}<br><br>
-                            <strong>Mata Pelajaran:</strong><br>${lessonAttendance.subject_name}<br><br>
-                            <strong>Tanggal:</strong><br>${dateInfo.day}, ${dateInfo.formatted}
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Jam Masuk:</strong><br>${formatTime(lessonAttendance.check_in) || 'Tidak ada data'}<br><br>
-                            <strong>Status:</strong><br>${statusConfig[lessonAttendance.check_in_status]?.text || 'Tidak ada data'}
-                        </div>
+
+            function resetView() {
+                currentFilters = {
+                    class_id: '',
+                    subject_id: '',
+                    date: '{{ date("Y-m-d") }}',
+                    academic_year: $('#academicYearFilter').val() || '{{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}'
+                };
+                
+                $('#kelasFilter').val('');
+                $('#matpelFilter').empty().append('<option value="">Pilih Mata Pelajaran</option>').prop('disabled', true);
+                $('#tanggalFilter').prop('disabled', true).val('{{ date("Y-m-d") }}');
+                
+                $('#statusInfo').hide();
+                hideActionButtons();
+                clearTable();
+                currentMode = 'view';
+            }
+
+            function showActionButtons() {
+                $('#editModeBtn').show();
+                $('#hadirkanSemuaBtn').show();
+                $('#alphakanSemuaBtn').show();
+            }
+
+            function hideActionButtons() {
+                $('#editModeBtn').hide();
+                $('#saveAllBtn').hide();
+                $('#hadirkanSemuaBtn').hide();
+                $('#alphakanSemuaBtn').hide();
+                currentMode = 'view';
+            }
+
+            function clearTable() {
+                table.clear().draw();
+                $('#loadingIndicator').hide();
+                $('#noDataIndicator').hide();
+            }
+
+            function showLoading() {
+                $('#loadingIndicator').show();
+                $('#noDataIndicator').hide();
+                clearTable();
+            }
+
+            function hideLoading() {
+                $('#loadingIndicator').hide();
+            }
+
+            function showNoData() {
+                $('#noDataIndicator').show();
+                $('#loadingIndicator').hide();
+            }
+
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                const options = { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                };
+                return date.toLocaleDateString('id-ID', options);
+            }
+
+            function loadSubjectsByClass(classId) {
+                if (!classId) return;
+                
+                $.ajax({
+                    url: '{{ route("lesson-attendances.get-subjects-by-class") }}',
+                    method: 'GET',
+                    data: {
+                        class_id: classId,
+                        academic_year: currentFilters.academic_year
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        const $matpelFilter = $('#matpelFilter');
+                        $matpelFilter.empty().append('<option value="">Pilih Mata Pelajaran</option>');
+                        
+                        if (response.data && response.data.length > 0) {
+                            response.data.forEach(function(subject) {
+                                $matpelFilter.append(`
+                                    <option value="${subject.id}" data-name="${subject.name}">
+                                        ${subject.name}
+                                    </option>
+                                `);
+                            });
+                            
+                            $matpelFilter.prop('disabled', false);
+                            
+                            const className = $('#kelasFilter').find('option:selected').data('name');
+                            updateStatus(`Kelas: ${className} - Pilih mata pelajaran (${response.data.length} tersedia)`);
+                        } else {
+                            $matpelFilter.prop('disabled', true);
+                            updateStatus(`Kelas: ${$('#kelasFilter').find('option:selected').data('name')} - Tidak ada mata pelajaran yang dijadwalkan`);
+                        }
+                    },
+                    error: function(xhr) {
+                        console.log('Error loading subjects:', xhr.responseText);
+                        $('#matpelFilter').prop('disabled', true);
+                        updateStatus(`Error: Gagal memuat mata pelajaran untuk kelas ini`);
+                        
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Gagal memuat mata pelajaran untuk kelas ini',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            }
+
+            function loadStudents() {
+                showLoading();
+                
+                $.ajax({
+                    url: '{{ route("lesson-attendances.get-students") }}',
+                    method: 'GET',
+                    data: {
+                        class_id: currentFilters.class_id,
+                        academic_year: currentFilters.academic_year
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        hideLoading();
+                        
+                        if (response.data && response.data.length > 0) {
+                            displayStudents(response.data);
+                        } else {
+                            showNoData();
+                        }
+                    },
+                    error: function(xhr) {
+                        hideLoading();
+                        showNoData();
+                        console.log('Error:', xhr.responseText);
+                        Swal.fire('Error', 'Gagal memuat data siswa', 'error');
+                    }
+                });
+            }
+
+            function loadAttendance() {
+                showLoading();
+                
+                $.ajax({
+                    url: '{{ route("lesson-attendances.get-attendance") }}',
+                    method: 'GET',
+                    data: currentFilters,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        hideLoading();
+                        
+                        if (response.data && response.data.length > 0) {
+                            displayAttendance(response.data);
+                        } else {
+                            showNoData();
+                        }
+                    },
+                    error: function(xhr) {
+                        hideLoading();
+                        showNoData();
+                        console.log('Error:', xhr.responseText);
+                        Swal.fire('Error', 'Gagal memuat data absensi', 'error');
+                    }
+                });
+            }
+
+            function displayStudents(students) {
+                table.clear();
+                
+                students.forEach(function(student, index) {
+                    table.row.add([
+                        student.no_absen || '-',
+                        student.name,
+                        student.nisn,
+                        '-',
+                        '<span class="text-muted">Pilih tanggal untuk input absensi</span>',
+                        '-',
+                        '<span class="text-muted">-</span>'
+                    ]);
+                });
+                
+                table.draw();
+            }
+
+            function displayAttendance(attendances) {
+                table.clear();
+                
+                attendances.forEach(function(attendance, index) {
+                    const row = [
+                        attendance.no_absen || '-',
+                        attendance.student_name,
+                        attendance.student_nisn,
+                        formatCheckIn(attendance.check_in),
+                        formatStatus(attendance.check_in_status),
+                        getStatusDescription(attendance.check_in_status),
+                        generateActionButtons(attendance)
+                    ];
+                    
+                    const addedRow = table.row.add(row);
+                    const rowNode = addedRow.node();
+                    $(rowNode).data('student-id', attendance.student_id);
+                    $(rowNode).attr('data-student-id', attendance.student_id);
+                    $(rowNode).data('attendance-id', attendance.id);
+                });
+                
+                table.draw();
+            }
+
+            function formatCheckIn(checkIn) {
+                if (!checkIn) return '-';
+                return checkIn.substring(0, 5); // HH:MM format
+            }
+
+            function formatStatus(status) {
+                const statusInfo = statusMap[status] || statusMap['alpha'];
+                return `<span class="status-badge ${statusInfo.class}">
+                            <i class="${statusInfo.icon}"></i> ${statusInfo.text}
+                        </span>`;
+            }
+
+            function getStatusDescription(status) {
+                const descriptions = {
+                    'hadir': 'Mengikuti pembelajaran',
+                    'terlambat': 'Datang terlambat',
+                    'izin': 'Tidak hadir dengan izin',
+                    'sakit': 'Tidak hadir karena sakit', 
+                    'alpha': 'Tidak hadir tanpa keterangan'
+                };
+                return descriptions[status] || descriptions['alpha'];
+            }
+
+            function generateActionButtons(attendance) {
+                const attendanceData = {
+                    id: attendance.id || '',
+                    student_id: attendance.student_id,
+                    student_name: attendance.student_name,
+                    student_nisn: attendance.student_nisn,
+                    no_absen: attendance.no_absen,
+                    check_in: attendance.check_in,
+                    check_in_status: attendance.check_in_status,
+                    date: attendance.date,
+                    class_id: attendance.class_id,
+                    subject_id: attendance.subject_id,
+                    academic_year: attendance.academic_year
+                };
+                
+                return `
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-info btn-edit" 
+                                data-attendance='${JSON.stringify(attendanceData).replace(/'/g, "&#39;")}'>
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-danger btn-delete" data-id="${attendance.id || ''}">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 `;
-                
-                swal({
-                    title: "Detail Absensi Pelajaran",
-                    content: { element: "div", attributes: { innerHTML: detailHtml } },
-                    button: "Tutup"
-                });
-            } else {
-                showAlert('error', 'Gagal', data.message || 'Terjadi kesalahan saat memuat data.');
             }
-        })
-        .catch(() => showAlert('error', 'Gagal', 'Terjadi kesalahan saat memuat data.'));
-    }
 
-    // Form functions
-    function populateSelects(students, classes, subjects) {
-        const studentSelect = document.getElementById('student_id');
-        const classSelect = document.getElementById('class_id');
-        const subjectSelect = document.getElementById('subject_id');
-        
-        studentSelect.innerHTML = '<option value="">-- Pilih Siswa --</option>';
-        students.forEach(student => {
-            studentSelect.innerHTML += `<option value="${student.id}">${student.name}</option>`;
-        });
-        
-        classSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
-        classes.forEach(classItem => {
-            classSelect.innerHTML += `<option value="${classItem.id}">${classItem.name}</option>`;
-        });
-
-        subjectSelect.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
-        if (subjects) {
-            subjects.forEach(subject => {
-                subjectSelect.innerHTML += `<option value="${subject.id}">${subject.name}</option>`;
-            });
-        }
-    }
-
-    function fillForm(lessonAttendance) {
-        Object.keys(lessonAttendance).forEach(key => {
-            const element = document.getElementById(key);
-            if (element) element.value = lessonAttendance[key] || '';
-        });
-
-        // Load subjects when editing and class is selected
-        if (lessonAttendance.class_id) {
-            loadSubjectsByClass(lessonAttendance.class_id);
-            // Set timeout to ensure subjects are loaded before setting the value
-            setTimeout(() => {
-                const subjectSelect = document.getElementById('subject_id');
-                if (lessonAttendance.subject_id) {
-                    subjectSelect.value = lessonAttendance.subject_id;
-                }
-            }, 500);
-        }
-    }
-
-    function resetForm() {
-        document.getElementById('lessonAttendanceForm').reset();
-        document.querySelectorAll('.invalid-feedback').forEach(el => {
-            el.classList.add('d-none');
-            el.textContent = '';
-        });
-        document.querySelectorAll('.form-control').forEach(el => {
-            el.classList.remove('is-invalid');
-        });
-    }
-
-    function handleFormSubmit(e) {
-        e.preventDefault();
-        
-        const submitBtn = document.getElementById('submitBtn');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Menyimpan...';
-        submitBtn.disabled = true;
-        
-        const formData = new FormData(e.target);
-        const url = isEditMode ? `{{ url('lesson-attendances') }}/${editId}` : '{{ route("lesson-attendances.store") }}';
-        
-        if (isEditMode) formData.append('_method', 'PUT');
-        
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showAlert('success', 'Berhasil!', data.message);
-                setTimeout(() => {
-                    $('#lessonAttendanceModal').modal('hide');
-                    // Refresh Livewire component
-                    window.livewire.emit('refreshTable');
-                }, 1000);
-            } else {
-                if (data.errors) {
-                    Object.keys(data.errors).forEach(field => {
-                        const errorElement = document.getElementById(`${field}-error`);
-                        const inputElement = document.getElementById(field);
-                        
-                        if (errorElement && inputElement) {
-                            errorElement.textContent = data.errors[field][0];
-                            errorElement.classList.remove('d-none');
-                            inputElement.classList.add('is-invalid');
-                        }
-                    });
+            function toggleEditMode() {
+                if (currentMode === 'view') {
+                    currentMode = 'edit';
+                    $('#editModeBtn').text('Mode View').removeClass('btn-warning').addClass('btn-info');
+                    $('#saveAllBtn').show();
+                    makeTableEditable();
                 } else {
-                    showAlert('error', 'Gagal', data.message || 'Terjadi kesalahan saat menyimpan data.');
+                    currentMode = 'view';
+                    $('#editModeBtn').text('Mode Edit').removeClass('btn-info').addClass('btn-warning');
+                    $('#saveAllBtn').hide();
+                    makeTableReadonly();
                 }
             }
-        })
-        .catch(() => showAlert('error', 'Gagal', 'Terjadi kesalahan saat menyimpan data.'))
-        .finally(() => {
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-        });
-    }
 
-    // Event listeners
-    document.addEventListener('DOMContentLoaded', function() {
-        // Button events
-        document.getElementById('btn-create').addEventListener('click', createLessonAttendance);
-        document.getElementById('lessonAttendanceForm').addEventListener('submit', handleFormSubmit);
-        document.getElementById('findStudentBtn').addEventListener('click', findStudentByNisn);
-
-        // Class change event to load subjects
-        document.getElementById('class_id').addEventListener('change', function() {
-            const classId = this.value;
-            loadSubjectsByClass(classId);
-        });
-
-        // Allow Enter key to trigger NISN search
-        document.getElementById('nisn').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                findStudentByNisn();
+            function makeTableEditable() {
+                $('#mainTable tbody tr').each(function() {
+                    const row = $(this);
+                    
+                    // Make check_in time column editable (column 3)
+                    const checkInCell = row.find('td:eq(3)');
+                    const currentCheckIn = checkInCell.text().trim();
+                    checkInCell.html(`<input type="time" class="form-control form-control-sm check-in-input" value="${currentCheckIn !== '-' ? currentCheckIn : ''}">`);
+                    
+                    // Make status column editable (column 4)
+                    const statusCell = row.find('td:eq(4)');
+                    const currentStatus = getCurrentStatusFromCell(statusCell);
+                    statusCell.html(generateStatusSelect(currentStatus));
+                });
+                
+                updateStatus('Mode Edit - Anda dapat mengubah jam masuk dan status kehadiran dengan mengklik pada sel');
             }
-        });
 
-        // Clear validation on input change
-        document.querySelectorAll('#lessonAttendanceForm input, #lessonAttendanceForm select').forEach(element => {
-            element.addEventListener('input', function() {
-                this.classList.remove('is-invalid');
-                const errorElement = document.getElementById(`${this.name}-error`);
-                if (errorElement) {
-                    errorElement.classList.add('d-none');
-                    errorElement.textContent = '';
+            function makeTableReadonly() {
+                // Reload attendance to restore original display
+                loadAttendance();
+                
+                const className = $('#kelasFilter').find('option:selected').data('name');
+                const subjectName = $('#matpelFilter').find('option:selected').data('name'); 
+                const dateText = formatDate($('#tanggalFilter').val());
+                updateStatus(`${className} - ${subjectName} - ${dateText} - Mode CRUD aktif`);
+            }
+
+            function getCurrentStatusFromCell(cell) {
+                const statusText = cell.text().toLowerCase();
+                if (statusText.includes('hadir')) return 'hadir';
+                if (statusText.includes('terlambat')) return 'terlambat';
+                if (statusText.includes('izin')) return 'izin';
+                if (statusText.includes('sakit')) return 'sakit';
+                return 'alpha';
+            }
+
+            function generateStatusSelect(selectedStatus) {
+                let options = '';
+                Object.keys(statusMap).forEach(function(status) {
+                    const selected = status === selectedStatus ? 'selected' : '';
+                    options += `<option value="${status}" ${selected}>${statusMap[status].text}</option>`;
+                });
+                
+                return `<select class="form-control form-control-sm status-select">${options}</select>`;
+            }
+
+            function bulkSetStatus(status) {
+                Swal.fire({
+                    title: 'Konfirmasi',
+                    text: `Apakah Anda yakin ingin mengatur semua siswa menjadi ${statusMap[status].text}?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#mainTable tbody tr').each(function() {
+                            const row = $(this);
+                            if (currentMode === 'edit') {
+                                row.find('.status-select').val(status);
+                                if (status === 'hadir' && !row.find('.check-in-input').val()) {
+                                    row.find('.check-in-input').val('07:00');
+                                }
+                            } else {
+                                // If not in edit mode, switch to edit mode first
+                                if (currentMode === 'view') {
+                                    toggleEditMode();
+                                    setTimeout(() => {
+                                        bulkSetStatus(status);
+                                    }, 100);
+                                    return false;
+                                }
+                            }
+                        });
+                        
+                        Swal.fire('Berhasil', `Semua siswa berhasil diatur menjadi ${statusMap[status].text}`, 'success');
+                    }
+                });
+            }
+
+            function openAttendanceModal(attendanceData = null) {
+                if (!currentFilters.class_id || !currentFilters.subject_id || !currentFilters.date) {
+                    Swal.fire('Perhatian', 'Pilih kelas, mata pelajaran, dan tanggal terlebih dahulu', 'warning');
+                    return;
+                }
+
+                if (attendanceData) {
+                    $('#attendanceModalTitle').text('Edit Absensi Siswa');
+                    populateAttendanceForm(attendanceData);
+                } else {
+                    $('#attendanceModalTitle').text('Tambah Absensi Siswa');
+                    clearAttendanceForm();
+                }
+
+                $('#attendanceModal').modal('show');
+            }
+
+            function populateAttendanceForm(attendanceData) {
+                $('#attendanceId').val(attendanceData.id || '');
+                $('#studentId').val(attendanceData.student_id);
+                $('#classId').val(currentFilters.class_id);
+                $('#subjectId').val(currentFilters.subject_id);
+                $('#attendanceDate').val(currentFilters.date);
+                $('#academicYear').val(currentFilters.academic_year);
+                
+                $('#studentName').val(attendanceData.student_name || '');
+                $('#studentNisn').val(attendanceData.student_nisn || '');
+                $('#checkIn').val(attendanceData.check_in || '');
+                $('#checkInStatus').val(attendanceData.check_in_status || '');
+            }
+
+            function clearAttendanceForm() {
+                $('#attendanceForm')[0].reset();
+                $('#attendanceId').val('');
+                $('#studentId').val('');
+                $('#classId').val(currentFilters.class_id);
+                $('#subjectId').val(currentFilters.subject_id);
+                $('#attendanceDate').val(currentFilters.date);
+                $('#academicYear').val(currentFilters.academic_year);
+            }
+
+            function saveAttendance() {
+                const formData = new FormData($('#attendanceForm')[0]);
+                
+                const url = $('#attendanceId').val() ? 
+                    `{{ url('lesson-attendances') }}/${$('#attendanceId').val()}` : 
+                    '{{ route("lesson-attendances.store") }}';
+                
+                const method = $('#attendanceId').val() ? 'PUT' : 'POST';
+                
+                if (method === 'PUT') {
+                    formData.append('_method', 'PUT');
+                }
+
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        $('#attendanceModal').modal('hide');
+                        Swal.fire('Berhasil', 'Absensi berhasil disimpan', 'success');
+                        loadAttendance();
+                    },
+                    error: function(xhr) {
+                        const errors = xhr.responseJSON?.errors || {};
+                        let errorMessage = 'Gagal menyimpan absensi';
+                        
+                        if (Object.keys(errors).length > 0) {
+                            errorMessage = Object.values(errors).flat().join('<br>');
+                        }
+                        
+                        Swal.fire('Error', errorMessage, 'error');
+                    }
+                });
+            }
+
+            function saveAllAttendance() {
+                const attendancesData = [];
+                let hasChanges = false;
+                
+                $('#mainTable tbody tr').each(function() {
+                    const row = $(this);
+                    const studentId = row.data('student-id');
+                    
+                    if (!studentId) {
+                        return;
+                    }
+                    
+                    const checkIn = row.find('.check-in-input').val();
+                    const status = row.find('.status-select').val();
+                    
+                    hasChanges = true;
+                    
+                    const attendanceData = {
+                        student_id: studentId,
+                        class_id: currentFilters.class_id,
+                        subject_id: currentFilters.subject_id,
+                        date: currentFilters.date,
+                        academic_year: currentFilters.academic_year,
+                        check_in: checkIn || null,
+                        check_in_status: status || 'alpha'
+                    };
+                    
+                    attendancesData.push(attendanceData);
+                });
+                
+                if (!hasChanges || attendancesData.length === 0) {
+                    Swal.fire('Perhatian', 'Tidak ada perubahan data untuk disimpan', 'warning');
+                    return;
+                }
+                
+                Swal.fire({
+                    title: 'Menyimpan Data...',
+                    text: `Menyimpan ${attendancesData.length} data absensi`,
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                $.ajax({
+                    url: '{{ route("lesson-attendances.bulk-update") }}',
+                    method: 'POST',
+                    data: {
+                        attendances: attendancesData,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    success: function(response) {
+                        Swal.close();
+                        
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: response.message,
+                                icon: 'success',
+                                confirmButtonText: 'OK',
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            
+                            toggleEditMode();
+                            loadAttendance();
+                        } else {
+                            throw new Error(response.message || 'Unknown error');
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.close();
+                        
+                        let errorMessage = 'Gagal menyimpan absensi';
+                        
+                        try {
+                            const errorResponse = JSON.parse(xhr.responseText);
+                            
+                            if (errorResponse.message) {
+                                errorMessage = errorResponse.message;
+                            }
+                            
+                        } catch (parseError) {
+                            errorMessage += '\n\nRaw error: ' + xhr.responseText;
+                        }
+                        
+                        Swal.fire({
+                            title: 'Error',
+                            text: errorMessage,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            }
+
+            // Event delegation for dynamic buttons
+            $(document).on('click', '.btn-edit', function() {
+                try {
+                    const attendanceDataStr = $(this).attr('data-attendance');
+                    const attendanceData = JSON.parse(attendanceDataStr);
+                    openAttendanceModal(attendanceData);
+                } catch (error) {
+                    console.error('Error parsing attendance data:', error);
+                    Swal.fire('Error', 'Gagal memuat data absensi', 'error');
                 }
             });
-        });
 
-        // Modal events
-        $('#lessonAttendanceModal').on('hidden.bs.modal', function() {
-            resetForm();
-            isEditMode = false;
-            editId = null;
-            toggleStatusFields(false); // Hide status fields when modal is closed
-            toggleNisnSearch(false); // Hide NISN search when modal is closed
+            $(document).on('click', '.btn-delete', function() {
+                const attendanceId = $(this).data('id');
+                
+                if (!attendanceId) {
+                    Swal.fire('Perhatian', 'Data absensi tidak ditemukan', 'warning');
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Hapus Absensi?',
+                    text: 'Data yang dihapus tidak dapat dikembalikan',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Hapus',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        deleteAttendance(attendanceId);
+                    }
+                });
+            });
+
+            function deleteAttendance(attendanceId) {
+                $.ajax({
+                    url: `{{ url('lesson-attendances') }}/${attendanceId}`,
+                    method: 'DELETE',
+                    data: {
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        Swal.fire('Berhasil', 'Absensi berhasil dihapus', 'success');
+                        loadAttendance();
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'Gagal menghapus absensi', 'error');
+                    }
+                });
+            }
+
+            // Keyboard shortcuts for quick status entry
+            $(document).on('keydown', '.status-select', function(e) {
+                const key = String.fromCharCode(e.which).toLowerCase();
+                if (statusShortcuts[key]) {
+                    $(this).val(statusShortcuts[key]);
+                    e.preventDefault();
+                    
+                    // Auto set check-in time for 'hadir' status
+                    if (statusShortcuts[key] === 'hadir') {
+                        const checkInInput = $(this).closest('tr').find('.check-in-input');
+                        if (!checkInInput.val()) {
+                            checkInInput.val('07:00');
+                        }
+                    }
+                }
+            });
+
+            // Initialize with current academic year and today's date
+            $('#academicYearFilter').val('{{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}');
+            $('#tanggalFilter').val('{{ date("Y-m-d") }}');
+            currentFilters.academic_year = '{{ App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}';
+            currentFilters.date = '{{ date("Y-m-d") }}';
         });
-    });
-</script>
+    </script>
 @endpush

@@ -127,9 +127,13 @@ Route::group(['middleware' => 'auth'], function () {
     
     // Lesson Attendance Routes
     Route::prefix('lesson-attendances')->name('lesson-attendances.')->group(function() {
-        Route::resource('/', LessonAttendanceController::class);
-        Route::get('/find-by-nisn/{nisn}', [LessonAttendanceController::class, 'findByNisn'])->name('find-by-nisn');
-        Route::get('/get-subjects-by-class/{classId}', [LessonAttendanceController::class, 'getSubjectsByClass'])->name('get-subjects-by-class');
+        Route::resource('/', LessonAttendanceController::class)->except(['create', 'edit', 'show']);
+    
+        // Additional routes for AJAX calls
+        Route::get('/get-subjects-by-class', [LessonAttendanceController::class, 'getSubjectsByClass'])->name('get-subjects-by-class');
+        Route::get('/get-students', [LessonAttendanceController::class, 'getStudents'])->name('get-students');
+        Route::get('/get-attendance', [LessonAttendanceController::class, 'getAttendance'])->name('get-attendance');
+        Route::post('/bulk-update', [LessonAttendanceController::class, 'bulkUpdate'])->name('bulk-update');
     });
 
     // Face Recognition Routes

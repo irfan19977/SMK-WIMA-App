@@ -17,111 +17,151 @@ use Illuminate\Support\Carbon;
 
 class LessonAttendanceController extends Controller
 {
-    use AuthorizesRequests;
     
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request)
+    public function index()
     {
-        $this->authorize('lesson_attendances.index');
-        
-        $query = $request->get('q');
         $user = Auth::user();
         
-        // Query untuk data lesson attendance
-        $lessonAttendancesQuery = DB::table('lesson_attendance as la')
-            ->select([
-                'la.id as lesson_attendance_id',
-                'la.student_id',
-                'la.class_id',
-                'la.subject_id', 
-                'la.date',
-                's.name as student_name',
-                'c.name as class_name',
-                'sub.name as subject_name',
-                'la.check_in',
-                'la.check_in_status'
-            ])
-            ->join('student as s', 'la.student_id', '=', 's.id')
-            ->join('classes as c', 'la.class_id', '=', 'c.id')
-            ->join('subject as sub', 'la.subject_id', '=', 'sub.id')
-            ->whereNull('la.deleted_at')
-            ->whereNull('s.deleted_at')
-            ->whereNull('c.deleted_at')
-            ->whereNull('sub.deleted_at');
-        
-        // Jika user adalah parent, batasi hanya data anak mereka
-        if ($user->hasRole('parent')) {
-            $parent = DB::table('parent')
-                ->where('user_id', $user->id)
-                ->whereNull('deleted_at')
-                ->first();
-            
-            if ($parent && $parent->student_id) {
-                $lessonAttendancesQuery->where('la.student_id', $parent->student_id);
+        // Get classes based on user role
+        if ($user->hasRole('teacher')) {
+            // For teachers, only show classes they teach
+            $classes = Classes::whereHas('schedules', function ($query) use ($user) {
+                $query->where('teacher_id', $user->id);
+            })->get();
+        } else {
+            // For admin and other roles, show all classes
+            $classes = Classes::all();
+        }
+
+        // Get all subjects (will be filtered by AJAX based on class selection)
+        $subjects = Subject::all();
+
+        return view('lesson_attendance.index', compact('classes', 'subjects'));
+    }
+
+    public function getSubjectsByClass(Request $request)
+    {
+        try {
+            $classId = $request->class_id;
+            $academicYear = $request->academic_year;
+            $user = Auth::user();
+
+            $query = Subject::query();
+
+            if ($user->hasRole('teacher')) {
+                // For teachers, only show subjects they teach for this class
+                $query->whereHas('schedules', function ($q) use ($classId, $user, $academicYear) {
+                    $q->where('class_id', $classId)
+                      ->where('teacher_id', $user->id);
+                    if ($academicYear) {
+                        $q->where('academic_year', $academicYear);
+                    }
+                });
             } else {
-                // Jika parent tidak memiliki student_id, return empty collection
-                $lessonAttendances = collect();
+                // For admin, show all subjects for the class
+                $query->whereHas('schedules', function ($q) use ($classId, $academicYear) {
+                    $q->where('class_id', $classId);
+                    if ($academicYear) {
+                        $q->where('academic_year', $academicYear);
+                    }
+                });
             }
-            
-            // Parent tidak bisa melakukan pencarian
-            $query = null;
-        }
-        
-        // Jika bukan parent, bisa melakukan pencarian
-        if (!$user->hasRole('parent') && $query) {
-            $lessonAttendancesQuery->where(function($subQuery) use ($query) {
-                $subQuery->where('s.name', 'LIKE', "%{$query}%")
-                        ->orWhere('c.name', 'LIKE', "%{$query}%")
-                        ->orWhere('sub.name', 'LIKE', "%{$query}%")
-                        ->orWhere('la.date', 'LIKE', "%{$query}%");
-            });
-        }
-        
-        $lessonAttendances = isset($lessonAttendances) ? $lessonAttendances : $lessonAttendancesQuery
-            ->orderBy('la.date', 'desc')
-            ->orderBy('la.check_in', 'asc')
-            ->get();
-        
-        if ($request->ajax()) {
+
+            $subjects = $query->get();
+
             return response()->json([
                 'success' => true,
-                'lesson_attendances' => $lessonAttendances
+                'data' => $subjects
             ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat mata pelajaran: ' . $e->getMessage()
+            ], 500);
         }
-        
-        return view('lesson_attendance.index', compact('lessonAttendances'));
     }
 
-    public function create()
+    public function getStudents(Request $request)
     {
-        $students = Student::all();
-        $classes = Classes::all();
-        $subjects = Subject::all();
-        
-        return response()->json([
-            'success' => true,
-            'title' => 'Tambah Data Absensi Pelajaran',
-            'students' => $students,
-            'classes' => $classes,
-            'subjects' => $subjects
-        ]);
+        try {
+            $classId = $request->class_id;
+            $academicYear = $request->academic_year;
+
+            // Fixed: Use relationship through student_class pivot table
+            $students = Student::whereHas('classes', function ($query) use ($classId, $academicYear) {
+                $query->where('classes.id', $classId)
+                      ->where('student_class.status', 'active');
+                if ($academicYear) {
+                    $query->where('student_class.academic_year', $academicYear);
+                }
+            })->orderBy('no_absen')->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $students
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat data siswa: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
-    private function convertDayToIndonesian($day)
+    public function getAttendance(Request $request)
     {
-        $days = [
-            'Monday' => 'Senin',
-            'Tuesday' => 'Selasa', 
-            'Wednesday' => 'Rabu',
-            'Thursday' => 'Kamis',
-            'Friday' => 'Jumat',
-            'Saturday' => 'Sabtu',
-            'Sunday' => 'Minggu'
-        ];
-        
-        return $days[$day] ?? $day;
+        try {
+            $classId = $request->class_id;
+            $subjectId = $request->subject_id;
+            $date = $request->date;
+            $academicYear = $request->academic_year;
+
+            // Fixed: Use relationship through student_class pivot table
+            $students = Student::whereHas('classes', function ($query) use ($classId, $academicYear) {
+                $query->where('classes.id', $classId)
+                      ->where('student_class.status', 'active');
+                if ($academicYear) {
+                    $query->where('student_class.academic_year', $academicYear);
+                }
+            })
+            ->with(['lessonAttendances' => function ($query) use ($subjectId, $date, $classId) {
+                $query->where('subject_id', $subjectId)
+                      ->where('class_id', $classId)
+                      ->where('date', $date);
+            }])
+            ->orderBy('no_absen')
+            ->get();
+
+            // Format the data
+            $attendanceData = $students->map(function ($student) use ($classId, $subjectId, $date, $academicYear) {
+                $attendance = $student->lessonAttendances->first();
+                
+                return [
+                    'id' => $attendance->id ?? null,
+                    'student_id' => $student->id,
+                    'student_name' => $student->name,
+                    'student_nisn' => $student->nisn,
+                    'no_absen' => $student->no_absen,
+                    'class_id' => $classId,
+                    'subject_id' => $subjectId,
+                    'date' => $date,
+                    'check_in' => $attendance->check_in ?? null,
+                    'check_in_status' => $attendance->check_in_status ?? 'alpha',
+                    'academic_year' => $academicYear,
+                    'semester' => $this->getSemester($date)
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $attendanceData
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat data absensi: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function store(Request $request)
@@ -131,179 +171,70 @@ class LessonAttendanceController extends Controller
             'class_id' => 'required|exists:classes,id',
             'subject_id' => 'required|exists:subject,id',
             'date' => 'required|date',
+            'check_in_status' => 'required|in:hadir,terlambat,izin,sakit,alpha',
             'check_in' => 'nullable|date_format:H:i',
-            'check_in_status' => 'nullable|in:tepat,terlambat,izin,sakit,alpha'
+            'academic_year' => 'required|string'
         ]);
 
         try {
             DB::beginTransaction();
 
-            // ===== VALIDASI BARU: Cek apakah siswa sudah absensi kedatangan =====
-            $attendanceCheck = DB::table('attendance')
-                ->where('student_id', $request->student_id)
-                ->where('class_id', $request->class_id)
-                ->where('date', $request->date)
-                ->whereNull('deleted_at')
-                ->first();
-
-            if (!$attendanceCheck) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Siswa belum melakukan absensi kedatangan hari ini. Harap lakukan absensi kedatangan terlebih dahulu sebelum absensi pelajaran.'
-                ]);
-            }
-
-            // Validasi tambahan: Pastikan siswa sudah check_in (tidak hanya tercatat tapi belum datang)
-            if (!$attendanceCheck->check_in) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Siswa belum melakukan check-in kedatangan. Harap lakukan check-in terlebih dahulu.'
-                ]);
-            }
-
-            // Validasi status kedatangan - jika alpha, tidak bisa absen pelajaran
-            if ($attendanceCheck->check_in_status === 'alpha') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Siswa tercatat alpha pada absensi kedatangan. Tidak dapat melakukan absensi pelajaran.'
-                ]);
-            }
-            // ===== END VALIDASI BARU =====
-
-            // Cek apakah sudah ada data untuk student, class, subject, dan date yang sama
-            $existingLessonAttendance = Lesson::where([
+            // Check if attendance already exists
+            $existingAttendance = Lesson::where([
                 'student_id' => $request->student_id,
                 'class_id' => $request->class_id,
                 'subject_id' => $request->subject_id,
                 'date' => $request->date
             ])->first();
 
-            if ($existingLessonAttendance) {
+            if ($existingAttendance) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Siswa sudah melakukan absen untuk pelajaran ini pada tanggal tersebut'
-                ]);
+                    'message' => 'Data absensi untuk siswa ini sudah ada'
+                ], 422);
             }
 
-            // Buat record lesson attendance baru
-            $lessonAttendanceData = [
-                'id' => Str::uuid(),
+            $attendance = Lesson::create([
                 'student_id' => $request->student_id,
                 'class_id' => $request->class_id,
                 'subject_id' => $request->subject_id,
                 'date' => $request->date,
                 'check_in' => $request->check_in,
-                'check_in_status' => $request->check_in_status ?? 'hadir',
-                'created_by' => Auth::id(),
-            ];
-
-            // Buat record lesson attendance baru
-            Lesson::create($lessonAttendanceData);
+                'check_in_status' => $request->check_in_status,
+                'academic_year' => $request->academic_year,
+                'semester' => $this->getSemester($request->date),
+                'created_by' => Auth::id()
+            ]);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data absensi pelajaran berhasil ditambahkan!'
+                'message' => 'Data absensi berhasil disimpan',
+                'data' => $attendance
             ]);
         } catch (\Exception $e) {
             DB::rollback();
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ]);
+                'message' => 'Gagal menyimpan data absensi: ' . $e->getMessage()
+            ], 500);
         }
-    }
-
-    public function show($id)
-    {
-        // Detail absensi pelajaran
-        $lessonAttendance = DB::table('lesson_attendance as la')
-            ->select([
-                'la.student_id',
-                'la.class_id',
-                'la.subject_id', 
-                'la.date',
-                's.name as student_name',
-                'c.name as class_name',
-                'sub.name as subject_name',
-                'la.check_in',
-                'la.check_in_status'
-            ])
-            ->join('student as s', 'la.student_id', '=', 's.id')
-            ->join('classes as c', 'la.class_id', '=', 'c.id')
-            ->join('subject as sub', 'la.subject_id', '=', 'sub.id')
-            ->where('la.id', $id)
-            ->first();
-
-        return response()->json([
-            'success' => true,
-            'lesson_attendance' => $lessonAttendance
-        ]);
-    }
-
-    public function edit($id)
-    {
-        // Ambil data berdasarkan lesson attendance ID
-        $lessonAttendance = Lesson::find($id);
-        
-        if (!$lessonAttendance) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data tidak ditemukan'
-            ]);
-        }
-
-        $students = Student::all();
-        $classes = Classes::all();
-        $subjects = Subject::all();
-
-        return response()->json([
-            'success' => true,
-            'title' => 'Edit Data Absensi Pelajaran',
-            'lesson_attendance' => [
-                'student_id' => $lessonAttendance->student_id,
-                'class_id' => $lessonAttendance->class_id,
-                'subject_id' => $lessonAttendance->subject_id,
-                'date' => $lessonAttendance->date,
-                'check_in' => $lessonAttendance->check_in,
-                'check_in_status' => $lessonAttendance->check_in_status ?? 'tepat'
-            ],
-            'students' => $students,
-            'classes' => $classes,
-            'subjects' => $subjects
-        ]);
     }
 
     public function update(Request $request, $id)
     {
         $request->validate([
-            'student_id' => 'required|exists:student,id',
-            'class_id' => 'required|exists:classes,id',
-            'subject_id' => 'required|exists:subject,id',
-            'date' => 'required|date',
-            'check_in' => 'nullable|date_format:H:i',
-            'check_in_status' => 'nullable|in:tepat,terlambat,izin,sakit,alpha'
+            'check_in_status' => 'required|in:hadir,terlambat,izin,sakit,alpha',
+            'check_in' => 'nullable|date_format:H:i'
         ]);
 
         try {
             DB::beginTransaction();
 
-            $lessonAttendance = Lesson::find($id);
+            $attendance = Lesson::findOrFail($id);
             
-            if (!$lessonAttendance) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Data tidak ditemukan'
-                ]);
-            }
-
-            // Update data
-            $lessonAttendance->update([
-                'student_id' => $request->student_id,
-                'class_id' => $request->class_id,
-                'subject_id' => $request->subject_id,
-                'date' => $request->date,
+            $attendance->update([
                 'check_in' => $request->check_in,
                 'check_in_status' => $request->check_in_status,
                 'updated_by' => Auth::id()
@@ -313,14 +244,15 @@ class LessonAttendanceController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data absensi pelajaran berhasil diperbarui!'
+                'message' => 'Data absensi berhasil diperbarui',
+                'data' => $attendance
             ]);
         } catch (\Exception $e) {
             DB::rollback();
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ]);
+                'message' => 'Gagal memperbarui data absensi: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -329,261 +261,96 @@ class LessonAttendanceController extends Controller
         try {
             DB::beginTransaction();
 
-            $lessonAttendance = Lesson::find($id);
-            if (!$lessonAttendance) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Data tidak ditemukan'
-                ]);
-            }
-
-            $lessonAttendance->delete();
+            $attendance = Lesson::findOrFail($id);
+            $attendance->delete();
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data absensi pelajaran berhasil dihapus!'
+                'message' => 'Data absensi berhasil dihapus'
             ]);
         } catch (\Exception $e) {
             DB::rollback();
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ]);
+                'message' => 'Gagal menghapus data absensi: ' . $e->getMessage()
+            ], 500);
         }
     }
 
-    public function findByNisn($nisn) 
+    public function bulkUpdate(Request $request)
     {
+        $request->validate([
+            'attendances' => 'required|array',
+            'attendances.*.student_id' => 'required|exists:student,id',
+            'attendances.*.class_id' => 'required|exists:classes,id',
+            'attendances.*.subject_id' => 'required|exists:subject,id',
+            'attendances.*.date' => 'required|date',
+            'attendances.*.check_in_status' => 'required|in:hadir,terlambat,izin,sakit,alpha',
+            'attendances.*.check_in' => 'nullable|date_format:H:i',
+            'attendances.*.academic_year' => 'required|string'
+        ]);
+
         try {
-            // Get current time and day using Carbon
-            $now = Carbon::now('Asia/Jakarta');
-            $currentTime = $now->format('H:i:s');
-            $currentDay = $now->format('l');
-            $currentDate = $now->format('Y-m-d');
+            DB::beginTransaction();
 
-            // Day mapping - sesuai dengan enum di database
-            $dayMap = [
-                'Monday' => 'senin',
-                'Tuesday' => 'selasa',
-                'Wednesday' => 'rabu',
-                'Thursday' => 'kamis',
-                'Friday' => 'jumat',
-                'Saturday' => 'sabtu',
-                'Sunday' => 'minggu' // jika diperlukan
-            ];
-            $indonesianDay = $dayMap[$currentDay] ?? null;
-            
-            if (!$indonesianDay) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Hari ini tidak ada jadwal pelajaran'
-                ], 404);
-            }
+            $savedCount = 0;
+            $updatedCount = 0;
 
-            // Find student by NISN
-            $student = DB::table('student')
-                ->where('nisn', $nisn)
-                ->whereNull('deleted_at')
-                ->first();
+            foreach ($request->attendances as $attendanceData) {
+                // Check if attendance already exists
+                $existingAttendance = Lesson::where([
+                    'student_id' => $attendanceData['student_id'],
+                    'class_id' => $attendanceData['class_id'],
+                    'subject_id' => $attendanceData['subject_id'],
+                    'date' => $attendanceData['date']
+                ])->first();
 
-            if (!$student) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Siswa dengan NISN tersebut tidak ditemukan'
-                ], 404);
-            }
-
-            // Get student's class from pivot table student_class
-            $studentClassRelation = DB::table('student_class')
-                ->where('student_id', $student->id)
-                ->whereNull('deleted_at')
-                ->first();
-
-            if (!$studentClassRelation) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Siswa tidak terdaftar di kelas manapun'
-                ], 404);
-            }
-            
-            // Get class details
-            $studentClass = DB::table('classes')
-                ->where('id', $studentClassRelation->class_id)
-                ->whereNull('deleted_at')
-                ->first();
-                
-            if (!$studentClass) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Kelas siswa tidak ditemukan'
-                ], 404);
-            }
-
-            // ===== VALIDASI BARU: Cek apakah siswa sudah absensi kedatangan =====
-            $attendanceCheck = DB::table('attendance')
-                ->where('student_id', $student->id)
-                ->where('class_id', $studentClass->id)
-                ->where('date', $currentDate)
-                ->whereNull('deleted_at')
-                ->first();
-
-            if (!$attendanceCheck) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Siswa belum melakukan absensi kedatangan hari ini. Harap lakukan absensi kedatangan terlebih dahulu.'
-                ], 400);
-            }
-
-            // Validasi tambahan: Pastikan siswa sudah check_in
-            if (!$attendanceCheck->check_in) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Siswa belum melakukan check-in kedatangan. Harap lakukan check-in terlebih dahulu.'
-                ], 400);
-            }
-
-            // Validasi status kedatangan - jika alpha, tidak bisa absen pelajaran
-            if ($attendanceCheck->check_in_status === 'alpha') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Siswa tercatat alpha pada absensi kedatangan. Tidak dapat melakukan absensi pelajaran.'
-                ], 400);
-            }
-            // ===== END VALIDASI BARU =====
-
-            // Find current schedule for the student's class on current day
-            $currentSchedule = DB::table('schedule as sch')
-                ->select([
-                    'sch.*',
-                    's.name as subject_name',
-                    't.name as teacher_name'
-                ])
-                ->join('subject as s', 'sch.subject_id', '=', 's.id')
-                ->join('teacher as t', 'sch.teacher_id', '=', 't.id')
-                ->where('sch.class_id', $studentClass->id)
-                ->where('sch.day', $indonesianDay)
-                ->where('sch.start_time', '<=', $currentTime)
-                ->where('sch.end_time', '>=', $currentTime)
-                ->whereNull('sch.deleted_at')
-                ->whereNull('s.deleted_at')
-                ->whereNull('t.deleted_at')
-                ->first();
-
-            if (!$currentSchedule) {
-                // Coba cari jadwal terdekat untuk hari ini (untuk debugging)
-                $allSchedulesToday = DB::table('schedule as sch')
-                    ->select(['sch.start_time', 'sch.end_time', 's.name as subject_name'])
-                    ->join('subject as s', 'sch.subject_id', '=', 's.id')
-                    ->where('sch.class_id', $studentClass->id)
-                    ->where('sch.day', $indonesianDay)
-                    ->whereNull('sch.deleted_at')
-                    ->whereNull('s.deleted_at')
-                    ->orderBy('sch.start_time')
-                    ->get();
-                    
-                $message = 'Tidak ada jadwal pelajaran yang sedang berlangsung saat ini';
-                if ($allSchedulesToday->isNotEmpty()) {
-                    $scheduleList = $allSchedulesToday->map(function($item) {
-                        return $item->subject_name . ' (' . $item->start_time . ' - ' . $item->end_time . ')';
-                    })->implode(', ');
-                    $message .= '. Jadwal hari ini: ' . $scheduleList;
+                if ($existingAttendance) {
+                    // Update existing attendance
+                    $existingAttendance->update([
+                        'check_in' => $attendanceData['check_in'] ?? null,
+                        'check_in_status' => $attendanceData['check_in_status'],
+                        'updated_by' => Auth::id()
+                    ]);
+                    $updatedCount++;
                 } else {
-                    $message .= '. Tidak ada jadwal untuk hari ' . ucfirst($indonesianDay);
+                    // Create new attendance
+                    Lesson::create([
+                        'student_id' => $attendanceData['student_id'],
+                        'class_id' => $attendanceData['class_id'],
+                        'subject_id' => $attendanceData['subject_id'],
+                        'date' => $attendanceData['date'],
+                        'check_in' => $attendanceData['check_in'] ?? null,
+                        'check_in_status' => $attendanceData['check_in_status'],
+                        'academic_year' => $attendanceData['academic_year'],
+                        'semester' => $this->getSemester($attendanceData['date']),
+                        'created_by' => Auth::id()
+                    ]);
+                    $savedCount++;
                 }
-                
-                return response()->json([
-                    'success' => false,
-                    'message' => $message,
-                    'debug_info' => [
-                        'current_time' => $currentTime,
-                        'current_day' => $indonesianDay,
-                        'class_id' => $studentClass->id,
-                        'class_name' => $studentClass->name,
-                        'schedules_today' => $allSchedulesToday
-                    ]
-                ], 404);
             }
 
-            // Check if student has already attended this subject today
-            $existingAttendance = DB::table('lesson_attendance')
-                ->where('student_id', $student->id)
-                ->where('subject_id', $currentSchedule->subject_id)
-                ->where('class_id', $studentClass->id)
-                ->whereDate('date', $currentDate)
-                ->whereNull('deleted_at')
-                ->exists();
+            DB::commit();
 
-            if ($existingAttendance) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Siswa sudah melakukan absensi untuk mata pelajaran ' . $currentSchedule->subject_name . ' hari ini'
-                ], 400);
-            }
-
-            // Return student and schedule data with proper structure for frontend
             return response()->json([
                 'success' => true,
-                'message' => 'Siswa ditemukan dan sudah melakukan absensi kedatangan',
-                'data' => [
-                    'id' => $student->id,
-                    'name' => $student->name,
-                    'nisn' => $student->nisn,
-                    'class_id' => $studentClass->id,
-                    'class_name' => $studentClass->name,
-                    'subject_id' => $currentSchedule->subject_id,
-                    'subject_name' => $currentSchedule->subject_name,
-                    'teacher_id' => $currentSchedule->teacher_id,
-                    'teacher_name' => $currentSchedule->teacher_name ?? 'Tidak ada guru',
-                    'current_schedule' => [
-                        'start_time' => $currentSchedule->start_time,
-                        'end_time' => $currentSchedule->end_time,
-                        'day' => $indonesianDay
-                    ],
-                    'attendance_info' => [
-                        'check_in_time' => $attendanceCheck->check_in,
-                        'check_in_status' => $attendanceCheck->check_in_status
-                    ]
-                ]
-            ], 200);
-            
-        } catch (\Exception $e) {
-            \Log::error('Error in findByNisn: ' . $e->getMessage(), [
-                'nisn' => $nisn,
-                'trace' => $e->getTraceAsString()
+                'message' => "Berhasil menyimpan {$savedCount} data baru dan memperbarui {$updatedCount} data absensi"
             ]);
-            
+        } catch (\Exception $e) {
+            DB::rollback();
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan pada server: ' . $e->getMessage()
+                'message' => 'Gagal menyimpan data absensi: ' . $e->getMessage()
             ], 500);
         }
     }
 
-    /**
-     * Get subjects by class ID
-     */
-    public function getSubjectsByClass($classId)
+    private function getSemester($date)
     {
-        try {
-            $subjects = DB::table('subject_schedule')
-                ->join('subject', 'subject_schedule.subject_id', '=', 'subject.id')
-                ->where('subject_schedule.class_id', $classId)
-                ->whereNull('subject.deleted_at')
-                ->select('subject.id', 'subject.name')
-                ->distinct()
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'subjects' => $subjects
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
-        }
+        $month = Carbon::parse($date)->month;
+        return ($month >= 7 && $month <= 12) ? 'ganjil' : 'genap';
     }
+
 }
