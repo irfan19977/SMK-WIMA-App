@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-  <title>SMK XYZ</title>
+  <title>SMK PGRI Lawang</title>
   <meta content="" name="description">
   <meta content="" name="keywords">
 
@@ -25,14 +25,7 @@
 
 <!-- Template Main CSS File -->
 <link href="{{ asset('frontend/assets/css/style.css') }}" rel="stylesheet">
-
-  <!-- =======================================================
-  * Template Name: SoftLand
-  * Updated: Sep 18 2023 with Bootstrap v5.3.2
-  * Template URL: https://bootstrapmade.com/softland-bootstrap-app-landing-page-template/
-  * Author: BootstrapMade.com
-  * License: https://bootstrapmade.com/license/
-  ======================================================== -->
+@stack('styles')
 </head>
 
 <body>
@@ -41,16 +34,17 @@
   <header id="header" class="fixed-top d-flex align-items-center">
     <div class="container d-flex justify-content-between align-items-center">
 
-      <div class="logo">
-        <h1><a href="index.html">SoftLand</a></h1>
+      <div class="logo d-flex align-items-center">
         <!-- Uncomment below if you prefer to use an image logo -->
-        <!-- <a href="index.html"><img src="assets/img/logo.png" alt="" class="img-fluid"></a>-->
+        <a href="index.html" class="me-3"><img src="{{ asset('frontend/assets/img/Logo-Tut-Wuri-Handayani-PNG-Warna.png') }}" alt="" class="img-fluid" style="height: 50px;"></a>
+        <h1 class="mb-0"><a href="index.html">SMK PGRI LAWANG</a></h1>
       </div>
 
       <nav id="navbar" class="navbar">
         <ul>
           <li><a class="{{ request()->routeIs('/') ? 'active' : '' }}" href="{{ route('/') }}">Home</a></li>
           <li><a class="{{ request()->routeIs('profile-sekolah.*') ? 'active' : '' }}" href="{{ route('profile-sekolah.index') }}">Profile</a></li>
+          <li><a class="{{ request()->routeIs('pendaftaran.*') ? 'active' : '' }}" href="{{ route('pendaftaran.index') }}">Pendaftaran</a></li>
           <li><a class="{{ request()->routeIs('berita.*') ? 'active' : '' }}" href="{{ route('berita.index') }}">Berita</a></li>
           <li><a class="{{ request()->is('contact.html') ? 'active' : '' }}" href="contact.html">Contact Us</a></li>
           <li><a class="{{ request()->routeIs('login') ? 'active' : '' }}" href="{{ route('login') }}">Login</a></li>
@@ -68,7 +62,7 @@
     <div class="container">
       <div class="row">
         <div class="col-md-4 mb-4 mb-md-0">
-          <h3>About SoftLand</h3>
+          <h3>About SMK PGRI Lawang</h3>
           <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eius ea delectus pariatur, numquam aperiam
             dolore nam optio dolorem facilis itaque voluptatum recusandae deleniti minus animi.</p>
           <p class="social">
@@ -137,6 +131,8 @@
 
 <!-- Template Main JS File -->
 <script src="{{ asset('frontend/assets/js/main.js') }}"></script>
+
+@stack('scripts')
 
 </body>
 

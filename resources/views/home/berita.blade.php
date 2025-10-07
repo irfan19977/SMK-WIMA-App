@@ -30,9 +30,8 @@
           <div class="col-12">
             <div class="row justify-content-center">
               <div class="col-md-10 text-center hero-text">
-                <h1 class="display-3 fw-bold mb-4" data-aos="fade-up" data-aos-delay="100">
-                  <span class="text-primary">Berita</span> & 
-                  <span class="text-gradient">Artikel</span>
+                <h1 class="display-4 fw-bold mb-4 text-white" data-aos="fade-up" data-aos-delay="300">
+                  Berita Sekolah
                 </h1>
                 <p class="lead mb-5 text-muted" data-aos="fade-up" data-aos-delay="200">
                   Informasi Terkini Seputar Kegiatan dan Prestasi Sekolah XYZ

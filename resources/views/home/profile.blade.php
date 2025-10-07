@@ -822,9 +822,9 @@
       
       <div class="container position-relative">
         <div class="row align-items-center">
-          <div class="col-lg-8 text-center text-lg-start mb-5 mb-lg-0" data-aos="fade-right">
+          <div class="col-lg-6 text-center text-lg-start" data-aos="fade-right">
             <div class="cta-badge mb-3">
-              <span class="badge bg-white bg-opacity-20 text-white px-3 py-2 rounded-pill">
+              <span class="badge bg-white bg-opacity-20 text-primary px-3 py-2 rounded-pill">
                 <i class="bi bi-rocket me-2"></i>Mulai Perjalanan Pendidikan
               </span>
             </div>
@@ -853,18 +853,18 @@
             </div>
           </div>
           
-          <div class="col-lg-4 text-center" data-aos="fade-left" data-aos-delay="200">
+          <div class="col-lg-6 text-center" data-aos="fade-left" data-aos-delay="200">
             <div class="cta-actions">
-              <div class="action-card mb-4">
-                <div class="card bg-white bg-opacity-10 backdrop-blur border-0 text-white ms-2">
-                  <div class="card-body p-4">
+              <div class="action-card mb-3">
+                <div class="card bg-white bg-opacity-10 backdrop-blur border-0 text-white mx-auto">
+                  <div class="card-body p-3">
                     <div class="urgency-badge mb-3">
                       <span class="badge bg-danger bg-gradient px-3 py-2 rounded-pill">
-                        <i class="bi bi-clock me-1"></i>Pendaftaran Terbatas!
+                        <i class="bi bi-clock me-1"></i>Pendaftaran Terbatas! (Sisa 45 Hari)
                       </span>
                     </div>
-                    <h5 class="fw-bold mb-2">Tahun Ajaran 2024/2025</h5>
-                    <p class="small text-white-75 mb-3">Sisa kuota hanya 50 siswa</p>
+                    <h5 class="fw-bold mb-3">Tahun Ajaran 2024/2025</h5>
+                    <p class="small text-white-75 mb-4">Sisa kuota hanya 50 siswa</p>
                     <div class="countdown-timer">
                       <div class="countdown-item">
                         <span class="countdown-number">45</span>
@@ -886,7 +886,7 @@
               </div>
               
               <div class="cta-buttons">
-                <a href="{{ route('pendaftaran') }}" class="btn btn-warning btn-lg rounded-pill px-5 mb-3 btn-glow">
+                <a href="{{ route('register') }}" class="btn btn-warning btn-lg rounded-pill px-5 mb-3 btn-glow">
                   <i class="bi bi-person-plus me-2"></i>Daftar Sekarang
                 </a>
                 <a href="#" class="btn btn-outline-light btn-lg rounded-pill px-5 mb-3">
@@ -930,7 +930,9 @@
 
   </main><!-- End #main -->
 
-  <!-- Custom Styles for Enhanced Visual Appeal -->
+@endsection
+
+@push('styles')
   <style>
     /* Floating Shapes Animation */
     .floating-shapes {
@@ -1523,13 +1525,17 @@
     .action-card {
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.2);
-      width: 125%;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 1rem;
+      min-height: auto;
+      display: inline-block;
     }
 
     .backdrop-blur {
         width: 95%;
       }
-    
     .urgency-badge {
       animation: pulse 2s infinite;
     }
@@ -1911,4 +1917,4 @@
       }
     }
   </style>
-@endsection
+@endpush

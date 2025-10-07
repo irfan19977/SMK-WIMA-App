@@ -11,6 +11,7 @@ use App\Http\Controllers\LessonAttendanceController;
 use App\Http\Controllers\ParentsController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SettingScheduleController;
 use App\Http\Controllers\StudentController;
@@ -38,9 +39,7 @@ Route::get('/detail', function () {
     return view('home.detail');
 })->name('berita.detail');
 
-Route::get('/pendaftaran', function () {
-    return view('home.pendaftaran');
-})->name('pendaftaran');
+Route::resource('/pendaftaran', RegistrationController::class);
 
     Route::post('/rfid-detect', [RFIDController::class, 'detectRFID']);
     Route::get('/get-latest-rfid', [RFIDController::class, 'getLatestRFID'])->name('get.latest.rfid');
