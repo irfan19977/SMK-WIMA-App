@@ -19,16 +19,16 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             AdministratorSeeder::class,
             TeacherSeeder::class,
-            StudentSeeder::class,
-            ParentSeeder::class,
-            ClassesSeeder::class,
-            StudentClassesSeeder::class,
-            SubjectSeeder::class,
-            ScheduleSeeder::class,
+            // StudentSeeder::class,
+            // ParentSeeder::class,
+            // ClassesSeeder::class,
+            // StudentClassesSeeder::class,
+            // SubjectSeeder::class,
+            // ScheduleSeeder::class,
             SettingScheduleSeeder::class,
             PermissionsSeeder::class,
-            AttendanceXTKJSeeder::class,
-            AttendanceXITKJSeeder::class
+            // AttendanceXTKJSeeder::class,
+            // AttendanceXITKJSeeder::class
         ]);
     }
 }

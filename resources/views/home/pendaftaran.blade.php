@@ -72,8 +72,20 @@
                             <h2 class="section-title">Formulir Pendaftaran</h2>
                             <p class="text-muted">Lengkapi formulir di bawah ini dengan informasi yang benar dan akurat</p>
                         </div>
-
-                        <form method="POST" action="{{ route('register') }}" class="registration-form" enctype="multipart/form-data">
+                        @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show">
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+                    
+                    @if(session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+                        <form method="POST" action="{{ route('pendaftaran.store') }}" class="registration-form" enctype="multipart/form-data">
                             @csrf
 
                             <!-- Progress Bar -->
@@ -111,12 +123,34 @@
                                     </div>
 
                                     <div class="col-md-6 mb-3">
-                                        <label for="nickname" class="form-label">
-                                            Nama Panggilan
-                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Nama panggilan atau nama kecil (opsional)">ⓘ</span>
+                                        <label for="phone" class="form-label">
+                                            Nomor WhatsApp
+                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Nomor WhatsApp untuk komunikasi (opsional)">ⓘ</span>
                                         </label>
-                                        <input type="text" class="form-control @error('nickname') is-invalid @enderror" id="nickname" name="nickname" value="{{ old('nickname') }}" placeholder="Nama Panggilan">
-                                        @error('nickname')
+                                        <input type="number" class="form-control @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone') }}" placeholder="Nomor WhatsApp" required>
+                                        @error('phone')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="nik" class="form-label">
+                                            NIK <span class="text-danger">*</span>
+                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Nomor Induk Kependudukan (16 digit)">ⓘ</span>
+                                        </label>
+                                        <input type="number" class="form-control @error('nik') is-invalid @enderror" id="nik" name="nik" value="{{ old('nik') }}" maxlength="16" placeholder="16 digit angka" required>
+                                        @error('nik')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="nisn" class="form-label">
+                                            NISN
+                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Nomor Induk Siswa Nasional">ⓘ</span>
+                                        </label>
+                                        <input type="number" class="form-control @error('nisn') is-invalid @enderror" id="nisn" name="nisn" value="{{ old('nisn') }}" maxlength="10" placeholder="10 digit angka">
+                                        @error('nisn')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -128,8 +162,8 @@
                                         </label>
                                         <select class="form-select @error('gender') is-invalid @enderror" id="gender" name="gender" required>
                                             <option value="">-- Pilih Jenis Kelamin --</option>
-                                            <option value="Laki-laki" {{ old('gender') == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
-                                            <option value="Perempuan" {{ old('gender') == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
+                                            <option value="laki-laki" {{ old('gender') == 'laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                                            <option value="perempuan" {{ old('gender') == 'perempuan' ? 'selected' : '' }}>Perempuan</option>
                                         </select>
                                         @error('gender')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -176,28 +210,6 @@
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="nik" class="form-label">
-                                            NIK <span class="text-danger">*</span>
-                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Nomor Induk Kependudukan (16 digit)">ⓘ</span>
-                                        </label>
-                                        <input type="number" class="form-control @error('nik') is-invalid @enderror" id="nik" name="nik" value="{{ old('nik') }}" maxlength="16" placeholder="16 digit angka" required>
-                                        @error('nik')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="nisn" class="form-label">
-                                            NISN
-                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Nomor Induk Siswa Nasional (opsional)">ⓘ</span>
-                                        </label>
-                                        <input type="number" class="form-control @error('nisn') is-invalid @enderror" id="nisn" name="nisn" value="{{ old('nisn') }}" maxlength="10" placeholder="10 digit angka">
-                                        @error('nisn')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
                                 </div>
 
                                 <div class="mb-3">
@@ -205,34 +217,10 @@
                                         Alamat Lengkap <span class="text-danger">*</span>
                                         <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Alamat lengkap dengan RT/RW dan kode pos">ⓘ</span>
                                     </label>
-                                    <textarea class="form-control @error('address') is-invalid @enderror" id="address" name="address" rows="3" placeholder="Jl. Contoh No. 123, RT.01/RW.02, Kelurahan, Kecamatan, Kota, Kode Pos" required>{{ old('address') }}</textarea>
+                                    <textarea class="form-control @error('address') is-invalid @enderror" id="address" name="address" rows="5" placeholder="Jl. Contoh No. 123, RT.01/RW.02, Kelurahan, Kecamatan, Kota, Kode Pos" required style="height: 150px">{{ old('address') }}</textarea>
                                     @error('address')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="phone" class="form-label">
-                                            Nomor Telepon <span class="text-danger">*</span>
-                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Nomor telepon yang aktif untuk kontak">ⓘ</span>
-                                        </label>
-                                        <input type="tel" class="form-control @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone') }}" placeholder="Contoh: 08123456789" required>
-                                        @error('phone')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="whatsapp" class="form-label">
-                                            Nomor WhatsApp
-                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Nomor WhatsApp untuk komunikasi (opsional)">ⓘ</span>
-                                        </label>
-                                        <input type="tel" class="form-control @error('whatsapp') is-invalid @enderror" id="whatsapp" name="whatsapp" value="{{ old('whatsapp') }}" placeholder="Nomor WhatsApp (opsional)">
-                                        @error('whatsapp')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
                                 </div>
 
                                 <div class="text-center">
@@ -262,10 +250,10 @@
 
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="pas_foto" class="form-label">Pas Foto 3x4 <span class="text-danger">*</span></label>
-                                        <input type="file" class="form-control @error('pas_foto') is-invalid @enderror" id="pas_foto" name="pas_foto" accept="image/*" required>
-                                        <div class="form-text">Format: JPG, PNG. Max: 2MB</div>
-                                        @error('pas_foto')
+                                        <label for="photo_path" class="form-label">Pas Foto 3x4 <span class="text-danger">*</span></label>
+                                        <input type="file" class="form-control @error('photo_path') is-invalid @enderror" id="photo_path" name="photo_path" accept="image/*" required>
+                                        <div class="form-text">Format: JPG, PNG. Max: 500KB</div>
+                                        @error('photo_path')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -298,10 +286,10 @@
                                     </div>
 
                                     <div class="col-md-6 mb-3">
-                                        <label for="raport" class="form-label">Akta Kelahiran</label>
-                                        <input type="file" class="form-control @error('raport') is-invalid @enderror" id="raport" name="raport" accept=".pdf,.jpg,.jpeg,.png" require>
+                                        <label for="ktp" class="form-label">KTP Orang Tua<span class="text-danger">*</span></label>
+                                        <input type="file" class="form-control @error('ktp') is-invalid @enderror" id="ktp" name="ktp" accept=".pdf,.jpg,.jpeg,.png" require>
                                         <div class="form-text">Format: PDF, JPG, PNG. Max: 500KB</div>
-                                        @error('raport')
+                                        @error('ktp')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -865,349 +853,350 @@
 
 @push('scripts')
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-    let currentStep = 1;
-    const totalSteps = 3;
-    
-    // Step titles untuk progress bar
-    const stepTitles = {
-        1: 'Informasi Pribadi',
-        2: 'Upload Dokumen',
-        3: 'Akun & Persyaratan'
-    };
+        document.addEventListener('DOMContentLoaded', function() {
+            let currentStep = 1;
+            const totalSteps = 3;
+            
+            // Step titles untuk progress bar
+            const stepTitles = {
+                1: 'Informasi Pribadi',
+                2: 'Upload Dokumen',
+                3: 'Akun & Persyaratan'
+            };
 
-    // Fungsi untuk update progress bar
-    function updateProgressBar() {
-        const progressPercentage = (currentStep / totalSteps) * 100;
-        const progressBar = document.getElementById('progress-bar');
-        const currentStepElement = document.getElementById('current-step');
-        const stepTitleElement = document.getElementById('step-title');
-        
-        progressBar.style.width = progressPercentage + '%';
-        progressBar.setAttribute('aria-valuenow', progressPercentage);
-        currentStepElement.textContent = currentStep;
-        stepTitleElement.textContent = stepTitles[currentStep];
-
-        // Update step indicators
-        document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
-            const stepNumber = index + 1;
-            if (stepNumber < currentStep) {
-                indicator.classList.add('completed');
-                indicator.classList.remove('active');
-            } else if (stepNumber === currentStep) {
-                indicator.classList.add('active');
-                indicator.classList.remove('completed');
-            } else {
-                indicator.classList.remove('active', 'completed');
-            }
-        });
-    }
-
-    // Fungsi untuk menampilkan pesan error
-    function showError(field, message) {
-        field.classList.add('is-invalid');
-        
-        // Hapus pesan error lama jika ada
-        const oldError = field.parentElement.querySelector('.invalid-feedback.js-error');
-        if (oldError) {
-            oldError.remove();
-        }
-        
-        // Tambah pesan error baru
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'invalid-feedback js-error';
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = message;
-        field.parentElement.appendChild(errorDiv);
-    }
-
-    // Fungsi untuk menghapus pesan error
-    function clearError(field) {
-        field.classList.remove('is-invalid');
-        const errorDiv = field.parentElement.querySelector('.invalid-feedback.js-error');
-        if (errorDiv) {
-            errorDiv.remove();
-        }
-    }
-
-    // Fungsi untuk show/hide step
-    function showStep(stepNumber) {
-        // Hide semua step
-        document.querySelectorAll('.form-step').forEach(step => {
-            step.style.display = 'none';
-            step.classList.remove('active');
-        });
-
-        // Show step yang dipilih
-        const targetStep = document.getElementById('step-' + stepNumber);
-        if (targetStep) {
-            targetStep.style.display = 'block';
-            targetStep.classList.add('active');
-        }
-
-        currentStep = stepNumber;
-        updateProgressBar();
-
-        // Scroll ke atas form
-        document.querySelector('.registration-form-container').scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
-        });
-    }
-
-    // Fungsi validasi step 1
-    function validateStep1() {
-        const fields = {
-            'name': 'Nama Lengkap wajib diisi',
-            'gender': 'Jenis Kelamin wajib dipilih',
-            'birth_date': 'Tanggal Lahir wajib diisi',
-            'birth_place': 'Tempat Lahir wajib diisi',
-            'religion': 'Agama wajib dipilih',
-            'nik': 'NIK wajib diisi',
-            'address': 'Alamat Lengkap wajib diisi',
-            'phone': 'Nomor Telepon wajib diisi'
-        };
-
-        let isValid = true;
-        let firstInvalidField = null;
-
-        // Validasi semua field wajib
-        for (const [fieldName, errorMessage] of Object.entries(fields)) {
-            const field = document.getElementById(fieldName);
-            if (field && !field.value.trim()) {
-                showError(field, errorMessage);
-                isValid = false;
-                if (!firstInvalidField) {
-                    firstInvalidField = field;
-                }
-            } else if (field) {
-                clearError(field);
-            }
-        }
-
-        // Validasi khusus NIK (harus 16 digit)
-        const nikField = document.getElementById('nik');
-        if (nikField && nikField.value.trim()) {
-            if (nikField.value.length !== 16) {
-                showError(nikField, 'NIK harus 16 digit');
-                isValid = false;
-                if (!firstInvalidField) {
-                    firstInvalidField = nikField;
-                }
-            } else if (!/^\d+$/.test(nikField.value)) {
-                showError(nikField, 'NIK harus berupa angka');
-                isValid = false;
-                if (!firstInvalidField) {
-                    firstInvalidField = nikField;
-                }
-            }
-        }
-
-        // Validasi NISN jika diisi (harus 10 digit)
-        const nisnField = document.getElementById('nisn');
-        if (nisnField && nisnField.value.trim()) {
-            if (nisnField.value.length !== 10) {
-                showError(nisnField, 'NISN harus 10 digit');
-                isValid = false;
-                if (!firstInvalidField) {
-                    firstInvalidField = nisnField;
-                }
-            } else if (!/^\d+$/.test(nisnField.value)) {
-                showError(nisnField, 'NISN harus berupa angka');
-                isValid = false;
-                if (!firstInvalidField) {
-                    firstInvalidField = nisnField;
-                }
-            }
-        }
-
-        if (!isValid && firstInvalidField) {
-            firstInvalidField.focus();
-            firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        return isValid;
-    }
-
-    // Fungsi validasi step 2
-    function validateStep2() {
-        const requiredFiles = {
-            'pas_foto': 'Pas Foto 3x4 wajib diupload',
-            'ijazah': 'Ijazah/SKL wajib diupload',
-            'kartu_keluarga': 'Kartu Keluarga wajib diupload',
-            'akte_lahir': 'Akte Kelahiran wajib diupload'
-        };
-
-        let isValid = true;
-        let firstInvalidField = null;
-
-        for (const [fieldName, errorMessage] of Object.entries(requiredFiles)) {
-            const field = document.getElementById(fieldName);
-            if (field && !field.files.length) {
-                showError(field, errorMessage);
-                isValid = false;
-                if (!firstInvalidField) {
-                    firstInvalidField = field;
-                }
-            } else if (field) {
-                clearError(field);
+            // Fungsi untuk update progress bar
+            function updateProgressBar() {
+                const progressPercentage = (currentStep / totalSteps) * 100;
+                const progressBar = document.getElementById('progress-bar');
+                const currentStepElement = document.getElementById('current-step');
+                const stepTitleElement = document.getElementById('step-title');
                 
-                // Validasi ukuran file
-                const file = field.files[0];
-                const maxSize = fieldName === 'pas_foto' ? 2 * 1024 * 1024 : 5 * 1024 * 1024; // 2MB untuk foto, 5MB untuk dokumen
+                progressBar.style.width = progressPercentage + '%';
+                progressBar.setAttribute('aria-valuenow', progressPercentage);
+                currentStepElement.textContent = currentStep;
+                stepTitleElement.textContent = stepTitles[currentStep];
+
+                // Update step indicators
+                document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+                    const stepNumber = index + 1;
+                    if (stepNumber < currentStep) {
+                        indicator.classList.add('completed');
+                        indicator.classList.remove('active');
+                    } else if (stepNumber === currentStep) {
+                        indicator.classList.add('active');
+                        indicator.classList.remove('completed');
+                    } else {
+                        indicator.classList.remove('active', 'completed');
+                    }
+                });
+            }
+
+            // Fungsi untuk menampilkan pesan error
+            function showError(field, message) {
+                field.classList.add('is-invalid');
                 
-                if (file && file.size > maxSize) {
-                    const maxSizeMB = maxSize / (1024 * 1024);
-                    showError(field, `Ukuran file maksimal ${maxSizeMB}MB`);
-                    isValid = false;
-                    if (!firstInvalidField) {
-                        firstInvalidField = field;
+                // Hapus pesan error lama jika ada
+                const oldError = field.parentElement.querySelector('.invalid-feedback.js-error');
+                if (oldError) {
+                    oldError.remove();
+                }
+                
+                // Tambah pesan error baru
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback js-error';
+                errorDiv.style.display = 'block';
+                errorDiv.textContent = message;
+                field.parentElement.appendChild(errorDiv);
+            }
+
+            // Fungsi untuk menghapus pesan error
+            function clearError(field) {
+                field.classList.remove('is-invalid');
+                const errorDiv = field.parentElement.querySelector('.invalid-feedback.js-error');
+                if (errorDiv) {
+                    errorDiv.remove();
+                }
+            }
+
+            // Fungsi untuk show/hide step
+            function showStep(stepNumber) {
+                // Hide semua step
+                document.querySelectorAll('.form-step').forEach(step => {
+                    step.style.display = 'none';
+                    step.classList.remove('active');
+                });
+
+                // Show step yang dipilih
+                const targetStep = document.getElementById('step-' + stepNumber);
+                if (targetStep) {
+                    targetStep.style.display = 'block';
+                    targetStep.classList.add('active');
+                }
+
+                currentStep = stepNumber;
+                updateProgressBar();
+
+                // Scroll ke atas form
+                document.querySelector('.registration-form-container').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }
+
+            // Fungsi validasi step 1
+            function validateStep1() {
+                const fields = {
+                    'name': 'Nama Lengkap wajib diisi',
+                    'phone': 'Nomor Whatsapp wajib diisi',
+                    'gender': 'Jenis Kelamin wajib dipilih',
+                    'birth_date': 'Tanggal Lahir wajib diisi',
+                    'birth_place': 'Tempat Lahir wajib diisi',
+                    'religion': 'Agama wajib dipilih',
+                    'nik': 'NIK wajib diisi',
+                    'nisn': 'NISN wajib diisi',
+                    'address': 'Alamat Lengkap wajib diisi',
+                    'phone': 'Nomor Telepon wajib diisi'
+                };
+
+                let isValid = true;
+                let firstInvalidField = null;
+
+                // Validasi semua field wajib
+                for (const [fieldName, errorMessage] of Object.entries(fields)) {
+                    const field = document.getElementById(fieldName);
+                    if (field && !field.value.trim()) {
+                        showError(field, errorMessage);
+                        isValid = false;
+                        if (!firstInvalidField) {
+                            firstInvalidField = field;
+                        }
+                    } else if (field) {
+                        clearError(field);
                     }
                 }
+
+                // Validasi khusus NIK (harus 16 digit)
+                const nikField = document.getElementById('nik');
+                if (nikField && nikField.value.trim()) {
+                    if (nikField.value.length !== 16) {
+                        showError(nikField, 'NIK harus 16 digit');
+                        isValid = false;
+                        if (!firstInvalidField) {
+                            firstInvalidField = nikField;
+                        }
+                    } else if (!/^\d+$/.test(nikField.value)) {
+                        showError(nikField, 'NIK harus berupa angka');
+                        isValid = false;
+                        if (!firstInvalidField) {
+                            firstInvalidField = nikField;
+                        }
+                    }
+                }
+
+                // Validasi NISN jika diisi (harus 10 digit)
+                const nisnField = document.getElementById('nisn');
+                if (nisnField && nisnField.value.trim()) {
+                    if (nisnField.value.length !== 10) {
+                        showError(nisnField, 'NISN harus 10 digit');
+                        isValid = false;
+                        if (!firstInvalidField) {
+                            firstInvalidField = nisnField;
+                        }
+                    } else if (!/^\d+$/.test(nisnField.value)) {
+                        showError(nisnField, 'NISN harus berupa angka');
+                        isValid = false;
+                        if (!firstInvalidField) {
+                            firstInvalidField = nisnField;
+                        }
+                    }
+                }
+
+                if (!isValid && firstInvalidField) {
+                    firstInvalidField.focus();
+                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                return isValid;
             }
-        }
 
-        if (!isValid && firstInvalidField) {
-            firstInvalidField.focus();
-            firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+            // Fungsi validasi step 2
+            function validateStep2() {
+                const requiredFiles = {
+                    'photo_path': 'Pas Foto 3x4 wajib diupload',
+                    'ijazah': 'Ijazah/SKL wajib diupload',
+                    'kartu_keluarga': 'Kartu Keluarga wajib diupload',
+                    'akte_lahir': 'Akte Kelahiran wajib diupload'
+                };
 
-        return isValid;
-    }
+                let isValid = true;
+                let firstInvalidField = null;
 
-    // Fungsi validasi step 3
-    function validateStep3() {
-        let isValid = true;
-        let firstInvalidField = null;
+                for (const [fieldName, errorMessage] of Object.entries(requiredFiles)) {
+                    const field = document.getElementById(fieldName);
+                    if (field && !field.files.length) {
+                        showError(field, errorMessage);
+                        isValid = false;
+                        if (!firstInvalidField) {
+                            firstInvalidField = field;
+                        }
+                    } else if (field) {
+                        clearError(field);
+                        
+                        // Validasi ukuran file
+                        const file = field.files[0];
+                        const maxSize = 500000; // 500KB
+                        
+                        if (file && file.size > maxSize) {
+                            showError(field, `Ukuran file maksimal 500KB`);
+                            isValid = false;
+                            if (!firstInvalidField) {
+                                firstInvalidField = field;
+                            }
+                        }
+                    }
+                }
 
-        // Validasi email
-        const emailField = document.getElementById('email');
-        if (emailField) {
-            if (!emailField.value.trim()) {
-                showError(emailField, 'Email wajib diisi');
-                isValid = false;
-                firstInvalidField = emailField;
-            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailField.value)) {
-                showError(emailField, 'Format email tidak valid');
-                isValid = false;
-                firstInvalidField = emailField;
-            } else {
-                clearError(emailField);
+                if (!isValid && firstInvalidField) {
+                    firstInvalidField.focus();
+                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                return isValid;
             }
-        }
 
-        // Validasi password
-        const passwordField = document.getElementById('password');
-        const passwordConfField = document.getElementById('password_confirmation');
-        
-        if (passwordField) {
-            if (!passwordField.value) {
-                showError(passwordField, 'Password wajib diisi');
-                isValid = false;
-                if (!firstInvalidField) firstInvalidField = passwordField;
-            } else if (passwordField.value.length < 8) {
-                showError(passwordField, 'Password minimal 8 karakter');
-                isValid = false;
-                if (!firstInvalidField) firstInvalidField = passwordField;
-            } else {
-                clearError(passwordField);
+            // Fungsi validasi step 3
+            function validateStep3() {
+                let isValid = true;
+                let firstInvalidField = null;
+
+                // Validasi email
+                const emailField = document.getElementById('email');
+                if (emailField) {
+                    if (!emailField.value.trim()) {
+                        showError(emailField, 'Email wajib diisi');
+                        isValid = false;
+                        firstInvalidField = emailField;
+                    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailField.value)) {
+                        showError(emailField, 'Format email tidak valid');
+                        isValid = false;
+                        firstInvalidField = emailField;
+                    } else {
+                        clearError(emailField);
+                    }
+                }
+
+                // Validasi password
+                const passwordField = document.getElementById('password');
+                const passwordConfField = document.getElementById('password_confirmation');
+                
+                if (passwordField) {
+                    if (!passwordField.value) {
+                        showError(passwordField, 'Password wajib diisi');
+                        isValid = false;
+                        if (!firstInvalidField) firstInvalidField = passwordField;
+                    } else if (passwordField.value.length < 8) {
+                        showError(passwordField, 'Password minimal 8 karakter');
+                        isValid = false;
+                        if (!firstInvalidField) firstInvalidField = passwordField;
+                    } else {
+                        clearError(passwordField);
+                    }
+                }
+
+                if (passwordConfField) {
+                    if (!passwordConfField.value) {
+                        showError(passwordConfField, 'Konfirmasi Password wajib diisi');
+                        isValid = false;
+                        if (!firstInvalidField) firstInvalidField = passwordConfField;
+                    } else if (passwordField.value !== passwordConfField.value) {
+                        showError(passwordConfField, 'Password tidak sama');
+                        isValid = false;
+                        if (!firstInvalidField) firstInvalidField = passwordConfField;
+                    } else {
+                        clearError(passwordConfField);
+                    }
+                }
+
+                // Validasi terms
+                const termsField = document.getElementById('terms');
+                if (termsField && !termsField.checked) {
+                    showError(termsField, 'Anda harus menyetujui syarat dan ketentuan');
+                    isValid = false;
+                    if (!firstInvalidField) firstInvalidField = termsField;
+                } else if (termsField) {
+                    clearError(termsField);
+                }
+
+                if (!isValid && firstInvalidField) {
+                    firstInvalidField.focus();
+                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                return isValid;
             }
-        }
 
-        if (passwordConfField) {
-            if (!passwordConfField.value) {
-                showError(passwordConfField, 'Konfirmasi Password wajib diisi');
-                isValid = false;
-                if (!firstInvalidField) firstInvalidField = passwordConfField;
-            } else if (passwordField.value !== passwordConfField.value) {
-                showError(passwordConfField, 'Password tidak sama');
-                isValid = false;
-                if (!firstInvalidField) firstInvalidField = passwordConfField;
-            } else {
-                clearError(passwordConfField);
+            // Event listener untuk tombol Next di step 1
+            const nextStepBtn = document.querySelector('#step-1 #next-step');
+            if (nextStepBtn) {
+                nextStepBtn.addEventListener('click', function() {
+                    if (validateStep1()) {
+                        showStep(2);
+                    }
+                });
             }
-        }
 
-        // Validasi terms
-        const termsField = document.getElementById('terms');
-        if (termsField && !termsField.checked) {
-            showError(termsField, 'Anda harus menyetujui syarat dan ketentuan');
-            isValid = false;
-            if (!firstInvalidField) firstInvalidField = termsField;
-        } else if (termsField) {
-            clearError(termsField);
-        }
-
-        if (!isValid && firstInvalidField) {
-            firstInvalidField.focus();
-            firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        return isValid;
-    }
-
-    // Event listener untuk tombol Next di step 1
-    const nextStepBtn = document.querySelector('#step-1 #next-step');
-    if (nextStepBtn) {
-        nextStepBtn.addEventListener('click', function() {
-            if (validateStep1()) {
-                showStep(2);
+            // Event listener untuk tombol Next di step 2
+            const step2NextBtn = document.querySelector('#step-2 .next-step');
+            if (step2NextBtn) {
+                step2NextBtn.addEventListener('click', function() {
+                    if (validateStep2()) {
+                        showStep(3);
+                    }
+                });
             }
+
+            // Event listener untuk semua tombol Previous
+            document.querySelectorAll('.prev-step').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (currentStep > 1) {
+                        showStep(currentStep - 1);
+                    }
+                });
+            });
+
+            // Remove invalid class dan error message saat user mulai mengisi field
+            document.querySelectorAll('input, select, textarea').forEach(field => {
+                field.addEventListener('input', function() {
+                    clearError(this);
+                });
+                
+                field.addEventListener('change', function() {
+                    clearError(this);
+                });
+            });
+
+            // Validasi sebelum submit
+            const form = document.querySelector('.registration-form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    // Validasi step 3 sebelum submit
+                    if (!validateStep3()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+            }
+
+            // Initialize tooltips (jika menggunakan Bootstrap)
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            if (typeof bootstrap !== 'undefined') {
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+
+            // Initialize step pertama
+            updateProgressBar();
         });
-    }
-
-    // Event listener untuk tombol Next di step 2
-    const step2NextBtn = document.querySelector('#step-2 .next-step');
-    if (step2NextBtn) {
-        step2NextBtn.addEventListener('click', function() {
-            if (validateStep2()) {
-                showStep(3);
-            }
-        });
-    }
-
-    // Event listener untuk semua tombol Previous
-    document.querySelectorAll('.prev-step').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (currentStep > 1) {
-                showStep(currentStep - 1);
-            }
-        });
-    });
-
-    // Remove invalid class dan error message saat user mulai mengisi field
-    document.querySelectorAll('input, select, textarea').forEach(field => {
-        field.addEventListener('input', function() {
-            clearError(this);
-        });
-        
-        field.addEventListener('change', function() {
-            clearError(this);
-        });
-    });
-
-    // Validasi sebelum submit
-    const form = document.querySelector('.registration-form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            // Validasi step 3 sebelum submit
-            if (!validateStep3()) {
-                e.preventDefault();
-                return false;
-            }
-        });
-    }
-
-    // Initialize tooltips (jika menggunakan Bootstrap)
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    if (typeof bootstrap !== 'undefined') {
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    }
-
-    // Initialize step pertama
-    updateProgressBar();
-});
     </script>
 @endpush

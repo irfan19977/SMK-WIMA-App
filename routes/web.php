@@ -9,6 +9,7 @@ use App\Http\Controllers\EkstrakurikulerController;
 use App\Http\Controllers\FaceRecognitionController;
 use App\Http\Controllers\LessonAttendanceController;
 use App\Http\Controllers\ParentsController;
+use App\Http\Controllers\PendaftaranController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegistrationController;
@@ -39,7 +40,7 @@ Route::get('/detail', function () {
     return view('home.detail');
 })->name('berita.detail');
 
-Route::resource('/pendaftaran', RegistrationController::class);
+Route::resource('/pendaftaran', PendaftaranController::class);
 
     Route::post('/rfid-detect', [RFIDController::class, 'detectRFID']);
     Route::get('/get-latest-rfid', [RFIDController::class, 'getLatestRFID'])->name('get.latest.rfid');

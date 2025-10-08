@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Student extends Model
 {
@@ -21,7 +22,7 @@ class Student extends Model
         
         static::creating(function ($model) {
             if (!$model->id) {
-                $model->id = (string) \Illuminate\Support\Str::uuid();
+                $model->id = Str::uuid();
             }
         });
     }
