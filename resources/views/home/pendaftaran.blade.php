@@ -104,7 +104,7 @@
                                             Nama Lengkap <span class="text-danger">*</span>
                                             <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Nama lengkap sesuai dengan identitas resmi">ⓘ</span>
                                         </label>
-                                        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required>
+                                        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" placeholder="Nama Lengkap" required>
                                         @error('name')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -115,7 +115,7 @@
                                             Nama Panggilan
                                             <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Nama panggilan atau nama kecil (opsional)">ⓘ</span>
                                         </label>
-                                        <input type="text" class="form-control @error('nickname') is-invalid @enderror" id="nickname" name="nickname" value="{{ old('nickname') }}">
+                                        <input type="text" class="form-control @error('nickname') is-invalid @enderror" id="nickname" name="nickname" value="{{ old('nickname') }}" placeholder="Nama Panggilan">
                                         @error('nickname')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -182,7 +182,7 @@
                                             NIK <span class="text-danger">*</span>
                                             <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Nomor Induk Kependudukan (16 digit)">ⓘ</span>
                                         </label>
-                                        <input type="text" class="form-control @error('nik') is-invalid @enderror" id="nik" name="nik" value="{{ old('nik') }}" maxlength="16" placeholder="16 digit angka" required>
+                                        <input type="number" class="form-control @error('nik') is-invalid @enderror" id="nik" name="nik" value="{{ old('nik') }}" maxlength="16" placeholder="16 digit angka" required>
                                         @error('nik')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -193,7 +193,7 @@
                                             NISN
                                             <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Nomor Induk Siswa Nasional (opsional)">ⓘ</span>
                                         </label>
-                                        <input type="text" class="form-control @error('nisn') is-invalid @enderror" id="nisn" name="nisn" value="{{ old('nisn') }}" maxlength="10" placeholder="10 digit angka">
+                                        <input type="number" class="form-control @error('nisn') is-invalid @enderror" id="nisn" name="nisn" value="{{ old('nisn') }}" maxlength="10" placeholder="10 digit angka">
                                         @error('nisn')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -235,23 +235,6 @@
                                     </div>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="blood_type" class="form-label">
-                                        Golongan Darah
-                                        <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Golongan darah sesuai dengan identitas (opsional)">ⓘ</span>
-                                    </label>
-                                    <select class="form-select @error('blood_type') is-invalid @enderror" id="blood_type" name="blood_type">
-                                        <option value="">-- Pilih Golongan Darah --</option>
-                                        <option value="A" {{ old('blood_type') == 'A' ? 'selected' : '' }}>A</option>
-                                        <option value="B" {{ old('blood_type') == 'B' ? 'selected' : '' }}>B</option>
-                                        <option value="AB" {{ old('blood_type') == 'AB' ? 'selected' : '' }}>AB</option>
-                                        <option value="O" {{ old('blood_type') == 'O' ? 'selected' : '' }}>O</option>
-                                    </select>
-                                    @error('blood_type')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
                                 <div class="text-center">
                                     <button type="button" class="btn btn-primary" id="next-step">
                                         Selanjutnya <i class="bi bi-arrow-right ms-2"></i>
@@ -290,7 +273,7 @@
                                     <div class="col-md-6 mb-3">
                                         <label for="ijazah" class="form-label">Ijazah/SKL <span class="text-danger">*</span></label>
                                         <input type="file" class="form-control @error('ijazah') is-invalid @enderror" id="ijazah" name="ijazah" accept=".pdf,.jpg,.jpeg,.png" required>
-                                        <div class="form-text">Format: PDF, JPG, PNG. Max: 5MB</div>
+                                        <div class="form-text">Format: PDF, JPG, PNG. Max: 500KB</div>
                                         @error('ijazah')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -299,7 +282,7 @@
                                     <div class="col-md-6 mb-3">
                                         <label for="kartu_keluarga" class="form-label">Kartu Keluarga <span class="text-danger">*</span></label>
                                         <input type="file" class="form-control @error('kartu_keluarga') is-invalid @enderror" id="kartu_keluarga" name="kartu_keluarga" accept=".pdf,.jpg,.jpeg,.png" required>
-                                        <div class="form-text">Format: PDF, JPG, PNG. Max: 5MB</div>
+                                        <div class="form-text">Format: PDF, JPG, PNG. Max: 500KB</div>
                                         @error('kartu_keluarga')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -308,16 +291,16 @@
                                     <div class="col-md-6 mb-3">
                                         <label for="akte_lahir" class="form-label">Akte Kelahiran <span class="text-danger">*</span></label>
                                         <input type="file" class="form-control @error('akte_lahir') is-invalid @enderror" id="akte_lahir" name="akte_lahir" accept=".pdf,.jpg,.jpeg,.png" required>
-                                        <div class="form-text">Format: PDF, JPG, PNG. Max: 5MB</div>
+                                        <div class="form-text">Format: PDF, JPG, PNG. Max: 500KB</div>
                                         @error('akte_lahir')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
 
                                     <div class="col-md-6 mb-3">
-                                        <label for="raport" class="form-label">Raport Semester Terakhir</label>
-                                        <input type="file" class="form-control @error('raport') is-invalid @enderror" id="raport" name="raport" accept=".pdf,.jpg,.jpeg,.png">
-                                        <div class="form-text">Format: PDF, JPG, PNG. Max: 5MB (Opsional)</div>
+                                        <label for="raport" class="form-label">Akta Kelahiran</label>
+                                        <input type="file" class="form-control @error('raport') is-invalid @enderror" id="raport" name="raport" accept=".pdf,.jpg,.jpeg,.png" require>
+                                        <div class="form-text">Format: PDF, JPG, PNG. Max: 500KB</div>
                                         @error('raport')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -326,7 +309,7 @@
                                     <div class="col-md-6 mb-3">
                                         <label for="sertifikat" class="form-label">Sertifikat/Piagam (Jika ada)</label>
                                         <input type="file" class="form-control @error('sertifikat') is-invalid @enderror" id="sertifikat" name="sertifikat" accept=".pdf,.jpg,.jpeg,.png" multiple>
-                                        <div class="form-text">Format: PDF, JPG, PNG. Max: 5MB per file (Opsional)</div>
+                                        <div class="form-text">Format: PDF, JPG, PNG. Max: 500KB per file (Opsional)</div>
                                         @error('sertifikat')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
