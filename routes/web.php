@@ -1,26 +1,27 @@
 <?php
 
 use App\Http\Controllers\API\RFIDController;
-use App\Http\Controllers\AsramaController;
-use App\Http\Controllers\AttendanceController;
-use App\Http\Controllers\ClassesController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EkstrakurikulerController;
-use App\Http\Controllers\FaceRecognitionController;
-use App\Http\Controllers\LessonAttendanceController;
-use App\Http\Controllers\ParentsController;
-use App\Http\Controllers\PendaftaranController;
-use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RegistrationController;
-use App\Http\Controllers\ScheduleController;
-use App\Http\Controllers\SettingScheduleController;
-use App\Http\Controllers\StudentController;
-use App\Http\Controllers\SubjectController;
-use App\Http\Controllers\TeacherController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\StudentGradesController;
-use App\Http\Controllers\TahfizController;
+use App\Http\Controllers\Backend\AsramaController;
+use App\Http\Controllers\Backend\AttendanceController;
+use App\Http\Controllers\Backend\ClassesController;
+use App\Http\Controllers\Backend\DashboardController;
+use App\Http\Controllers\Backend\EkstrakurikulerController;
+use App\Http\Controllers\Backend\FaceRecognitionController;
+use App\Http\Controllers\Backend\LessonAttendanceController;
+use App\Http\Controllers\Backend\ParentsController;
+use App\Http\Controllers\Frontend\PendaftaranController;
+use App\Http\Controllers\Backend\PermissionController;
+use App\Http\Controllers\Backend\ProfileController;
+use App\Http\Controllers\Backend\RegistrationController;
+use App\Http\Controllers\Backend\ScheduleController;
+use App\Http\Controllers\Backend\SettingScheduleController;
+use App\Http\Controllers\Backend\StudentController;
+use App\Http\Controllers\Backend\SubjectController;
+use App\Http\Controllers\Backend\TeacherController;
+use App\Http\Controllers\Backend\PendaftaranSiswaController;
+use App\Http\Controllers\Backend\RoleController;
+use App\Http\Controllers\Backend\StudentGradesController;
+use App\Http\Controllers\Backend\TahfizController;
 use App\Models\Ekstrakurikuler;
 use App\Models\Student;
 use Illuminate\Support\Facades\Route;
@@ -53,6 +54,9 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('/', [DashboardController::class, 'index']);
         Route::get('/attendance-data', [DashboardController::class, 'getAttendanceData'])->name('.attendance-data');
     });
+
+    Route::resource('pendaftaran-siswa', PendaftaranSiswaController::class);
+    Route::post('pendaftaran-siswa/{pendaftaran_siswa}/accept', [PendaftaranSiswaController::class, 'accept'])->name('pendaftaran-siswa.accept');
 
     // Student Management Routes
     Route::prefix('students')->name('students.')->group(function() {

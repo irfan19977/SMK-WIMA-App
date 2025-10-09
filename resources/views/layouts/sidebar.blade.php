@@ -23,6 +23,15 @@
                 </a>
             </li>
         @endcan
+        
+        {{-- Pengumuman --}}
+        @can('announcements.index')
+            <li class="dropdown {{ Request::is('announcements*') ? 'active' : '' }}">
+                <a href="{{ route('pendaftaran.index') }}" class="nav-link">
+                    <i class="fas fa-bullhorn"></i><span>Pendaftaran</span>
+                </a>
+            </li>
+        @endcan
 
         {{-- Akademik --}}
         @canany(['classes.index', 'subjects.index', 'schedules.index', 'student-grades.index'])

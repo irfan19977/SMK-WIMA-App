@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Backend;
 
-use App\Models\Student;
+use App\Http\Controllers\Controller;
+use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class StudentController extends Controller
+class TeacherController extends Controller
 {
     use AuthorizesRequests;
     /**
@@ -20,38 +21,62 @@ class StudentController extends Controller
      */
     public function index(Request $request)
     {
-        $this->authorize('students.index');
-        $query = Student::with('user');
+        $this->authorize('teachers.index');
+
+        $query = Teacher::with(['user', 'user.roles']);
         
         // Filter pencarian
         if ($request->has('q') && !empty($request->q)) {
             $searchTerm = $request->q;
             $query->where(function($q) use ($searchTerm) {
                 $q->where('name', 'LIKE', '%' . $searchTerm . '%')
-                ->orWhere('nisn', 'LIKE', '%' . $searchTerm . '%');
+                ->orWhere('nip', 'LIKE', '%' . $searchTerm . '%');
             });
         }
         
-        $students = $query->paginate(10);
+        $teachers = $query->paginate(10);
         
         // Jika request AJAX, return JSON
         if ($request->ajax() || $request->expectsJson()) {
+            // Transform data untuk memastikan relasi dimuat dengan benar
+            $teachersData = $teachers->getCollection()->map(function($teacher) {
+                return [
+                    'id' => $teacher->id,
+                    'name' => $teacher->name,
+                    'nip' => $teacher->nip,
+                    'no_card' => $teacher->no_card,
+                    'education_level' => $teacher->education_level,
+                    'education_major' => $teacher->education_major,
+                    'user' => [
+                        'id' => $teacher->user->id,
+                        'email' => $teacher->user->email,
+                        'phone' => $teacher->user->phone,
+                        'status' => $teacher->user->status,
+                        'roles' => $teacher->user->roles->map(function($role) {
+                            return [
+                                'name' => $role->name
+                            ];
+                        })
+                    ]
+                ];
+            });
+            
             return response()->json([
                 'success' => true,
-                'students' => $students->items(),
+                'teachers' => $teachersData,
                 'pagination' => [
-                    'current_page' => $students->currentPage(),
-                    'per_page' => $students->perPage(),
-                    'total' => $students->total(),
-                    'last_page' => $students->lastPage(),
+                    'current_page' => $teachers->currentPage(),
+                    'per_page' => $teachers->perPage(),
+                    'total' => $teachers->total(),
+                    'last_page' => $teachers->lastPage(),
                 ],
-                'currentPage' => $students->currentPage(),
-                'perPage' => $students->perPage(),
+                'currentPage' => $teachers->currentPage(),
+                'perPage' => $teachers->perPage(),
             ]);
         }
         
         // Return view normal untuk non-AJAX request
-        return view('students.index', compact('students'));
+        return view('teachers.index', compact('teachers'));
     }
 
     /**
@@ -59,7 +84,7 @@ class StudentController extends Controller
      */
     public function create()
     {
-        return view('students.create');
+        return view('teachers.create');
     }
 
     /**
@@ -73,10 +98,11 @@ class StudentController extends Controller
             'email' => 'required|email',
             'password' => 'nullable|string|min:8',
             'phone' => 'nullable|string|max:20',
-            'nisn' => 'nullable|string|max:20',
+            'nip' => 'nullable|string|max:20',
             'no_card' => 'nullable|string|max:20',
-            'birth_place' => 'nullable|string|max:100',
-            'birth_date' => 'nullable|date',
+            'education_level' => 'nullable|string|max:100',
+            'education_major' => 'nullable|string|max:100',
+            'education_institution' => 'nullable|string|max:100',
             'province' => 'nullable|string|max:100',
             'regency' => 'nullable|string|max:100',
             'district' => 'nullable|string|max:100',
@@ -86,31 +112,32 @@ class StudentController extends Controller
 
 
        try {
+        
         DB::beginTransaction();
 
-        $students = User::create([
+        $teachers = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => $request->password ? Hash::make($request->password) : null,
             'phone' => $request->phone,
             'status' => $request->status ? true : false,
         ]);
-        $students->assignRole('student');
+        $teachers->assignRole('teacher');
 
         // Step 2: Generate QR Code for student
-        $qrcode = 'STD-' . strtoupper(Str::random(8)) . '-' . date('Y');
+        $qrcode = 'TEC-' . strtoupper(Str::random(8)) . '-' . date('Y');
 
         // Step 3: Create student record
-        $student = Student::create([
+        $teachers = Teacher::create([
             'id' => Str::uuid(),
-            'user_id' => $students->id,
+            'user_id' => $teachers->id,
             'name' => $request->name,
-            'nisn' => $request->nisn,
+            'nip' => $request->nip,
             'qrcode' => $qrcode,
             'no_card' => $request->no_card,
-            'medical_info' => $request->medical_info,
-            'birth_place' => $request->birth_place,
-            'birth_date' => $request->birth_date,
+            'education_level' => $request->education_level,
+            'education_major' => $request->education_major,
+            'education_institution' => $request->education_institution,
             'gender' => $request->gender,
             'province' => $request->province,
             'regency' => $request->regency,
@@ -122,8 +149,8 @@ class StudentController extends Controller
 
         DB::commit();
 
-        // Redirect to the students index with a success message
-        return redirect()->route('students.index')->with('success', 'Student created successfully.');
+        // Redirect to the teachers index with a success message
+        return redirect()->route('teachers.index')->with('success', 'Student created successfully.');
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -147,8 +174,8 @@ class StudentController extends Controller
      */
     public function edit(string $id)
     {
-        $student = Student::with('user')->findOrFail($id);
-        return view('students.edit', compact('student'));
+        $teachers = Teacher::with('user')->findOrFail($id);
+        return view('teachers.edit', compact('teachers'));
     }
 
     /**
@@ -156,7 +183,7 @@ class StudentController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $students = Student::with('user')->findOrFail($id);
+        $teachers = Teacher::with('user')->findOrFail($id);
         
         // Validate the request data
         $request->validate([
@@ -164,10 +191,11 @@ class StudentController extends Controller
             'email' => 'required|email',
             'password' => 'nullable|string|min:8',
             'phone' => 'nullable|string|max:20',
-            'nisn' => 'nullable|string|max:20',
+            'nip' => 'nullable|string|max:20',
             'no_card' => 'nullable|string|max:20',
-            'birth_place' => 'nullable|string|max:100',
-            'birth_date' => 'nullable|date',
+            'education_level' => 'nullable|string|max:100',
+            'education_major' => 'nullable|string|max:100',
+            'education_institution' => 'nullable|string|max:100',
             'province' => 'nullable|string|max:100',
             'regency' => 'nullable|string|max:100',
             'district' => 'nullable|string|max:100',
@@ -175,24 +203,22 @@ class StudentController extends Controller
             'address' => 'nullable|string|max:255',
         ]);
 
-        
-
         try {
             DB::beginTransaction();
 
             // Handle photo upload
-            $photoPath = $students->photo; // Keep existing photo by default
+            $photoPath = $teachers->photo; // Keep existing photo by default
             if ($request->hasFile('photo')) {
                 // Delete old photo if exists
-                if ($students->photo && Storage::disk('public')->exists($students->photo)) {
-                    Storage::disk('public')->delete($students->photo);
+                if ($teachers->photo && Storage::disk('public')->exists($teachers->photo)) {
+                    Storage::disk('public')->delete($teachers->photo);
                 }
                 // Upload new photo
-                $photoPath = $request->file('photo')->store('students/photos', 'public');
+                $photoPath = $request->file('photo')->store('teachers/photos', 'public');
             }
 
             // Update user data
-            $studentsData = [
+            $teachersData = [
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
@@ -202,19 +228,19 @@ class StudentController extends Controller
 
             // Only update password if provided
             if ($request->filled('password')) {
-                $studentsData['password'] = Hash::make($request->password);
+                $teachersData['password'] = Hash::make($request->password);
             }
 
-            $students->user->update($studentsData);
+            $teachers->user->update($teachersData);
 
             // Update student data
-            $students->update([
+            $teachers->update([
                 'name' => $request->name,
-                'nisn' => $request->nisn,
+                'nip' => $request->nip,
                 'no_card' => $request->no_card,
-                'medical_info' => $request->medical_info,
-                'birth_place' => $request->birth_place,
-                'birth_date' => $request->birth_date,
+                'education_level' => $request->education_level,
+                'education_major' => $request->education_major,
+                'education_institution' => $request->education_institution,
                 'gender' => $request->gender,
                 'province' => $request->province,
                 'regency' => $request->regency,
@@ -226,13 +252,13 @@ class StudentController extends Controller
 
             DB::commit();
 
-            return redirect()->route('students.index')->with('success', 'Student updated successfully.');
+            return redirect()->route('teachers.index')->with('success', 'Student updated successfully.');
 
         } catch (\Exception $e) {
             DB::rollback();
             
             // Delete uploaded photo if exists and different from original
-            if ($request->hasFile('photo') && $photoPath !== $students->photo && Storage::disk('public')->exists($photoPath)) {
+            if ($request->hasFile('photo') && $photoPath !== $teachers->photo && Storage::disk('public')->exists($photoPath)) {
                 Storage::disk('public')->delete($photoPath);
             }
             
@@ -250,10 +276,10 @@ class StudentController extends Controller
         try {
             DB::beginTransaction();
             
-            $students = Student::findOrFail($id);
-            $user = $students->user;
+            $teacher = Teacher::findOrFail($id);
+            $user = $teacher->user;
             
-            $students->delete(); // Delete teacher first
+            $teacher->delete(); // Delete teacher first
             $user->delete(); // Then delete user
             
             DB::commit();

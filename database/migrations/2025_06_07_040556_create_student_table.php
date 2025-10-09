@@ -29,6 +29,7 @@ return new class extends Migration
             $table->string('akte_lahir')->nullable();
             $table->string('ktp')->nullable();
             $table->string('sertifikat')->nullable();
+            $table->string('status')->nullable();
             $table->foreignUuid('created_by')->nullable();
             $table->foreignUuid('updated_by')->nullable();
             $table->foreignUuid('deleted_by')->nullable();

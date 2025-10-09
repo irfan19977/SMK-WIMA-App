@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Frontend;
 
+use App\Http\Controllers\Controller;
 use App\Models\ParentModel;
 use App\Models\Student;
 use App\Models\User;
@@ -102,12 +103,13 @@ class PendaftaranController extends Controller
                 'akte_lahir' => $akteLahirPath,
                 'ktp' => $ktpPath,
                 'sertifikat' => $sertifikatPath,
+                'status' => 'calon siswa',
             ]);
 
             DB::commit();
 
             // Redirect ke halaman yang benar
-            return redirect()->route('/')
+            return redirect()->back()
                 ->with('success', 'Pendaftaran berhasil! Silakan login dengan akun yang telah dibuat.');
             
         } catch (\Illuminate\Validation\ValidationException $e) {

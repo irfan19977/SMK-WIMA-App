@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Backend;
 
+use App\Http\Controllers\Controller;
 use App\Helpers\AcademicYearHelper;
 use App\Models\Ekstrakurikuler;
 use App\Models\EkstrakurikulerAssign;
