@@ -33,8 +33,8 @@
                 @endif
               </div>
               <h5 class="mb-1">{{ $student->name ?? '-' }}</h5>
-              <span class="badge badge-warning">
-                Calon Siswa
+              <span class="badge badge-success">
+                Siswa
               </span>
               <div class="mb-2 mt-2"><i class="fas fa-envelope mr-2"></i>{{ $student->user->email ?? '-' }}</div>
               <div class="mb-2">
@@ -74,12 +74,12 @@
                       <td>{{ $student->nik ?? '-' }}</td>
                     </tr>
                     <tr>
-                      <th>Jurusan Utama</th>
-                      <td>{{ $student->jurusan_utama ?? '-' }}</td>
+                      <th>No. Absen</th>
+                      <td>{{ $student->no_absen ?? '-' }}</td>
                     </tr>
                     <tr>
-                      <th>Jurusan Cadangan</th>
-                      <td>{{ $student->jurusan_cadangan ?? '-' }}</td>
+                      <th>No. Kartu</th>
+                      <td>{{ $student->no_card ?? '-' }}</td>
                     </tr>
                     <tr>
                       <th>Jenis Kelamin</th>
@@ -112,8 +112,8 @@
                     <tr>
                       <th>Status Akun</th>
                       <td>
-                        <span class="badge badge-warning">
-                          Calon Siswa
+                        <span class="badge {{ $student->user->status ? 'badge-success' : 'badge-danger' }}">
+                          {{ $student->user->status ? 'Aktif' : 'Diblokir' }}
                         </span>
                       </td>
                     </tr>

@@ -55,6 +55,8 @@ class PendaftaranController extends Controller
                 'ktp' => 'required|file|mimes:pdf,jpg,jpeg,png|max:500',
                 'sertifikat' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:500',
                 'terms' => 'required|accepted',
+                'jurusan_utama' => 'required',
+                'jurusan_cadangan' => 'required',
             ], [
                 'email.unique' => 'Email sudah terdaftar. Silakan gunakan email lain.',
                 'nik.unique' => 'NIK sudah terdaftar.',
@@ -63,6 +65,8 @@ class PendaftaranController extends Controller
                 'nisn.digits' => 'NISN harus 10 digit.',
                 'password.confirmed' => 'Konfirmasi password tidak cocok.',
                 'terms.required' => 'Anda harus menyetujui syarat dan ketentuan.',
+                'jurusan_utama.required' => 'Jurusan utama harus dipilih.',
+                'jurusan_cadangan.required' => 'Jurusan cadangan harus dipilih.',
             ]);
 
             // Simpan semua file dengan pengecekan yang lebih baik
@@ -104,6 +108,9 @@ class PendaftaranController extends Controller
                 'ktp' => $ktpPath,
                 'sertifikat' => $sertifikatPath,
                 'status' => 'calon siswa',
+                'jurusan_utama' => $validated['jurusan_utama'],
+                'jurusan_cadangan' => $validated['jurusan_cadangan'],
+                'academic_year' => (date('Y') + 1). '/' . (date('Y') + 2),
             ]);
 
             DB::commit();

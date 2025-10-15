@@ -33,6 +33,22 @@ Route::get('/profile-sekolah', function () {
     return view('home.profile');
 })->name('profile-sekolah.index');
 
+Route::get('/teknik-komputer-jaringan', function () {
+    return view('home.tkj');
+})->name('tkj.index');
+
+Route::get('/teknik-kendaraan-ringan', function () {
+    return view('home.tkr');
+})->name('tkr.index');
+
+Route::get('/kimia-industri', function () {
+    return view('home.kimia');
+})->name('kimia.index');
+
+Route::get('/teknik-bisnis-sepeda-motor', function () {
+    return view('home.tbsm');
+})->name('tbsm.index');
+
 Route::get('/berita', function () {
     return view('home.berita');
 })->name('berita.index');
@@ -57,23 +73,25 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::resource('pendaftaran-siswa', PendaftaranSiswaController::class);
     Route::post('pendaftaran-siswa/{pendaftaran_siswa}/accept', [PendaftaranSiswaController::class, 'accept'])->name('pendaftaran-siswa.accept');
+    Route::get('pendaftaran-siswa/export', [PendaftaranSiswaController::class, 'export'])->name('pendaftaran-siswa.export');
+    Route::get('pendaftaran-siswa/print', [PendaftaranSiswaController::class, 'print'])->name('pendaftaran-siswa.print');
 
     // Student Management Routes
     Route::prefix('students')->name('students.')->group(function() {
-        Route::post('/{userId}/toggle-active', [StudentController::class, 'toggleActive'])->name('toggle-active');
-        Route::post('/recognize-face', [StudentController::class, 'recognizeFace'])->name('recognize-face');
-        Route::resource('/', StudentController::class);
+        Route::post('{userId}/toggle-active', [StudentController::class, 'toggleActive'])->name('toggle-active');
+        Route::post('recognize-face', [StudentController::class, 'recognizeFace'])->name('recognize-face');
+        Route::resource('/', StudentController::class)->parameters(['' => 'student']);
     });
 
     // Teacher Management Routes
     Route::prefix('teachers')->name('teachers.')->group(function() {
-        Route::resource('/', TeacherController::class);
+        Route::resource('/', TeacherController::class)->parameters(['' => 'teachers']);
         Route::post('/{teacherId}/toggle-active', [TeacherController::class, 'toggleActive'])->name('toggle-active');
     });
     
     // Parent Management Routes
     Route::prefix('parents')->name('parents.')->group(function() {
-        Route::resource('/', ParentsController::class);
+        Route::resource('/', ParentsController::class)->parameters(['']);
         Route::post('/{parentId}/toggle-active', [ParentsController::class, 'toggleActive'])->name('toggle-active');
     });
 

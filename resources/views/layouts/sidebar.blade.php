@@ -1,6 +1,6 @@
 <aside id="sidebar-wrapper">
     <div class="sidebar-brand">
-        <a href="{{ route('dashboard') }}">
+        <a href="{{ route('/') }}">
             <img alt="" src="{{ asset('assets/img/logo.png') }}" class="header-logo" />
             <span class="logo-name">Otika</span>
         </a>
@@ -27,7 +27,7 @@
         {{-- Pengumuman --}}
         @can('announcements.index')
             <li class="dropdown {{ Request::is('announcements*') ? 'active' : '' }}">
-                <a href="{{ route('pendaftaran.index') }}" class="nav-link">
+                <a href="{{ route('pendaftaran-siswa.index') }}" class="nav-link">
                     <i class="fas fa-bullhorn"></i><span>Pendaftaran</span>
                 </a>
             </li>

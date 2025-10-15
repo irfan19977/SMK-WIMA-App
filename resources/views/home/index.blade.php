@@ -104,7 +104,7 @@
               <div class="col-md-3 mb-4">
                 <div class="stat-item" style="background: #f8f9fa; border-radius: 15px; padding: 30px 20px; margin: 0 10px; border: 1px solid #e9ecef;">
                   <div style="font-size: 3rem; font-weight: 700; color: #2d71a1; margin-bottom: 10px;">{{ number_format(App\Models\Visitor::getMonthlyVisitors()) }}+</div>
-                  <h5 style="color: #333; margin-bottom: 10px;">Total Pengunjung</h5>
+                  <h5 style="color: #333; margin-bottom: 10px;">Pengunjung</h5>
                   <p style="color: #6c757d; font-size: 14px;">Bulan ini</p>
                 </div>
               </div>
@@ -186,26 +186,26 @@
                   <h3 style="color: white; margin-bottom: 25px;"><i class="bx bx-info-circle me-2"></i>Informasi Pendaftaran</h3>
 
                   <div class="registration-info" style="color: rgba(255,255,255,0.9); font-size: 18px; line-height: 1.8;">
-                    <p class="mb-3"><strong>Tahun Akademik 2024/2025</strong></p>
+                    <p class="mb-3"><strong>Tahun Akademik {{ (date('Y') + 1). '/' . (date('Y') + 2) }}</strong></p>
                     <p class="mb-3">Pendaftaran siswa baru SMK PGRI Lawang telah dibuka untuk memberikan kesempatan kepada putra-putri terbaik bangsa untuk bergabung dengan kami.</p>
                     <p class="mb-4">Dapatkan pendidikan berkualitas dengan fasilitas modern dan tenaga pengajar profesional yang siap membimbing Anda meraih masa depan gemilang.</p>
 
-                    <div class="row text-center">
-                      <div class="col-md-4 col-sm-4 col-4">
+                    <div class="row text-center d-flex align-items-stretch">
+                      <div class="col-lg-4 col-md-6 col-sm-6 col-12">
                         <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px;">
                           <i class="bx bx-calendar-check bx-lg mb-2" style="color: #3db3c5;"></i>
                           <p style="margin: 0; font-size: 14px;"><strong>Online 24/7</strong><br>Pendaftaran Daring</p>
                         </div>
                       </div>
-                      <div class="col-md-4 col-sm-4 col-4">
+                      <div class="col-lg-4 col-md-6 col-sm-6 col-12">
                         <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px;">
-                          <i class="bx bx-support bx-lg mb-2" style="color: #2d71a1;"></i>
+                          <i class="bx bx-support bx-lg mb-2" style="color: #3db3c5;"></i>
                           <p style="margin: 0; font-size: 14px;"><strong>Bantuan</strong><br>CS Terlatih</p>
                         </div>
                       </div>
-                      <div class="col-md-4 col-sm-4 col-4">
+                      <div class="col-lg-4 col-md-6 col-sm-6 col-12">
                         <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px;">
-                          <i class="bx bx-shield-check bx-lg mb-2" style="color: #1391a5;"></i>
+                          <i class="bx bx-badge-check bx-lg mb-2" style="color: #3db3c5;"></i>
                           <p style="margin: 0; font-size: 14px;"><strong>Terjamin</strong><br>Kualitas Terbaik</p>
                         </div>
                       </div>
@@ -251,7 +251,6 @@
   </main><!-- End #main -->
 @endsection
 
-@push('styles')
   <style>
     .step {
       background-color: #ffffff;
@@ -264,6 +263,34 @@
       transform: translateY(-5px);
       box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     }
+
+    /* Equal height cards */
+    .registration-content .row.d-flex.align-items-stretch .col-lg-4,
+    .registration-content .row.d-flex.align-items-stretch .col-md-6,
+    .registration-content .row.d-flex.align-items-stretch .col-sm-6,
+    .registration-content .row.d-flex.align-items-stretch .col-12 {
+      display: flex;
+    }
+
+    .registration-content .row.d-flex.align-items-stretch .col-lg-4 > div,
+    .registration-content .row.d-flex.align-items-stretch .col-md-6 > div,
+    .registration-content .row.d-flex.align-items-stretch .col-sm-6 > div,
+    .registration-content .row.d-flex.align-items-stretch .col-12 > div {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Mobile responsive improvements */
+    @media (max-width: 576px) {
+      .registration-content .row.d-flex.align-items-stretch .col-12 > div {
+        margin-bottom: 15px;
+        padding: 20px;
+      }
+
+      .registration-content .row.d-flex.align-items-stretch .col-12 .bx {
+        font-size: 2.5rem !important;
+      }
+    }
   </style>
-@endpush
 

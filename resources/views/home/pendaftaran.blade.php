@@ -25,7 +25,7 @@
         </svg>
       </div>
 
-      <div class="container position-relative" style="z-index: 2;">
+    <div class="container position-relative" style="z-index: 2;">
         <div class="row align-items-center min-vh-50">
             <div class="col-12">
                 <div class="row justify-content-center">
@@ -35,19 +35,19 @@
                         </h1>
                         <div class="hero-stats" data-aos="fade-up" data-aos-delay="500">
                             <div class="row justify-content-center">
-                                <div class="col-md-3 mb-3">
+                                <div class="col-12 col-sm-6 col-md-4 mb-3">
                                     <div class="stat-card card-quota">
                                         <div class="stat-number">200+</div>
                                         <div class="stat-label">Kuota Siswa</div>
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-3">
+                                <div class="col-12 col-sm-6 col-md-4 mb-3">
                                     <div class="stat-card card-scholarship">
                                         <div class="stat-number">100%</div>
                                         <div class="stat-label">Beasiswa</div>
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-3">
+                                <div class="col-12 col-sm-6 col-md-4 mb-3">
                                     <div class="stat-card card-online">
                                         <div class="stat-number">24/7</div>
                                         <div class="stat-label">Online</div>
@@ -59,6 +59,7 @@
                 </div>
             </div>
         </div>
+        
     </div>
     </section>
 
@@ -151,6 +152,40 @@
                                         </label>
                                         <input type="number" class="form-control @error('nisn') is-invalid @enderror" id="nisn" name="nisn" value="{{ old('nisn') }}" maxlength="10" placeholder="10 digit angka">
                                         @error('nisn')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="jurusan_utama" class="form-label">
+                                            Jurusan Utama <span class="text-danger">*</span>
+                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Pilih jurusan yang paling diinginkan">ⓘ</span>
+                                        </label>
+                                        <select class="form-select @error('jurusan_utama') is-invalid @enderror" id="jurusan_utama" name="jurusan_utama" required>
+                                            <option value="">-- Pilih Jurusan Utama --</option>
+                                            <option value="Teknik Komputer dan Jaringan" {{ old('jurusan_utama') == 'Teknik Komputer dan Jaringan' ? 'selected' : '' }}>Teknik Komputer dan Jaringan (TKJ)</option>
+                                            <option value="Teknik Kendaraan Ringan" {{ old('jurusan_utama') == 'Teknik Kendaraan Ringan' ? 'selected' : '' }}>Teknik Kendaraan Ringan (TKR)</option>
+                                            <option value="Teknik Kimia Industri" {{ old('jurusan_utama') == 'Teknik Kimia Industri' ? 'selected' : '' }}>Teknik Kimia Industri (TKI)</option>
+                                            <option value="Teknik Bisnis Sepeda Motor" {{ old('jurusan_utama') == 'Teknik Bisnis Sepeda Motor' ? 'selected' : '' }}>Teknik Bisnis Sepeda Motor (TBSM)</option>
+                                        </select>
+                                        @error('jurusan_utama')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="jurusan_cadangan" class="form-label">
+                                            Jurusan Cadangan
+                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Pilih jurusan alternatif (opsional)">ⓘ</span>
+                                        </label>
+                                        <select class="form-select @error('jurusan_cadangan') is-invalid @enderror" id="jurusan_cadangan" name="jurusan_cadangan">
+                                            <option value="">-- Pilih Jurusan Cadangan --</option>
+                                            <option value="Teknik Komputer dan Jaringan" {{ old('jurusan_cadangan') == 'Teknik Komputer dan Jaringan' ? 'selected' : '' }}>Teknik Komputer dan Jaringan (TKJ)</option>
+                                            <option value="Teknik Kendaraan Ringan" {{ old('jurusan_cadangan') == 'Teknik Kendaraan Ringan' ? 'selected' : '' }}>Teknik Kendaraan Ringan (TKR)</option>
+                                            <option value="Teknik Kimia Industri" {{ old('jurusan_cadangan') == 'Teknik Kimia Industri' ? 'selected' : '' }}>Teknik Kimia Industri (TKI)</option>
+                                            <option value="Teknik Bisnis Sepeda Motor" {{ old('jurusan_cadangan') == 'Teknik Bisnis Sepeda Motor' ? 'selected' : '' }}>Teknik Bisnis Sepeda Motor (TBSM)</option>
+                                        </select>
+                                        @error('jurusan_cadangan')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -381,6 +416,7 @@
                                     </div>
                                 </div>
                             </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -830,23 +866,73 @@
         @media (max-width: 768px) {
             .hero-section {
                 min-height: 35vh;
+                padding-top: 20px;
             }
 
             .hero-text {
-                padding: 30px 0;
+                padding: 30px 0 60px 0;
+            }
+
+            .hero-text h1 {
+                font-size: 2.5rem;
+                margin-bottom: 30px;
+            }
+
+            .hero-stats {
+                margin-top: 40px;
+            }
+
+        @media (max-width: 576px) {
+            .hero-stats .row {
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            .hero-stats .row > div:nth-child(1),
+            .hero-stats .row > div:nth-child(2) {
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
+
+            .hero-stats .row > div:nth-child(3) {
+                flex: 0 0 100%;
+                max-width: 100%;
+                margin-top: 1px;
             }
 
             .stat-card {
-                margin-bottom: 20px;
+                margin-bottom: 1px;
+                padding: 12px;
+                max-width: none;
+                margin-left: 0;
+                margin-right: 0;
             }
+        }
 
-            .registration-form-container {
-                padding: 20px;
+        @media (min-width: 577px) {
+            .stat-card {
+                margin-bottom: 15px;
+                padding: 12px;
+                max-width: 300px;
+                margin-left: auto;
+                margin-right: auto;
             }
+        }
 
-            .form-section {
-                padding: 20px 0;
-            }
+        .stat-number {
+            font-size: 1.6rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+        }
+
+        .registration-form-container {
+            padding: 20px;
+        }
+
+        .form-section {
+            padding: 20px 0;
         }
     </style>
 @endpush
@@ -954,6 +1040,7 @@
                     'religion': 'Agama wajib dipilih',
                     'nik': 'NIK wajib diisi',
                     'nisn': 'NISN wajib diisi',
+                    'jurusan_utama': 'Jurusan Utama wajib dipilih',
                     'address': 'Alamat Lengkap wajib diisi',
                     'phone': 'Nomor Telepon wajib diisi'
                 };
@@ -1197,6 +1284,80 @@
 
             // Initialize step pertama
             updateProgressBar();
+
+            // Fungsi untuk mengatur pilihan jurusan cadangan berdasarkan pilihan utama
+            function updateJurusanCadangan() {
+                const jurusanUtama = document.getElementById('jurusan_utama');
+                const jurusanCadangan = document.getElementById('jurusan_cadangan');
+
+                if (!jurusanUtama || !jurusanCadangan) return;
+
+                const selectedUtama = jurusanUtama.value;
+
+                // Reset semua opsi cadangan menjadi enabled
+                for (let option of jurusanCadangan.options) {
+                    option.disabled = false;
+                }
+
+                // Disable opsi yang sama dengan pilihan utama
+                if (selectedUtama) {
+                    for (let option of jurusanCadangan.options) {
+                        if (option.value === selectedUtama) {
+                            option.disabled = true;
+                            // Jika opsi yang disabled adalah yang sedang dipilih, reset pilihan cadangan
+                            if (jurusanCadangan.value === selectedUtama) {
+                                jurusanCadangan.value = '';
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Event listener untuk jurusan utama
+            const jurusanUtamaField = document.getElementById('jurusan_utama');
+            if (jurusanUtamaField) {
+                jurusanUtamaField.addEventListener('change', updateJurusanCadangan);
+            }
+
+            // Fungsi untuk mengatur pilihan jurusan utama berdasarkan pilihan cadangan
+            function updateJurusanUtama() {
+                const jurusanUtama = document.getElementById('jurusan_utama');
+                const jurusanCadangan = document.getElementById('jurusan_cadangan');
+
+                if (!jurusanUtama || !jurusanCadangan) return;
+
+                const selectedCadangan = jurusanCadangan.value;
+
+                // Reset semua opsi utama menjadi enabled
+                for (let option of jurusanUtama.options) {
+                    option.disabled = false;
+                }
+
+                // Disable opsi yang sama dengan pilihan cadangan
+                if (selectedCadangan) {
+                    for (let option of jurusanUtama.options) {
+                        if (option.value === selectedCadangan) {
+                            option.disabled = true;
+                            // Jika opsi yang disabled adalah yang sedang dipilih, reset pilihan utama
+                            if (jurusanUtama.value === selectedCadangan) {
+                                jurusanUtama.value = '';
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Event listener untuk jurusan cadangan
+            const jurusanCadanganField = document.getElementById('jurusan_cadangan');
+            if (jurusanCadanganField) {
+                jurusanCadanganField.addEventListener('change', updateJurusanUtama);
+            }
+
+            // Inisialisasi saat halaman dimuat
+            updateJurusanCadangan();
+            updateJurusanUtama();
         });
     </script>
 @endpush

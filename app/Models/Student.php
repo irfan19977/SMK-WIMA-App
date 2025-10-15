@@ -100,13 +100,8 @@ class Student extends Model
         });
     }
 
-    /**
-     * Scope for students with face registration
-     */
-    public function scopeWithFaceRegistration($query)
+    public function getRouteKeyName()
     {
-        return $query->whereNotNull('face_encoding')
-                    ->whereNotNull('face_photo');
+        return 'id';
     }
-
 }

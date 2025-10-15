@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -22,7 +23,7 @@ class StudentController extends Controller
     public function index(Request $request)
     {
         $this->authorize('students.index');
-        $query = Student::with('user');
+        $query = Student::with('user')->where('status', 'siswa');
         
         // Filter pencarian
         if ($request->has('q') && !empty($request->q)) {
@@ -68,79 +69,154 @@ class StudentController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate the request data
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'password' => 'nullable|string|min:8',
-            'phone' => 'nullable|string|max:20',
-            'nisn' => 'nullable|string|max:20',
-            'no_card' => 'nullable|string|max:20',
-            'birth_place' => 'nullable|string|max:100',
-            'birth_date' => 'nullable|date',
-            'province' => 'nullable|string|max:100',
-            'regency' => 'nullable|string|max:100',
-            'district' => 'nullable|string|max:100',
-            'village' => 'nullable|string|max:100',
-            'address' => 'nullable|string|max:255',
-        ]);
 
+        try {
+            // Debug: Cek data yang masuk
+            Log::info('Form submitted', $request->except(['password', 'password_confirmation']));
 
-       try {
-        DB::beginTransaction();
+            DB::beginTransaction();
 
-        $students = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $request->password ? Hash::make($request->password) : null,
-            'phone' => $request->phone,
-            'status' => $request->status ? true : false,
-        ]);
-        $students->assignRole('student');
+            // Validate the request
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'nullable|min:8|confirmed',
+                'phone' => 'nullable|numeric',
+                'gender' => 'required|in:laki-laki,perempuan',
+                'birth_date' => 'required|date',
+                'birth_place' => 'required|string|max:255',
+                'religion' => 'required|string|max:255',
+                'nik' => 'required|numeric|digits:16|unique:student,nik',
+                'nisn' => 'nullable|numeric|digits:10|unique:student,nisn',
+                'no_absen' => 'nullable|string|max:20',
+                'no_card' => 'nullable|string|max:20',
+                'address' => 'required|string',
+                'photo_path' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:500',
+                'ijazah' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:500',
+                'kartu_keluarga' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:500',
+                'akte_lahir' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:500',
+                'ktp' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:500',
+                'sertifikat' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:500',
+            ], [
+                'email.unique' => 'Email sudah terdaftar. Silakan gunakan email lain.',
+                'nik.unique' => 'NIK sudah terdaftar.',
+                'nisn.unique' => 'NISN sudah terdaftar.',
+                'nik.digits' => 'NIK harus 16 digit.',
+                'nisn.digits' => 'NISN harus 10 digit.',
+                'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            ]);
 
-        // Step 2: Generate QR Code for student
-        $qrcode = 'STD-' . strtoupper(Str::random(8)) . '-' . date('Y');
+            // Simpan semua file dengan pengecekan yang lebih baik
+            $photoPath = $this->uploadFile($request, 'photo_path', 'photos');
+            $ijazahPath = $this->uploadFile($request, 'ijazah', 'documents/ijazah');
+            $kartuKeluargaPath = $this->uploadFile($request, 'kartu_keluarga', 'documents/kartu_keluarga');
+            $akteLahirPath = $this->uploadFile($request, 'akte_lahir', 'documents/akte_lahir');
+            $ktpPath = $this->uploadFile($request, 'ktp', 'documents/ktp');
+            $sertifikatPath = $this->uploadFile($request, 'sertifikat', 'documents/sertifikat'); // bisa null
 
-        // Step 3: Create student record
-        $student = Student::create([
-            'id' => Str::uuid(),
-            'user_id' => $students->id,
-            'name' => $request->name,
-            'nisn' => $request->nisn,
-            'qrcode' => $qrcode,
-            'no_card' => $request->no_card,
-            'medical_info' => $request->medical_info,
-            'birth_place' => $request->birth_place,
-            'birth_date' => $request->birth_date,
-            'gender' => $request->gender,
-            'province' => $request->province,
-            'regency' => $request->regency,
-            'district' => $request->district,
-            'village' => $request->village,
-            'address' => $request->address,
-            'created_by' => Auth::id(), // Set current user as creator
-        ]);
+            // Simpan data user
+            $userData = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'photo_path' => $photoPath,
+                'status' => $request->has('status') ? $request->status : true,
+            ];
 
-        DB::commit();
+            // Only set password if provided
+            if (!empty($validated['password'])) {
+                $userData['password'] = Hash::make($validated['password']);
+            }
 
-        // Redirect to the students index with a success message
-        return redirect()->route('students.index')->with('success', 'Student created successfully.');
+            $user = User::create($userData);
+
+            // Assign role student
+            $user->assignRole('student');
+
+            // Simpan data student
+            $student = Student::create([
+                'id' => Str::uuid(),
+                'user_id' => $user->id,
+                'name' => $validated['name'],
+                'nisn' => $validated['nisn'],
+                'nik' => $validated['nik'],
+                'no_absen' => $validated['no_absen'],
+                'no_card' => $validated['no_card'],
+                'gender' => $validated['gender'],
+                'birth_date' => $validated['birth_date'],
+                'birth_place' => $validated['birth_place'],
+                'religion' => $validated['religion'],
+                'address' => $validated['address'],
+                'ijazah' => $ijazahPath,
+                'kartu_keluarga' => $kartuKeluargaPath,
+                'akte_lahir' => $akteLahirPath,
+                'ktp' => $ktpPath,
+                'sertifikat' => $sertifikatPath,
+                'status' => 'siswa',
+            ]);
+
+            DB::commit();
+
+            // Return JSON response for AJAX requests
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data siswa berhasil ditambahkan.',
+                    'student' => $student->load('user')
+                ]);
+            }
+
+            // Redirect ke halaman yang benar
+            return redirect()->back()
+                ->with('success', 'Pendaftaran berhasil! Silakan login dengan akun yang telah dibuat.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+
+            // Return JSON response for AJAX requests
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation error',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput();
 
         } catch (\Exception $e) {
-            DB::rollback();
-            
+            DB::rollBack();
+            Log::error('Registration failed: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            // Return JSON response for AJAX requests
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mendaftar: ' . $e->getMessage()
+                ], 500);
+            }
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to create student: ' . $e->getMessage());
+                ->with('error', 'Gagal mendaftar: ' . $e->getMessage());
         }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Student $student)
     {
-        //
+        // Pastikan hanya siswa dengan status 'siswa' yang bisa diakses
+        if ($student->status !== 'siswa') {
+            abort(404, 'Siswa tidak ditemukan atau belum diterima.');
+        }
+
+        $student->load('user');
+        return view('students.show', compact('student'));
     }
 
     /**
@@ -149,6 +225,20 @@ class StudentController extends Controller
     public function edit(string $id)
     {
         $student = Student::with('user')->findOrFail($id);
+
+        // Pastikan hanya siswa dengan status 'siswa' yang bisa diedit
+        if ($student->status !== 'siswa') {
+            abort(404, 'Siswa tidak ditemukan atau belum diterima.');
+        }
+
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'student' => $student,
+                'title' => 'Edit Siswa',
+            ]);
+        }
+
         return view('students.edit', compact('student'));
     }
 
@@ -157,86 +247,194 @@ class StudentController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $students = Student::with('user')->findOrFail($id);
-        
-        // Validate the request data
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'password' => 'nullable|string|min:8',
-            'phone' => 'nullable|string|max:20',
-            'nisn' => 'nullable|string|max:20',
-            'no_card' => 'nullable|string|max:20',
-            'birth_place' => 'nullable|string|max:100',
-            'birth_date' => 'nullable|date',
-            'province' => 'nullable|string|max:100',
-            'regency' => 'nullable|string|max:100',
-            'district' => 'nullable|string|max:100',
-            'village' => 'nullable|string|max:100',
-            'address' => 'nullable|string|max:255',
-        ]);
+        $student = Student::with('user')->findOrFail($id);
 
-        
+        // Pastikan hanya siswa dengan status 'siswa' yang bisa diupdate
+        if ($student->status !== 'siswa') {
+            abort(404, 'Siswa tidak ditemukan atau belum diterima.');
+        }
+
+        // Validate the request data - different validation for AJAX vs normal requests
+        if ($request->ajax()) {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email',
+                'nisn' => 'nullable|string|max:20',
+                'nik' => 'nullable|string|max:20',
+                'phone' => 'nullable|string|max:20',
+                'no_card' => 'nullable|string|max:20',
+                'no_absen' => 'nullable|string|max:20',
+                'gender' => 'nullable|string|max:20',
+                'birth_place' => 'nullable|string|max:100',
+                'birth_date' => 'nullable|date',
+                'religion' => 'nullable|string|max:100',
+                'address' => 'nullable|string|max:255',
+            ]);
+        } else {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email',
+                'password' => 'nullable|string|min:8',
+                'phone' => 'nullable|string|max:20',
+                'nisn' => 'nullable|string|max:20',
+                'nik' => 'nullable|string|max:20',
+                'no_card' => 'nullable|string|max:20',
+                'no_absen' => 'nullable|string|max:20',
+                'gender' => 'nullable|string|max:20',
+                'birth_place' => 'nullable|string|max:100',
+                'birth_date' => 'nullable|date',
+                'religion' => 'nullable|string|max:100',
+                'address' => 'nullable|string|max:255',
+            ]);
+        }
+
+
 
         try {
             DB::beginTransaction();
 
-            // Handle photo upload
-            $photoPath = $students->photo; // Keep existing photo by default
-            if ($request->hasFile('photo')) {
+            // Handle photo upload (from users table)
+            $photoPath = $student->user->photo_path; // Keep existing photo by default
+            if ($request->hasFile('photo_path')) {
                 // Delete old photo if exists
-                if ($students->photo && Storage::disk('public')->exists($students->photo)) {
-                    Storage::disk('public')->delete($students->photo);
+                if ($student->user->photo_path && Storage::disk('public')->exists($student->user->photo_path)) {
+                    Storage::disk('public')->delete($student->user->photo_path);
                 }
                 // Upload new photo
-                $photoPath = $request->file('photo')->store('students/photos', 'public');
+                $photoPath = $request->file('photo_path')->store('students/photos', 'public');
+            }
+
+            // Handle document files (from students table)
+            $ijazahPath = $student->ijazah;
+            if ($request->hasFile('ijazah')) {
+                // Delete old ijazah if exists
+                if ($student->ijazah && Storage::disk('public')->exists($student->ijazah)) {
+                    Storage::disk('public')->delete($student->ijazah);
+                }
+                // Upload new ijazah
+                $ijazahPath = $request->file('ijazah')->store('students/documents', 'public');
+            }
+
+            $kartuKeluargaPath = $student->kartu_keluarga;
+            if ($request->hasFile('kartu_keluarga')) {
+                // Delete old kartu_keluarga if exists
+                if ($student->kartu_keluarga && Storage::disk('public')->exists($student->kartu_keluarga)) {
+                    Storage::disk('public')->delete($student->kartu_keluarga);
+                }
+                // Upload new kartu_keluarga
+                $kartuKeluargaPath = $request->file('kartu_keluarga')->store('students/documents', 'public');
+            }
+
+            $akteLahirPath = $student->akte_lahir;
+            if ($request->hasFile('akte_lahir')) {
+                // Delete old akte_lahir if exists
+                if ($student->akte_lahir && Storage::disk('public')->exists($student->akte_lahir)) {
+                    Storage::disk('public')->delete($student->akte_lahir);
+                }
+                // Upload new akte_lahir
+                $akteLahirPath = $request->file('akte_lahir')->store('students/documents', 'public');
+            }
+
+            $ktpPath = $student->ktp;
+            if ($request->hasFile('ktp')) {
+                // Delete old ktp if exists
+                if ($student->ktp && Storage::disk('public')->exists($student->ktp)) {
+                    Storage::disk('public')->delete($student->ktp);
+                }
+                // Upload new ktp
+                $ktpPath = $request->file('ktp')->store('students/documents', 'public');
+            }
+
+            $sertifikatPath = $student->sertifikat;
+            if ($request->hasFile('sertifikat')) {
+                // Delete old sertifikat if exists
+                if ($student->sertifikat && Storage::disk('public')->exists($student->sertifikat)) {
+                    Storage::disk('public')->delete($student->sertifikat);
+                }
+                // Upload new sertifikat
+                $sertifikatPath = $request->file('sertifikat')->store('students/documents', 'public');
             }
 
             // Update user data
-            $studentsData = [
+            $userData = [
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'status' => $request->status ? true : false,
-                'photo' => $photoPath,
+                'photo_path' => $photoPath,
             ];
 
             // Only update password if provided
             if ($request->filled('password')) {
-                $studentsData['password'] = Hash::make($request->password);
+                $userData['password'] = Hash::make($request->password);
             }
 
-            $students->user->update($studentsData);
+            $student->user->update($userData);
 
             // Update student data
-            $students->update([
+            $student->update([
                 'name' => $request->name,
                 'nisn' => $request->nisn,
+                'nik' => $request->nik,
                 'no_card' => $request->no_card,
-                'medical_info' => $request->medical_info,
+                'no_absen' => $request->no_absen,
+                'gender' => $request->gender,
                 'birth_place' => $request->birth_place,
                 'birth_date' => $request->birth_date,
-                'gender' => $request->gender,
-                'province' => $request->province,
-                'regency' => $request->regency,
-                'district' => $request->district,
-                'village' => $request->village,
+                'religion' => $request->religion,
                 'address' => $request->address,
+                'ijazah' => $ijazahPath,
+                'kartu_keluarga' => $kartuKeluargaPath,
+                'akte_lahir' => $akteLahirPath,
+                'ktp' => $ktpPath,
+                'sertifikat' => $sertifikatPath,
                 'updated_by' => Auth::id(),
             ]);
 
             DB::commit();
 
+            // Return JSON response for AJAX requests
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Siswa berhasil diperbarui.',
+                    'student' => $student->load('user'),
+                ]);
+            }
+
             return redirect()->route('students.index')->with('success', 'Student updated successfully.');
 
         } catch (\Exception $e) {
             DB::rollback();
-            
-            // Delete uploaded photo if exists and different from original
-            if ($request->hasFile('photo') && $photoPath !== $students->photo && Storage::disk('public')->exists($photoPath)) {
+
+            // Delete uploaded files if they exist and are different from original
+            if ($request->hasFile('photo_path') && $photoPath !== $student->user->photo_path && Storage::disk('public')->exists($photoPath)) {
                 Storage::disk('public')->delete($photoPath);
             }
-            
+            if ($request->hasFile('ijazah') && $ijazahPath !== $student->ijazah && Storage::disk('public')->exists($ijazahPath)) {
+                Storage::disk('public')->delete($ijazahPath);
+            }
+            if ($request->hasFile('kartu_keluarga') && $kartuKeluargaPath !== $student->kartu_keluarga && Storage::disk('public')->exists($kartuKeluargaPath)) {
+                Storage::disk('public')->delete($kartuKeluargaPath);
+            }
+            if ($request->hasFile('akte_lahir') && $akteLahirPath !== $student->akte_lahir && Storage::disk('public')->exists($akteLahirPath)) {
+                Storage::disk('public')->delete($akteLahirPath);
+            }
+            if ($request->hasFile('ktp') && $ktpPath !== $student->ktp && Storage::disk('public')->exists($ktpPath)) {
+                Storage::disk('public')->delete($ktpPath);
+            }
+            if ($request->hasFile('sertifikat') && $sertifikatPath !== $student->sertifikat && Storage::disk('public')->exists($sertifikatPath)) {
+                Storage::disk('public')->delete($sertifikatPath);
+            }
+
+            // Return JSON response for AJAX requests
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update student: ' . $e->getMessage()
+                ], 500);
+            }
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to update student: ' . $e->getMessage());
@@ -250,13 +448,19 @@ class StudentController extends Controller
     {
         try {
             DB::beginTransaction();
-            
-            $students = Student::findOrFail($id);
-            $user = $students->user;
-            
-            $students->delete(); // Delete teacher first
+
+            $student = Student::findOrFail($id);
+
+            // Pastikan hanya siswa dengan status 'siswa' yang bisa dihapus
+            if ($student->status !== 'siswa') {
+                abort(404, 'Siswa tidak ditemukan atau belum diterima.');
+            }
+
+            $user = $student->user;
+
+            $student->delete(); // Delete student first
             $user->delete(); // Then delete user
-            
+
             DB::commit();
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
@@ -270,30 +474,51 @@ class StudentController extends Controller
         try {
             // Cari user berdasarkan ID yang dikirim dari frontend
             $user = User::findOrFail($userId);
-            
+
+            // Pastikan user memiliki role student
+            if (!$user->hasRole('student')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User bukan siswa.'
+                ], 404);
+            }
+
             // Toggle status user
             $user->status = !$user->status;
             $saved = $user->save();
-            
+
             if (!$saved) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Gagal menyimpan perubahan status'
                 ], 500);
             }
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Status berhasil diperbarui',
                 'is_active' => $user->status, // Pastikan key ini sama dengan yang di frontend
                 'status_text' => $user->status ? 'Aktif' : 'Diblokir'
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Helper function untuk upload file
+     */
+    private function uploadFile(Request $request, $fieldName, $folder)
+    {
+        if ($request->hasFile($fieldName)) {
+            $file = $request->file($fieldName);
+            $fileName = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            return $file->storeAs($folder, $fileName, 'public');
+        }
+        return null;
     }
 }
