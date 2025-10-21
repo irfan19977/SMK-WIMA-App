@@ -71,10 +71,11 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('/attendance-data', [DashboardController::class, 'getAttendanceData'])->name('.attendance-data');
     });
 
-    Route::resource('pendaftaran-siswa', PendaftaranSiswaController::class);
-    Route::post('pendaftaran-siswa/{pendaftaran_siswa}/accept', [PendaftaranSiswaController::class, 'accept'])->name('pendaftaran-siswa.accept');
     Route::get('pendaftaran-siswa/export', [PendaftaranSiswaController::class, 'export'])->name('pendaftaran-siswa.export');
+    Route::get('pendaftaran-siswa/export-excel', [PendaftaranSiswaController::class, 'exportExcel'])->name('pendaftaran-siswa.export-excel');
     Route::get('pendaftaran-siswa/print', [PendaftaranSiswaController::class, 'print'])->name('pendaftaran-siswa.print');
+    Route::post('pendaftaran-siswa/{pendaftaran_siswa}/accept', [PendaftaranSiswaController::class, 'accept'])->name('pendaftaran-siswa.accept');
+    Route::resource('pendaftaran-siswa', PendaftaranSiswaController::class);
 
     // Student Management Routes
     Route::prefix('students')->name('students.')->group(function() {

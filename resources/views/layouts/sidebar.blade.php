@@ -2,7 +2,7 @@
     <div class="sidebar-brand">
         <a href="{{ route('/') }}">
             <img alt="" src="{{ asset('assets/img/logo.png') }}" class="header-logo" />
-            <span class="logo-name">Otika</span>
+            <span class="logo-name">SMK PGRI</span>
         </a>
     </div>
     <ul class="sidebar-menu">
@@ -28,7 +28,7 @@
         @can('announcements.index')
             <li class="dropdown {{ Request::is('announcements*') ? 'active' : '' }}">
                 <a href="{{ route('pendaftaran-siswa.index') }}" class="nav-link">
-                    <i class="fas fa-bullhorn"></i><span>Pendaftaran</span>
+                    <i class="fas fa-user-plus"></i><span>Pendaftaran</span>
                 </a>
             </li>
         @endcan

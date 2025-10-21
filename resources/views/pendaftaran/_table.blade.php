@@ -1,10 +1,15 @@
 @forelse ($students as $student)
   <tr>
     <td class="text-center">{{ $loop->iteration }}</td>
-    <td><a href="#" class="text-secondery font-weight-bold">{{ $student->name }}</a></td>
+    <td>{{ $student->name }}</td>
     <td>{{ $student->nisn ?? '-' }}</td>
-    <td>{{ $student->email ?? ($student->user->email ?? '-') }}</td>
-    <td>{{ $student->phone ?? ($student->user->phone ?? '-') }}</td>
+    <td>{{ $student->nik ?? '-' }}</td>
+    <td>{{ $student->jurusan_utama ?? '-' }}</td>
+    <td>{{ $student->jurusan_cadangan ?? '-' }}</td>
+    <td>{{ $student->gender ?? '-' }}</td>
+    <td>{{ $student->birth_place ?? '-' }}</td>
+    <td>{{ $student->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : '-' }}</td>
+    <td>{{ optional($student->user)->phone ?? '-' }}</td>
     <td>
       @php($st = $student->status ?? 'calon siswa')
       <span class="badge {{ $st === 'calon siswa' ? 'badge-warning' : ($st === 'siswa' ? 'badge-success' : 'badge-secondary') }}">
@@ -26,6 +31,6 @@
   </tr>
 @empty
   <tr>
-    <td colspan="8" class="text-center">Tidak ada pendaftar baru</td>
+    <td colspan="12" class="text-center">Tidak ada pendaftar baru</td>
   </tr>
 @endforelse

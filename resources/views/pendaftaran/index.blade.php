@@ -42,24 +42,29 @@
         </div>
         <div class="col-md-6 d-flex align-items-end justify-content-end">
           <div>
-            <button class="btn btn-success btn-modern mr-2" onclick="exportAttendance()">
-              <i class="fas fa-file-excel mr-2"></i>Export Absensi
+            <button class="btn btn-success btn-modern mr-2" onclick="exportExcel()">
+              <i class="fas fa-file-excel mr-2"></i>Export Excel
             </button>
             <button class="btn btn-primary btn-modern" onclick="printAttendance()">
-              <i class="fas fa-print mr-2"></i>Cetak Absensi
+              <i class="fas fa-print mr-2"></i>Cetak PDF
             </button>
           </div>
         </div>
       </div>
       <div class="table-responsive">
-        <table class="table table-striped" id="sortable-table">
+        <table class="table table-striped" id="sortable-table" style="font-size: 12px;">
           <thead>
             <tr class="text-center">
               <th>No.</th>
               <th>Nama</th>
               <th>NISN</th>
-              <th>Email</th>
-              <th>Phone</th>
+              <th>NIK</th>
+              <th>Jurusan Utama</th>
+              <th>Jurusan Cadangan</th>
+              <th>Jenis Kelamin</th>
+              <th>Tempat Lahir</th>
+              <th>Tanggal Lahir</th>
+              <th>Nomor HP</th>
               <th>Status</th>
               <th>Aksi</th>
             </tr>
@@ -74,6 +79,32 @@
 
 @endsection
 
+@push('styles')
+  <style>
+    #sortable-table th:nth-child(1) { width: 3%; }  /* No */
+    #sortable-table th:nth-child(2) { width: 15%; } /* Nama */
+    #sortable-table th:nth-child(3) { width: 8%; }  /* NISN */
+    #sortable-table th:nth-child(4) { width: 10%; } /* NIK */
+    #sortable-table th:nth-child(5) { width: 12%; } /* Jurusan Utama */
+    #sortable-table th:nth-child(6) { width: 12%; } /* Jurusan Cadangan */
+    #sortable-table th:nth-child(7) { width: 8%; }  /* Jenis Kelamin */
+    #sortable-table th:nth-child(8) { width: 10%; } /* Tempat Lahir */
+    #sortable-table th:nth-child(9) { width: 8%; }  /* Tanggal Lahir */
+    #sortable-table th:nth-child(10) { width: 8%; } /* Nomor HP */
+    #sortable-table th:nth-child(11) { width: 6%; } /* Status */
+    #sortable-table th:nth-child(12) { width: 6%; } /* Aksi */
+
+    #sortable-table td {
+      padding: 8px 4px;
+      vertical-align: middle;
+    }
+
+    .btn-action {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+  </style>
+@endpush
 @push('scripts')
   <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -97,6 +128,7 @@
 
     clearButton.addEventListener('click', function() {
       searchInput.value = '';
+      clearTimeout(searchInput.searchTimeout);
       searchInput.focus();
       clearButton.style.display = 'none';
       searchButton.style.display = 'block';
@@ -141,6 +173,9 @@
       }
     }
 
+    // Initialize search timeout
+    searchInput.searchTimeout = null;
+
     searchInput.addEventListener('input', function() {
       if (this.value.trim() !== '') {
         clearButton.style.display = 'block';
@@ -149,11 +184,18 @@
         clearButton.style.display = 'none';
         searchButton.style.display = 'block';
       }
+
+      // Debounce search - trigger after user stops typing for 500ms
+      clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(() => {
+        reloadTable();
+      }, 500);
     });
 
     // Klik tombol search untuk reload
     if (searchButton) {
       searchButton.addEventListener('click', function() {
+        clearTimeout(searchInput.searchTimeout);
         reloadTable();
       });
     }
@@ -163,6 +205,7 @@
       searchInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
           e.preventDefault();
+          clearTimeout(searchInput.searchTimeout);
           reloadTable();
         }
       });
@@ -255,8 +298,8 @@
     // initial bind
     bindAcceptButtons();
 
-    window.exportAttendance = function() {
-      const url = new URL(`{{ route('pendaftaran-siswa.export') }}`);
+    window.exportExcel = function() {
+      const url = new URL(`{{ route('pendaftaran-siswa.export-excel') }}`);
       const q = (searchInput.value || '').trim();
       if (q) url.searchParams.set('q', q);
       if (academicYearFilter && academicYearFilter.value) {
