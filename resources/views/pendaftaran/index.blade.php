@@ -42,7 +42,7 @@
         </div>
         <div class="col-md-6 d-flex align-items-end justify-content-end">
           <div>
-            <button class="btn btn-success btn-modern mr-2" onclick="exportExcel()">
+            <button class="btn btn-primary btn-modern mr-2" onclick="exportExcel()">
               <i class="fas fa-file-excel mr-2"></i>Export Excel
             </button>
             <button class="btn btn-primary btn-modern" onclick="printAttendance()">
