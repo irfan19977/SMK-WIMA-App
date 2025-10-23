@@ -25,23 +25,31 @@
 <body>
   <div class="container">
     <!-- Kop Surat -->
+    <!-- Kop Surat -->
     <div class="header">
       <table style="width: 100%; border: none; margin-bottom: 10px;">
         <tr>
-          <td style="width: 80px; border: none; text-align: center; vertical-align: middle;">
-            <img src="{{ asset('backend/assets/img/logo.png') }}" alt="Logo" style="width: 70px; height: auto;">
+          <td style="width: 90px; border: none; text-align: center; vertical-align: top; padding-top: 5px;">
+            <img src="{{ asset('backend/assets/img/logo.png') }}" alt="Logo" style="width: 75px; height: auto;">
           </td>
-          <td style="border: none; text-align: center; vertical-align: middle;">
-            <h1 style="margin: 0; font-size: 20px; font-weight: bold;">SMK PGRI LAWANG</h1>
-            <p style="margin: 2px 0; font-size: 11px;">Jl. Raya Lawang No. 123, Lawang, Malang, Jawa Timur</p>
-            <p style="margin: 2px 0; font-size: 11px;">Telp: (0341) 426xxx | Email: info@smkpgrilawang.sch.id</p>
-            <p style="margin: 2px 0; font-size: 11px;">Website: www.smkpgrilawang.sch.id</p>
+          <td style="border: none; text-align: center; vertical-align: middle; padding: 0 10px;">
+            <h3 style="margin: 0 0 3px 0; font-size: 18px; font-weight: bold; letter-spacing: 0.5px;">YAYASAN LEMBAGA PENDIDIKAN PERSATUAN GURU</h3>
+            <h3 style="margin: 0 0 3px 0; font-size: 18px; font-weight: bold; letter-spacing: 0.5px;">REPUBLIK INDONESIA (YLP PGRI)</h3>
+            <h3 style="margin: 0 0 8px 0; font-size: 20px; font-weight: bold; letter-spacing: 1px;">SMK PGRI LAWANG</h3>
+            <p style="margin: 0; font-size: 10px; line-height: 1.4;">SEKOLAH MENENGAH KEJURUAN</p>
+            <p style="margin: 2px 0; font-size: 10px; line-height: 1.4;">Terakreditasi Baik dan Bersertifikat Mutu / Manik</p>
+            <p style="margin: 2px 0; font-size: 10px; line-height: 1.4;">Kompetensi Keahlian : Akuntansi Keuangan & Lembaga</p>
+            <p style="margin: 2px 0; font-size: 10px; line-height: 1.4;">Jl. Dr. Moh Hatta 7/1 Lawang Telp. (0341) 426943 Fax (0341) 1399006 Kode Pos 65218</p>
+            <p style="margin: 2px 0; font-size: 10px; line-height: 1.4;">Email: smkpgrilawang@gmail.com</p>
+            <p style="margin: 2px 0; font-size: 10px; line-height: 1.4;">Website: www.smkpgrilawang.sch.id</p>
           </td>
-          <td style="width: 80px; border: none;"></td>
+          <td style="width: 90px; border: none; text-align: center; vertical-align: top; padding-top: 5px;">
+            <img src="{{ asset('backend/assets/img/logo.png') }}" alt="Logo" style="width: 75px; height: auto;">
+          </td>
         </tr>
       </table>
-      <hr style="border: 2px solid #000; margin: 10px 0 5px 0;">
-      <hr style="border: 1px solid #000; margin: 0 0 15px 0;">
+      <hr style="border: 1.5px solid #000; margin: 8px 0 3px 0;">
+      <hr style="border: 0.5px solid #000; margin: 0 0 15px 0;">
     </div>
 
     <!-- Judul Dokumen -->
