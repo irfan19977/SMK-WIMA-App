@@ -55,9 +55,9 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Tahun Ajaran</label>
-                                <input type="text" class="form-control @error('academic_yaer') is-invalid @enderror"
-                                    name="academic_yaer" placeholder="Masukkan Tahun Ajaran" value="{{ date('Y') }}/{{ date('Y') + 1 }}">
-                                @error('academic_yaer')
+                                <input type="text" class="form-control @error('academic_year') is-invalid @enderror"
+                                    name="academic_year" placeholder="Masukkan Tahun Ajaran" value="{{ date('Y') }}/{{ date('Y') + 1 }}">
+                                @error('academic_year')
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>

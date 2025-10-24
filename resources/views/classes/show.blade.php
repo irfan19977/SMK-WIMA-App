@@ -171,7 +171,7 @@
                                                 <div class="col-sm-6 mb-3">
                                                     <label class="text-muted small">Tahun Akademik</label>
                                                     <div class="font-weight-bold">
-                                                        {{ $classes->academic_year ?? '2024/2025' }}</div>
+                                                        {{ $classes->academic_year }}</div>
                                                 </div>
                                                 <div class="col-sm-6 mb-3">
                                                     <label class="text-muted small">Total Siswa</label>
