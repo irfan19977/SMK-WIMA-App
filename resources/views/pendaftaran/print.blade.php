@@ -45,7 +45,7 @@
         <tr>
 
           <td style="width: 80px; border: none; text-align: center; vertical-align: middle; padding: 0;">
-            <img src="{{ asset('backend/assets/img/logo 1.png') }}" alt="Logo" style="width: 65px; height: auto;">
+            <img src="{{ asset('backend/assets/img/logo yayasan.png') }}" alt="Logo" style="width: 65px; height: auto;">
           </td>
           <td style="border: none; text-align: center; vertical-align: middle; padding: 0 5px;">
             <div style="margin: 0; padding: 0;">
