@@ -57,6 +57,10 @@ Route::get('/detail', function () {
     return view('home.detail');
 })->name('berita.detail');
 
+Route::get('/contact', function () {
+    return view('home.contact');
+})->name('contact.index');
+
 Route::resource('/pendaftaran', PendaftaranController::class);
 
     Route::post('/rfid-detect', [RFIDController::class, 'detectRFID']);
