@@ -57,7 +57,7 @@
           </li>
           <li><a class="{{ request()->routeIs('pendaftaran.*') ? 'active' : '' }}" href="{{ route('pendaftaran.index') }}">Pendaftaran</a></li>
           <li><a class="{{ request()->routeIs('berita.*') ? 'active' : '' }}" href="{{ route('berita.index') }}">Berita</a></li>
-          <li><a class="{{ request()->is('contact.html') ? 'active' : '' }}" href="contact.html">Contact Us</a></li>
+          <li><a class="{{ request()->is('contact.*') ? 'active' : '' }}" href="{{ route('contact.index') }}">Contact Us</a></li>
           <li><a class="{{ request()->routeIs('login') ? 'active' : '' }}" href="{{ route('login') }}">Login</a></li>
         </ul>
         <i class="bi bi-list mobile-nav-toggle"></i>

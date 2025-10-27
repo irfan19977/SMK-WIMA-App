@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\Helpers\AcademicYearHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Classes;
@@ -16,6 +17,25 @@ use Illuminate\Support\Str;
 class ClassesController extends Controller
 {
 
+    /**
+     * Search for classes based on query
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function search(Request $request)
+    {
+        $query = $request->input('q');
+        
+        $classes = Classes::where('name', 'LIKE', "%{$query}%")
+            ->orWhere('code', 'LIKE', "%{$query}%")
+            ->orWhere('grade', 'LIKE', "%{$query}%")
+            ->orWhere('major', 'LIKE', "%{$query}%")
+            ->get();
+            
+        return response()->json($classes);
+    }
+
     public function index(Request $request)
     {
         if (Auth::user()->hasRole('student')) {
@@ -29,7 +49,13 @@ class ClassesController extends Controller
                 return redirect()->back()->with('error', 'Anda belum terdaftar di kelas manapun.');
             }
         }
+        
         $query = Classes::query();
+        
+        // Filter non-archived classes by default
+        if (!$request->has('show_archived')) {
+            $query->where('is_archived', false);
+        }
         
         // Search filter
         if ($request->has('q') && !empty($request->q)) {
@@ -81,6 +107,7 @@ class ClassesController extends Controller
             $request->validate([
                 'name' => 'required|string|max:255',
                 'major' => 'required|string|max:255',
+                'academic_year' => 'nullable|string|max:255',
             ]);
 
             // Generate kode dengan format CLS-XXXXXX
@@ -93,6 +120,8 @@ class ClassesController extends Controller
                 'grade' => $request->grade,
                 'major' => $request->major,
                 'code' => $code,
+                'academic_year' => $request->academic_year ?: AcademicYearHelper::getCurrentAcademicYear(),
+                'created_by' => Auth::id(),
             ]);
 
             return redirect()->route('classes.index')->with('success', 'Kelas berhasil dibuat.');
@@ -375,6 +404,7 @@ class ClassesController extends Controller
                 'major' => $request->major,
                 'grade' => $request->grade,
                 'academic_year' => $request->academic_year,
+                'updated_by' => Auth::id(),
             ]);
 
             return redirect()->route('classes.index')->with('success', 'Kelas berhasil diperbarui.');
@@ -385,7 +415,30 @@ class ClassesController extends Controller
         }
     }
 
-    public function destroy(string $id)
+    public function toggleArchive($id)
+    {
+        try {
+            $class = Classes::findOrFail($id);
+            $class->update([
+                'is_archived' => !$class->is_archived
+            ]);
+            
+            $status = $class->is_archived ? 'diarsipkan' : 'dikembalikan';
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Kelas berhasil ' . $status,
+                'is_archived' => $class->is_archived
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengubah status arsip: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroy($id)
     {
         try {
             $class = Classes::findOrFail($id);
@@ -442,14 +495,16 @@ class ClassesController extends Controller
                     $skippedCount++;
                     $skippedNames[] = $student->name;
                 } else {
-                    // Create assignment in pivot table
+                    // Create assignment in pivot table with start_date
                     DB::table('student_class')->insert([
                         'id' => Str::uuid(),
                         'class_id' => $class->id,
                         'student_id' => $studentId,
+                        'academic_year' => $class->academic_year ?? AcademicYearHelper::getCurrentAcademicYear(),
                         'created_by' => Auth::id(),
                         'created_at' => now(),
                         'updated_at' => now(),
+                        'start_date' => now(), 
                     ]);
                     $successCount++;
                 }

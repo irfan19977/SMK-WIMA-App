@@ -102,6 +102,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Class Management Routes
     Route::prefix('classes')->name('classes.')->group(function () {
+        Route::get('/search', [ClassesController::class, 'search'])->name('search');
         Route::resource('/', ClassesController::class)->parameters(['' => 'class']);
         Route::post('{class}/assign-student', [ClassesController::class, 'assignStudent'])->name('assign-student');
         Route::post('{class}/bulk-assign', [ClassesController::class, 'bulkAssign'])->name('bulk-assign');

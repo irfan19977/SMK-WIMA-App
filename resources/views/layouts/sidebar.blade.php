@@ -26,7 +26,7 @@
         
         {{-- Pengumuman --}}
         @can('announcements.index')
-            <li class="dropdown {{ Request::is('announcements*') ? 'active' : '' }}">
+            <li class="dropdown {{ Request::is('pendaftaran*') ? 'active' : '' }}">
                 <a href="{{ route('pendaftaran-siswa.index') }}" class="nav-link">
                     <i class="fas fa-user-plus"></i><span>Pendaftaran</span>
                 </a>

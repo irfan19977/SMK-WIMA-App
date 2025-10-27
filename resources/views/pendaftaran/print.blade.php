@@ -11,7 +11,7 @@
     @media print {
       .print-instruction { display: none; }
     }
-    body { font-family: Arial, Helvetica, sans-serif; color: #111; margin: 0; padding: 0; }
+    body { font-family: 'Times New Roman', Times, serif; color: #111; margin: 0; padding: 0; }
     .container { max-width: 100%; margin: 0 auto; padding: 20px; }
     h2 { margin: 0 0 8px 0; font-size: 18px; }
     .subtitle { margin: 0 0 16px 0; font-size: 13px; color: #444; }
@@ -45,22 +45,23 @@
         <tr>
 
           <td style="width: 80px; border: none; text-align: center; vertical-align: middle; padding: 0;">
-            <img src="{{ asset('backend/assets/img/logo yayasan.png') }}" alt="Logo" style="width: 65px; height: auto;">
+            <img src="{{ asset('backend/assets/img/logo yayasan.png') }}" alt="Logo" style="width: 120px; height: auto;">
           </td>
           <td style="border: none; text-align: center; vertical-align: middle; padding: 0 5px;">
             <div style="margin: 0; padding: 0;">
-              <p style="margin: 0; padding: 0; font-size: 9px; font-weight: normal; line-height: 1.1;">YAYASAN PEMBINA LEMBAGA PENDIDIKAN PERSATUAN GURU</p>
-              <p style="margin: 0; padding: 0; font-size: 9px; font-weight: normal; line-height: 1.1;">REPUBLIK INDONESIA (YP LP PGRI)</p>
+              <p style="margin: 0; padding: 0; font-size: 12px; font-weight: normal; line-height: 1.1;">YAYASAN PEMBINA LEMBAGA PENDIDIKAN </p>
+              <p style="margin: 0; padding: 0; font-size: 12px; font-weight: normal; line-height: 1.1;">PERSATUAN GURU REPUBLIK INDONESIA (YP LP PGRI)</p>
+              <p style="margin: 0; padding: 0; font-size: 12px; font-weight: normal; line-height: 1.1;">KABUPATEN MALANG</p>
               <h2 style="margin: 2px 0 1px 0; padding: 0; font-size: 20px; font-weight: bold; letter-spacing: 1px;">SMK PGRI LAWANG</h2>
-              <p style="margin: 0; padding: 0; font-size: 9px; font-weight: normal; letter-spacing: 0.5px; line-height: 1.1;">SEKOLAH MENENGAH KEJURUAN</p>
-              <p style="margin: 1px 0 0 0; padding: 0; font-size: 8px; font-weight: bold; line-height: 1.2;">Kompetensi Keahlian dan Sesuai Molior Waktu</p>
-              <p style="margin: 0; padding: 0; font-size: 8px; font-weight: normal; line-height: 1.2;">Kimia Industri, Teknik Komputer & Jaringan</p>
-              <p style="margin: 0; padding: 0; font-size: 8px; font-weight: normal; line-height: 1.2;">Jl. Dr. Mardijil 71 Lawang - Telp. (0341) 4365505 Fax. (0341) 4365505</p>
-              <p style="margin: 0; padding: 0; font-size: 8px; font-weight: normal; line-height: 1.2;">E-mail: smkpgri@smkpgrilawang.sch.id &nbsp; Website : www.smkpgrilawang.sch.id</p>
+              <p style="margin: 0; padding: 0; font-size: 12px; font-weight: normal; letter-spacing: 0.5px; line-height: 1.1;">Kompetensi Keahlian:</p>
+              <p style="margin: 1px 0 0 0; padding: 0; font-size: 12px; font-weight: bold; line-height: 1.2;">Teknik Kendaraan Ringan Otomotif,Teknik Bisnis dan Sepeda Motor</p>
+              <p style="margin: 0; padding: 0; font-size: 12px; font-weight: bold; line-height: 1.2;">Teknik Kimia Industri, Teknik Komputer & Jaringan</p>
+              <p style="margin: 0; padding: 0; font-size: 12px; font-weight: normal; line-height: 1.2;">JL. Dr. Wahidin 17 Lawang Telp. (0341) 4395005 Fax. (0341) 4395005 Lawang</p>
+              <p style="margin: 0; padding: 0; font-size: 12px; font-weight: normal; line-height: 1.2;">Website : www.smkpgri-lawang.sch.id &nbsp; E-mail: www.cssmkpgrilawang@gmail.com  </p>
             </div>
           </td>
           <td style="width: 80px; border: none; text-align: center; vertical-align: middle; padding: 0;">
-            <img src="{{ asset('backend/assets/img/logo 1.png') }}" alt="Logo" style="width: 65px; height: auto;">
+            <img src="{{ asset('backend/assets/img/logo 1.png') }}" alt="Logo" style="width: 120px; height: auto;">
           </td>
         </tr>
       </table>
@@ -116,14 +117,11 @@
     </table>
   </div>
   <script>
-    window.addEventListener('load', function() { setTimeout(function(){ window.print(); }, 200); });
-  </script>
-  <script>
     function updatePrintTime() {
       const now = new Date();
       const formatted = now.toLocaleString('id-ID', {
         day: '2-digit',
-        month: '2-digit', 
+        month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
@@ -134,10 +132,10 @@
     
     updatePrintTime();
     
-    window.addEventListener('load', function() { 
-      setTimeout(function(){ 
-        window.print(); 
-      }, 200); 
+    window.addEventListener('load', function() {
+      setTimeout(function(){
+        window.print();
+      }, 200);
     });
   </script>
 </body>
