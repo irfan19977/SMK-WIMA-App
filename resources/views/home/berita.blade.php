@@ -33,9 +33,6 @@
                 <h1 class="display-4 fw-bold mb-4 text-white" data-aos="fade-up" data-aos-delay="300">
                   Berita Sekolah
                 </h1>
-                <p class="lead mb-5 text-muted" data-aos="fade-up" data-aos-delay="200">
-                  Informasi Terkini Seputar Kegiatan dan Prestasi Sekolah XYZ
-                </p>
               </div>
             </div>
           </div>
@@ -62,127 +59,110 @@
 
         <div class="row">
           <!-- Main Featured Article -->
+          @if($featuredNews->isNotEmpty())
           <div class="col-lg-8 mb-4" data-aos="fade-right">
+            @php $firstNews = $featuredNews->first(); @endphp
             <article class="featured-article">
               <div class="article-image">
-                <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" alt="Siswa SMA XYZ Raih Juara 1 Olimpiade Sains Nasional" class="img-fluid rounded-4">
+                <img src="{{ $firstNews->image_url }}" alt="{{ $firstNews->title }}" class="img-fluid rounded-4">
                 <div class="article-overlay">
                   <div class="article-category">
-                    <span class="badge bg-success">Prestasi</span>
+                    <span class="badge bg-success">{{ $firstNews->category }}</span>
                   </div>
                   <div class="article-date">
-                    <i class="bi bi-calendar3 me-2"></i>15 Januari 2024
+                    <i class="bi bi-calendar3 me-2"></i>{{ $firstNews->published_at->translatedFormat('d F Y') }}
                   </div>
                 </div>
               </div>
               <div class="article-content">
                 <h3 class="article-title">
-                  <a href="{{ route('berita.detail') }}" class="text-decoration-none">Siswa SMA XYZ Raih Juara 1 Olimpiade Sains Nasional 2024</a>
+                  <a href="{{ route('berita.detail', $firstNews->slug) }}" class="text-decoration-none">{{ $firstNews->title }}</a>
                 </h3>
                 <p class="article-excerpt">
-                  Prestasi membanggakan kembali ditorehkan siswa Sekolah XYZ. Ahmad Rizki Pratama, siswa kelas XI IPA berhasil meraih juara 1 dalam Olimpiade Sains Nasional bidang Fisika yang diselenggarakan di Jakarta...
+                  {{ $firstNews->excerpt }}
                 </p>
                 <div class="article-meta">
                   <div class="author-info">
-                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="Author" class="author-avatar">
+                    <img src="{{ $firstNews->user->photo_path ?? 'https://ui-avatars.com/api/?name='.urlencode($firstNews->user->name).'&background=random' }}" alt="{{ $firstNews->user->name }}" class="author-avatar">
                     <div class="author-details">
-                      <span class="author-name">Drs. Budi Santoso</span>
-                      <span class="author-role">Kepala Sekolah</span>
+                      <span class="author-name">{{ $firstNews->user->name }}</span>
+                      <span class="author-role">{{ $firstNews->user->roles->first() ? $firstNews->user->roles->first()->name : 'Admin' }}</span>
                     </div>
                   </div>
                   <div class="article-stats">
-                    <span class="stat-item"><i class="bi bi-eye me-1"></i>1,234</span>
-                    <span class="stat-item"><i class="bi bi-heart me-1"></i>89</span>
-                    <span class="stat-item"><i class="bi bi-share me-1"></i>45</span>
+                    <span class="stat-item"><i class="bi bi-eye me-1"></i>{{ number_format($firstNews->view_count) }}</span>
+                    <span class="stat-item"><i class="bi bi-chat-left-text me-1"></i>{{ $firstNews->comments_count ?? 0 }}</span>
                   </div>
                 </div>
               </div>
             </article>
           </div>
+          @endif
 
           <!-- Side Articles -->
           <div class="col-lg-4" data-aos="fade-left" data-aos-delay="200">
             <div class="side-articles">
+              @forelse($sideNews as $news)
               <div class="side-article mb-4">
                 <div class="row g-3">
                   <div class="col-4">
-                    <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Pembukaan Lab Komputer Baru" class="img-fluid rounded-3">
+                    <img src="{{ $news->image_url }}" alt="{{ $news->title }}" class="img-fluid rounded-3" style="height: 80px; object-fit: cover;">
                   </div>
                   <div class="col-8">
                     <div class="article-category mb-2">
-                      <span class="badge bg-info bg-opacity-20 text-white">Fasilitas</span>
+                      @php
+                        $badgeClass = [
+                          'prestasi' => 'bg-success',
+                          'kegiatan' => 'bg-warning',
+                          'fasilitas' => 'bg-info',
+                          'pendidikan' => 'bg-primary',
+                          'alumni' => 'bg-secondary'
+                        ][strtolower($news->category)] ?? 'bg-primary';
+                      @endphp
+                      <span class="badge {{ $badgeClass }} bg-opacity-20 text-white">{{ $news->category }}</span>
                     </div>
-                    <h5 class="article-title">
-                      <a href="#" class="text-decoration-none">Pembukaan Lab Komputer Baru dengan Teknologi Terdepan</a>
+                    <h5 class="article-title" style="font-size: 0.9rem; line-height: 1.3;">
+                      <a href="{{ route('berita.detail', $news->slug) }}" class="text-decoration-none">{{ Str::limit($news->title, 45) }}</a>
                     </h5>
                     <div class="article-meta small text-muted">
-                      <i class="bi bi-calendar3 me-2"></i>12 Januari 2024
+                      <i class="bi bi-calendar3 me-1"></i>{{ $news->published_at->format('d M Y') }}
                     </div>
                   </div>
                 </div>
               </div>
-
-              <div class="side-article mb-4">
-                <div class="row g-3">
-                  <div class="col-4">
-                    <img src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Kegiatan Bakti Sosial" class="img-fluid rounded-3">
-                  </div>
-                  <div class="col-8">
-                    <div class="article-category mb-2">
-                      <span class="badge bg-warning bg-opacity-20 text-white">Kegiatan</span>
-                    </div>
-                    <h5 class="article-title">
-                      <a href="#" class="text-decoration-none">Bakti Sosial Siswa XYZ untuk Korban Bencana Alam</a>
-                    </h5>
-                    <div class="article-meta small text-muted">
-                      <i class="bi bi-calendar3 me-2"></i>10 Januari 2024
-                    </div>
-                  </div>
+              @empty
+                <div class="alert alert-info small">
+                  <i class="bi bi-info-circle me-1"></i> Belum ada berita terbaru
                 </div>
-              </div>
+              @endforelse
 
-              <div class="side-article mb-4">
-                <div class="row g-3">
-                  <div class="col-4">
-                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Workshop Guru" class="img-fluid rounded-3">
-                  </div>
-                  <div class="col-8">
-                    <div class="article-category mb-2">
-                      <span class="badge bg-success bg-opacity-20 text-white">Pendidikan</span>
-                    </div>
-                    <h5 class="article-title">
-                      <a href="#" class="text-decoration-none">Workshop Pengembangan Kurikulum Digital</a>
-                    </h5>
-                    <div class="article-meta small text-muted">
-                      <i class="bi bi-calendar3 me-2"></i>8 Januari 2024
-                    </div>
-                  </div>
-                </div>
-              </div>
-
+              @if($trendingNews->isNotEmpty())
               <div class="trending-topics">
                 <h6 class="fw-bold mb-3">
-                  <i class="bi bi-fire text-danger me-2"></i>Topik Trending
+                  <i class="bi bi-fire text-danger me-2"></i>Berita Populer
                 </h6>
                 <div class="trending-list">
+                  @foreach($trendingNews as $index => $news)
                   <div class="trending-item">
-                    <span class="trending-number text-black">1</span>
-                    <a href="#" class="trending-link">Pendaftaran Siswa Baru 2024/2025</a>
+                    <span class="trending-number text-black">{{ $index + 1 }}</span>
+                    <a href="{{ route('berita.detail', $news->slug) }}" class="trending-link" title="{{ $news->title }}">
+                      {{ Str::limit($news->title, 30) }}
+                      <span class="badge bg-secondary bg-opacity-10 text-muted small ms-2">{{ number_format($news->view_count) }}x</span>
+                    </a>
                   </div>
-                  <div class="trending-item">
-                    <span class="trending-number text-black">2</span>
-                    <a href="#" class="trending-link">Program Beasiswa Prestasi</a>
-                  </div>
-                  <div class="trending-item">
-                    <span class="trending-number text-black">3</span>
-                    <a href="#" class="trending-link">Ekstrakurikuler Robotika</a>
-                  </div>
-                  <div class="trending-item">
-                    <span class="trending-number text-black">4</span>
-                    <a href="#" class="trending-link">Study Tour ke Jepang</a>
-                  </div>
+                  @endforeach
                 </div>
               </div>
+              @else
+              <div class="trending-topics">
+                <h6 class="fw-bold mb-3">
+                  <i class="bi bi-fire text-danger me-2"></i>Berita Populer
+                </h6>
+                <div class="alert alert-info small">
+                  <i class="bi bi-info-circle me-1"></i> Belum ada data kunjungan berita
+                </div>
+              </div>
+              @endif
             </div>
           </div>
         </div>
@@ -212,237 +192,127 @@
               <button class="filter-btn active" data-filter="all">
                 <i class="bi bi-grid-3x3-gap me-2"></i>Semua Berita
               </button>
-              <button class="filter-btn" data-filter="prestasi">
-                <i class="bi bi-trophy me-2"></i>Prestasi
-              </button>
-              <button class="filter-btn" data-filter="kegiatan">
-                <i class="bi bi-calendar-event me-2"></i>Kegiatan
-              </button>
-              <button class="filter-btn" data-filter="fasilitas">
-                <i class="bi bi-building me-2"></i>Fasilitas
-              </button>
-              <button class="filter-btn" data-filter="pendidikan">
-                <i class="bi bi-book me-2"></i>Pendidikan
-              </button>
-              <button class="filter-btn" data-filter="alumni">
-                <i class="bi bi-people me-2"></i>Alumni
-              </button>
+              @foreach($categories as $category)
+                @php
+                  // Map category to icon
+                  $icons = [
+                    'Prestasi' => 'trophy',
+                    'Kegiatan' => 'calendar-event',
+                    'Fasilitas' => 'building',
+                    'Pendidikan' => 'book',
+                    'Alumni' => 'people',
+                    'Umum' => 'newspaper'
+                  ];
+                  $icon = $icons[$category] ?? 'newspaper';
+                @endphp
+                <button class="filter-btn" data-filter="{{ strtolower($category) }}">
+                  <i class="bi bi-{{ $icon }} me-2"></i>{{ $category }}
+                </button>
+              @endforeach
             </div>
           </div>
         </div>
 
         <!-- News Grid -->
         <div class="row g-4" id="news-grid">
-          <!-- News Item 1 -->
-          <div class="col-lg-4 col-md-6 news-item" data-category="prestasi" data-aos="fade-up">
+          @forelse($latestNews as $index => $news)
+          <div class="col-lg-4 col-md-6 news-item" data-category="{{ strtolower($news->category) }}" data-aos="fade-up" @if($index > 0 && $index % 3 == 0) data-aos-delay="200" @elseif($index % 2 == 0) data-aos-delay="100" @endif>
             <article class="news-card">
               <div class="news-image">
-                <img src="https://images.unsplash.com/photo-1606127486207-9ba386ba6b49?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Juara Debat Bahasa Inggris" class="img-fluid">
+                <img src="{{ $news->image_url }}" alt="{{ $news->title }}" class="img-fluid">
                 <div class="news-overlay">
                   <div class="news-category">
-                    <span class="badge bg-success">Prestasi</span>
+                    @php
+                      $badgeClass = [
+                        'prestasi' => 'bg-success',
+                        'kegiatan' => 'bg-warning',
+                        'fasilitas' => 'bg-info',
+                        'pendidikan' => 'bg-primary',
+                        'alumni' => 'bg-secondary'
+                      ][strtolower($news->category)] ?? 'bg-primary';
+                    @endphp
+                    <span class="badge {{ $badgeClass }}">{{ $news->category }}</span>
                   </div>
                 </div>
               </div>
               <div class="news-content">
                 <div class="news-meta">
-                  <span class="news-date"><i class="bi bi-calendar3 me-1"></i>14 Jan 2024</span>
-                  <span class="news-author"><i class="bi bi-person me-1"></i>Tim Redaksi</span>
+                  <span class="news-date"><i class="bi bi-calendar3 me-1"></i>{{ $news->published_at->format('d M Y') }}</span>
+                  <span class="news-author"><i class="bi bi-person me-1"></i>{{ $news->user->name }}</span>
                 </div>
                 <h4 class="news-title">
-                  <a href="#" class="text-decoration-none">Tim Debat Bahasa Inggris Raih Juara Nasional</a>
+                  <a href="{{ route('berita.detail', $news->slug) }}" class="text-decoration-none">{{ $news->title }}</a>
                 </h4>
                 <p class="news-excerpt">
-                  Tim debat Sekolah XYZ berhasil meraih juara 1 dalam kompetisi debat bahasa Inggris tingkat nasional...
+                  {{ Str::limit(strip_tags($news->content), 120) }}
                 </p>
                 <div class="news-footer">
-                  <a href="#" class="read-more">
+                  <a href="{{ route('berita.detail', $news->slug) }}" class="read-more">
                     Baca Selengkapnya <i class="bi bi-arrow-right ms-1"></i>
                   </a>
                   <div class="news-stats">
-                    <span><i class="bi bi-eye"></i> 856</span>
-                    <span><i class="bi bi-heart"></i> 42</span>
+                    <span><i class="bi bi-eye"></i> {{ number_format($news->view_count) }}</span>
+                    <span><i class="bi bi-chat-left-text"></i> {{ $news->comments_count ?? 0 }}</span>
                   </div>
                 </div>
               </div>
             </article>
           </div>
-
-          <!-- News Item 2 -->
-          <div class="col-lg-4 col-md-6 news-item" data-category="kegiatan" data-aos="fade-up" data-aos-delay="100">
-            <article class="news-card">
-              <div class="news-image">
-                <img src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Festival Seni Budaya" class="img-fluid">
-                <div class="news-overlay">
-                  <div class="news-category">
-                    <span class="badge bg-warning">Kegiatan</span>
-                  </div>
-                </div>
-              </div>
-              <div class="news-content">
-                <div class="news-meta">
-                  <span class="news-date"><i class="bi bi-calendar3 me-1"></i>13 Jan 2024</span>
-                  <span class="news-author"><i class="bi bi-person me-1"></i>Humas Sekolah</span>
-                </div>
-                <h4 class="news-title">
-                  <a href="#" class="text-decoration-none">Festival Seni Budaya Nusantara 2024</a>
-                </h4>
-                <p class="news-excerpt">
-                  Sekolah XYZ menggelar festival seni budaya dengan menampilkan beragam kesenian tradisional Indonesia...
-                </p>
-                <div class="news-footer">
-                  <a href="#" class="read-more">
-                    Baca Selengkapnya <i class="bi bi-arrow-right ms-1"></i>
-                  </a>
-                  <div class="news-stats">
-                    <span><i class="bi bi-eye"></i> 1,245</span>
-                    <span><i class="bi bi-heart"></i> 78</span>
-                  </div>
-                </div>
-              </div>
-            </article>
+          @empty
+          <div class="col-12 text-center py-5">
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i> Belum ada berita yang tersedia.
+            </div>
           </div>
+          @endforelse
+        </div>
 
-          <!-- News Item 3 -->
-          <div class="col-lg-4 col-md-6 news-item" data-category="fasilitas" data-aos="fade-up" data-aos-delay="200">
-            <article class="news-card">
-              <div class="news-image">
-                <img src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Perpustakaan Digital" class="img-fluid">
-                <div class="news-overlay">
-                  <div class="news-category">
-                    <span class="badge bg-info">Fasilitas</span>
-                  </div>
-                </div>
-              </div>
-              <div class="news-content">
-                <div class="news-meta">
-                  <span class="news-date"><i class="bi bi-calendar3 me-1"></i>11 Jan 2024</span>
-                  <span class="news-author"><i class="bi bi-person me-1"></i>Admin</span>
-                </div>
-                <h4 class="news-title">
-                  <a href="#" class="text-decoration-none">Perpustakaan Digital Berteknologi AI Diluncurkan</a>
-                </h4>
-                <p class="news-excerpt">
-                  Sekolah XYZ meluncurkan perpustakaan digital canggih dengan teknologi AI untuk membantu siswa belajar...
-                </p>
-                <div class="news-footer">
-                  <a href="#" class="read-more">
-                    Baca Selengkapnya <i class="bi bi-arrow-right ms-1"></i>
-                  </a>
-                  <div class="news-stats">
-                    <span><i class="bi bi-eye"></i> 967</span>
-                    <span><i class="bi bi-heart"></i> 53</span>
-                  </div>
-                </div>
-              </div>
-            </article>
-          </div>
+        <!-- Pagination -->
+        @if($latestNews->hasPages())
+        <div class="row mt-5">
+          <div class="col-12">
+            <nav aria-label="News pagination">
+              <ul class="pagination justify-content-center">
+                @if($latestNews->onFirstPage())
+                  <li class="page-item disabled">
+                    <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+                  </li>
+                @else
+                  <li class="page-item">
+                    <a class="page-link" href="{{ $latestNews->previousPageUrl() }}" aria-label="Previous">
+                      <i class="bi bi-chevron-left"></i>
+                    </a>
+                  </li>
+                @endif
 
-          <!-- News Item 4 -->
-          <div class="col-lg-4 col-md-6 news-item" data-category="pendidikan" data-aos="fade-up">
-            <article class="news-card">
-              <div class="news-image">
-                <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Kurikulum Baru" class="img-fluid">
-                <div class="news-overlay">
-                  <div class="news-category">
-                    <span class="badge bg-primary">Pendidikan</span>
-                  </div>
-                </div>
-              </div>
-              <div class="news-content">
-                <div class="news-meta">
-                  <span class="news-date"><i class="bi bi-calendar3 me-1"></i>9 Jan 2024</span>
-                  <span class="news-author"><i class="bi bi-person me-1"></i>Kurikulum</span>
-                </div>
-                <h4 class="news-title">
-                  <a href="#" class="text-decoration-none">Implementasi Kurikulum Merdeka di Sekolah XYZ</a>
-                </h4>
-                <p class="news-excerpt">
-                  Sekolah XYZ resmi menerapkan Kurikulum Merdeka untuk meningkatkan kualitas pembelajaran siswa...
-                </p>
-                <div class="news-footer">
-                  <a href="#" class="read-more">
-                    Baca Selengkapnya <i class="bi bi-arrow-right ms-1"></i>
-                  </a>
-                  <div class="news-stats">
-                    <span><i class="bi bi-eye"></i> 1,456</span>
-                    <span><i class="bi bi-heart"></i> 89</span>
-                  </div>
-                </div>
-              </div>
-            </article>
-          </div>
+                @foreach($latestNews->getUrlRange(1, $latestNews->lastPage()) as $page => $url)
+                  @if($page == $latestNews->currentPage())
+                    <li class="page-item active" aria-current="page">
+                      <span class="page-link">{{ $page }}</span>
+                    </li>
+                  @else
+                    <li class="page-item">
+                      <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                    </li>
+                  @endif
+                @endforeach
 
-          <!-- News Item 5 -->
-          <div class="col-lg-4 col-md-6 news-item" data-category="alumni" data-aos="fade-up" data-aos-delay="100">
-            <article class="news-card">
-              <div class="news-image">
-                <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Alumni Success Story" class="img-fluid">
-                <div class="news-overlay">
-                  <div class="news-category">
-                    <span class="badge bg-secondary">Alumni</span>
-                  </div>
-                </div>
-              </div>
-              <div class="news-content">
-                <div class="news-meta">
-                  <span class="news-date"><i class="bi bi-calendar3 me-1"></i>7 Jan 2024</span>
-                  <span class="news-author"><i class="bi bi-person me-1"></i>Alumni Network</span>
-                </div>
-                <h4 class="news-title">
-                  <a href="#" class="text-decoration-none">Alumni XYZ Raih Beasiswa S2 di Harvard University</a>
-                </h4>
-                <p class="news-excerpt">
-                  Sarah Putri, alumni angkatan 2020, berhasil meraih beasiswa penuh untuk melanjutkan studi S2 di Harvard...
-                </p>
-                <div class="news-footer">
-                  <a href="#" class="read-more">
-                    Baca Selengkapnya <i class="bi bi-arrow-right ms-1"></i>
-                  </a>
-                  <div class="news-stats">
-                    <span><i class="bi bi-eye"></i> 2,134</span>
-                    <span><i class="bi bi-heart"></i> 156</span>
-                  </div>
-                </div>
-              </div>
-            </article>
-          </div>
-
-          <!-- News Item 6 -->
-          <div class="col-lg-4 col-md-6 news-item" data-category="prestasi" data-aos="fade-up" data-aos-delay="200">
-            <article class="news-card">
-              <div class="news-image">
-                <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Lomba Robotika" class="img-fluid">
-                <div class="news-overlay">
-                  <div class="news-category">
-                    <span class="badge bg-success">Prestasi</span>
-                  </div>
-                </div>
-              </div>
-              <div class="news-content">
-                <div class="news-meta">
-                  <span class="news-date"><i class="bi bi-calendar3 me-1"></i>5 Jan 2024</span>
-                  <span class="news-author"><i class="bi bi-person me-1"></i>STEM Club</span>
-                </div>
-                <h4 class="news-title">
-                  <a href="#" class="text-decoration-none">Juara 1 Kompetisi Robotika Tingkat Provinsi</a>
-                </h4>
-                <p class="news-excerpt">
-                  Ekstrakurikuler Robotika Sekolah XYZ berhasil menyabet juara 1 dalam kompetisi robotika provinsi...
-                </p>
-                <div class="news-footer">
-                  <a href="#" class="read-more">
-                    Baca Selengkapnya <i class="bi bi-arrow-right ms-1"></i>
-                  </a>
-                  <div class="news-stats">
-                    <span><i class="bi bi-eye"></i> 1,678</span>
-                    <span><i class="bi bi-heart"></i> 94</span>
-                  </div>
-                </div>
-              </div>
-            </article>
+                @if($latestNews->hasMorePages())
+                  <li class="page-item">
+                    <a class="page-link" href="{{ $latestNews->nextPageUrl() }}" aria-label="Next">
+                      <i class="bi bi-chevron-right"></i>
+                    </a>
+                  </li>
+                @else
+                  <li class="page-item disabled">
+                    <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+                  </li>
+                @endif
+              </ul>
+            </nav>
           </div>
         </div>
+        @endif
 
         <!-- Load More Button -->
         <div class="row mt-5">
@@ -1131,68 +1001,117 @@
   <!-- JavaScript -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Category Filter
-      const filterBtns = document.querySelectorAll('.filter-btn');
-      const newsItems = document.querySelectorAll('.news-item');
-
-      filterBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-          // Remove active class from all buttons
-          filterBtns.forEach(b => b.classList.remove('active'));
-          // Add active class to clicked button
-          this.classList.add('active');
-
-          const filterValue = this.getAttribute('data-filter');
-
-          newsItems.forEach(item => {
-            if (filterValue === 'all' || item.getAttribute('data-category') === filterValue) {
-              item.style.display = 'block';
-              item.classList.remove('filtered-out');
-            } else {
-              item.style.display = 'none';
-              item.classList.add('filtered-out');
-            }
-          });
-        });
-      });
-
-      // Newsletter Form
-      const newsletterForm = document.querySelector('.newsletter-form form');
-      newsletterForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const email = this.querySelector('input[type="email"]').value;
-        if (email) {
-          alert('Terima kasih! Anda telah berlangganan newsletter kami.');
-          this.reset();
-        }
-      });
-
-      // Load More Button
+      // Elements
+      const filterButtons = document.querySelectorAll('.filter-btn');
+      const newsItems = document.querySelectorAll('.news-item'); // Menggunakan class news-item yang sesuai dengan struktur HTML
       const loadMoreBtn = document.getElementById('loadMore');
-      loadMoreBtn.addEventListener('click', function() {
-        // Simulate loading more content
-        this.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Memuat...';
-        this.disabled = true;
-        
-        setTimeout(() => {
-          this.innerHTML = '<i class="bi bi-check-circle me-2"></i>Semua berita telah dimuat';
-          this.classList.replace('btn-outline-primary', 'btn-success');
-        }, 2000);
-      });
+      let visibleItems = 6;
+      const itemsPerLoad = 3;
+      let currentFilter = 'all';
 
-      // Smooth scroll for breadcrumb
-      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-          e.preventDefault();
-          const target = document.querySelector(this.getAttribute('href'));
-          if (target) {
-            target.scrollIntoView({
+      // Simple filter function
+      function filterNews(category) {
+        currentFilter = category;
+        let count = 0;
+        
+        newsItems.forEach(item => {
+          const itemCategory = item.getAttribute('data-category') ? item.getAttribute('data-category').toLowerCase() : '';
+          
+          if (category === 'all' || itemCategory === category.toLowerCase()) {
+            item.style.display = ''; // Mengosongkan style display untuk mengembalikan ke default
+            count++;
+          } else {
+            item.style.display = 'none';
+          }
+        });
+
+        // Update load more button
+        updateLoadMoreButton();
+      }
+
+      // Filter button click handler
+      filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          // Update active button
+          filterButtons.forEach(btn => btn.classList.remove('active'));
+          this.classList.add('active');
+          
+          // Get filter value
+          const filterValue = this.getAttribute('data-filter');
+          
+          // Apply filter
+          filterNews(filterValue);
+          
+          // Smooth scroll to news grid
+          const newsGrid = document.getElementById('news-grid');
+          if (newsGrid) {
+            newsGrid.scrollIntoView({ 
               behavior: 'smooth',
-              block: 'start'
+              block: 'start' 
             });
           }
         });
       });
+
+      // Initialize
+      if (filterButtons.length > 0) {
+        filterButtons[0].classList.add('active');
+      }
+      filterNews('all');
+
+      // Newsletter Form
+      const newsletterForm = document.querySelector('.newsletter-form form');
+      if (newsletterForm) {
+        newsletterForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const emailInput = this.querySelector('input[type="email"]');
+          if (emailInput && emailInput.value) {
+            alert('Terima kasih! Anda telah berlangganan newsletter kami.');
+            this.reset();
+          }
+        });
+      }
+
+      // Load More Button functionality
+      if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function() {
+          this.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Memuat...';
+          this.disabled = true;
+          
+          // Simulate loading more content
+          setTimeout(() => {
+            visibleItems += itemsPerLoad;
+            filterNews(currentFilter);
+            
+            this.innerHTML = 'Muat Lebih Banyak';
+            this.disabled = false;
+            
+            // Hide button if all items are shown
+            updateLoadMoreButton();
+          }, 500);
+        });
+      }
+
+      // Update load more button visibility
+      function updateLoadMoreButton() {
+        if (!loadMoreBtn) return;
+        
+        const visibleCount = Array.from(newsItems).filter(item => 
+          item.style.display !== 'none'
+        ).length;
+        
+        const totalCount = currentFilter === 'all' 
+          ? newsItems.length 
+          : Array.from(newsItems).filter(item => 
+              item.getAttribute('data-category') && 
+              item.getAttribute('data-category').toLowerCase() === currentFilter.toLowerCase()
+            ).length;
+        
+        loadMoreBtn.style.display = visibleCount < totalCount ? 'inline-flex' : 'none';
+      }
+      
+      // Initialize load more button
+      updateLoadMoreButton();
     });
   </script>
 

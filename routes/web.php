@@ -22,13 +22,20 @@ use App\Http\Controllers\Backend\PendaftaranSiswaController;
 use App\Http\Controllers\Backend\RoleController;
 use App\Http\Controllers\Backend\StudentGradesController;
 use App\Http\Controllers\Backend\TahfizController;
+use App\Http\Controllers\Backend\NewsController;
+use App\Http\Controllers\Frontend\BeritaController;
 use App\Models\Ekstrakurikuler;
 use App\Models\Student;
 use Illuminate\Support\Facades\Route;
 
+// Frontend Routes
 Route::get('/', function () {
     return view('home.index');
 })->name('/');
+
+// Berita Routes
+Route::get('/berita', [BeritaController::class, 'index'])->name('berita.index');
+Route::get('/berita/{slug}', [BeritaController::class, 'detail'])->name('berita.detail');
 Route::get('/profile-sekolah', function () {
     return view('home.profile');
 })->name('profile-sekolah.index');
@@ -49,13 +56,8 @@ Route::get('/teknik-bisnis-sepeda-motor', function () {
     return view('home.tbsm');
 })->name('tbsm.index');
 
-Route::get('/berita', function () {
-    return view('home.berita');
-})->name('berita.index');
-
-Route::get('/detail', function () {
-    return view('home.detail');
-})->name('berita.detail');
+Route::get('/berita', [BeritaController::class, 'index'])->name('berita.index');
+Route::get('/berita-detail', [BeritaController::class, 'detail'])->name('berita.detail');
 
 Route::get('/contact', function () {
     return view('home.contact');
@@ -68,6 +70,8 @@ Route::resource('/pendaftaran', PendaftaranController::class);
     Route::post('/clear-rfid-cache', [RFIDController::class, 'clearRFIDCache'])->name('clear.rfid');
 
 Route::group(['middleware' => 'auth'], function () {
+    // Admin News Management
+    Route::resource('news', NewsController::class);
 
     // Dashboard Routes
     Route::prefix('dashboard')->name('dashboard')->group(function() {
@@ -108,6 +112,7 @@ Route::group(['middleware' => 'auth'], function () {
         Route::post('{class}/bulk-assign', [ClassesController::class, 'bulkAssign'])->name('bulk-assign');
         Route::delete('{class}/remove-student', [ClassesController::class, 'removeStudent'])->name('remove-student');
         Route::get('{class}/attendance-data', [ClassesController::class, 'getAttendanceData'])->name('attendance-data');
+        Route::post('{class}/toggle-archive', [ClassesController::class, 'toggleArchive'])->name('toggle-archive');
     });
 
     // Student Grades Routes

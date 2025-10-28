@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="{{ asset('backend/assets/bundles/pretty-checkbox/pretty-checkbox.min.css') }}">
   <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
 
+  <link rel="stylesheet" href="{{ asset('backend/assets/bundles/summernote/summernote-bs4.css') }}">
 
   @stack('styles')
 </head>
@@ -169,7 +170,10 @@
   <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
   <!-- Load face-api library -->
   <script src="{{ asset('js/face-api.min.js') }}"></script>
-
+  <!-- JS Libraies -->
+  <script src="{{ asset('backend/assets/bundles/summernote/summernote-bs4.js') }}"></script>
+  <script src="{{ asset('backend/assets/bundles/upload-preview/assets/js/jquery.uploadPreview.min.js') }}"></script>
+<script src="{{ asset('backend/assets/js/page/create-post.js') }}"></script>
   <script>
     @if (session('success'))
         swal({

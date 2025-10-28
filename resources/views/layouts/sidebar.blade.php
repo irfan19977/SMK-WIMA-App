@@ -24,6 +24,15 @@
             </li>
         @endcan
         
+        {{-- Berita --}}
+        @can('classes.index')
+            <li class="dropdown {{ Request::is('news*') ? 'active' : '' }}">
+                <a href="{{ route('news.index') }}" class="nav-link">
+                    <i class="fas fa-newspaper"></i><span>Berita</span>
+                </a>
+            </li>
+        @endcan
+        
         {{-- Pengumuman --}}
         @can('announcements.index')
             <li class="dropdown {{ Request::is('pendaftaran*') ? 'active' : '' }}">

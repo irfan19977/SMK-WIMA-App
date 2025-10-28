@@ -26,34 +26,72 @@ class ClassesController extends Controller
     public function search(Request $request)
     {
         $query = $request->input('q');
-        
-        $classes = Classes::where('name', 'LIKE', "%{$query}%")
+        $showArchived = $request->has('show_archived') && $request->show_archived;
+
+        $classesQuery = Classes::where('name', 'LIKE', "%{$query}%")
             ->orWhere('code', 'LIKE', "%{$query}%")
             ->orWhere('grade', 'LIKE', "%{$query}%")
-            ->orWhere('major', 'LIKE', "%{$query}%")
-            ->get();
-            
-        return response()->json($classes);
+            ->orWhere('major', 'LIKE', "%{$query}%");
+
+        // Filter classes based on show_archived parameter
+        if ($showArchived) {
+            // Show only archived classes
+            $classesQuery->where('is_archived', true);
+        } else {
+            // Show only non-archived classes
+            $classesQuery->where('is_archived', false);
+        }
+
+        // Sort by grade first (10, 11, 12), then by major in dropdown order
+        $majorOrder = [
+            'Teknik Kendaraan Ringan Otomotif',
+            'Teknik Bisnis dan Sepeda Motor',
+            'Teknik Kimian Industri',
+            'Teknik Komputer & Jaringan'
+        ];
+
+        $classesQuery->orderByRaw("CAST(grade AS UNSIGNED) ASC")
+                     ->orderByRaw("FIELD(major, '" . implode("','", $majorOrder) . "') ASC");
+
+        $classes = $classesQuery->get();
+
+        return response()->json($classes->map(function($class) {
+            return [
+                'id' => $class->id,
+                'name' => $class->name,
+                'major' => $class->major,
+                'code' => $class->code,
+                'grade' => $class->grade,
+                'is_archived' => $class->is_archived,
+            ];
+        }));
     }
 
     public function index(Request $request)
     {
-        if (Auth::user()->hasRole('student')) {
+        if (Auth::check()) {
+            // Check if user has student role by checking if they have a student record
             $student = \App\Models\Student::where('user_id', Auth::id())->first();
-            $studentClass = $student ? \App\Models\StudentClass::where('student_id', $student->id)->first() : null;
-            
-            if ($studentClass) {
-                return redirect()->route('classes.show', $studentClass->class_id);
-            } else {
-                // Jika student tidak memiliki kelas, redirect dengan pesan error
-                return redirect()->back()->with('error', 'Anda belum terdaftar di kelas manapun.');
+            if ($student) {
+                $studentClass = \App\Models\StudentClass::where('student_id', $student->id)->first();
+
+                if ($studentClass) {
+                    return redirect()->route('classes.show', $studentClass->class_id);
+                } else {
+                    // Jika student tidak memiliki kelas, redirect dengan pesan error
+                    return redirect()->back()->with('error', 'Anda belum terdaftar di kelas manapun.');
+                }
             }
         }
         
         $query = Classes::query();
         
-        // Filter non-archived classes by default
-        if (!$request->has('show_archived')) {
+        // Filter classes based on show_archived parameter
+        if ($request->has('show_archived') && $request->show_archived) {
+            // Show only archived classes
+            $query->where('is_archived', true);
+        } else {
+            // Show only non-archived classes by default
             $query->where('is_archived', false);
         }
         
@@ -66,7 +104,18 @@ class ClassesController extends Controller
                   ->orWhere('code', 'LIKE', '%' . $searchTerm . '%');
             });
         }
-        
+
+        // Sort by grade first (10, 11, 12), then by major in dropdown order
+        $majorOrder = [
+            'Teknik Kendaraan Ringan Otomotif',
+            'Teknik Bisnis dan Sepeda Motor',
+            'Teknik Kimian Industri',
+            'Teknik Komputer & Jaringan'
+        ];
+
+        $query->orderByRaw("CAST(grade AS UNSIGNED) ASC")
+              ->orderByRaw("FIELD(major, '" . implode("','", $majorOrder) . "') ASC");
+
         $classes = $query->paginate(10);
         
         // Return JSON for AJAX requests
@@ -78,6 +127,7 @@ class ClassesController extends Controller
                     'major' => $class->major,
                     'code' => $class->code,
                     'grade' => $class->grade,
+                    'is_archived' => $class->is_archived,
                 ];
             });
             
@@ -105,9 +155,18 @@ class ClassesController extends Controller
     {
         try {
             $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:255|unique:classes,name',
                 'major' => 'required|string|max:255',
+                'grade' => 'nullable|integer|min:1|max:12',
                 'academic_year' => 'nullable|string|max:255',
+            ], [
+                'name.required' => 'Nama kelas harus diisi.',
+                'name.unique' => 'Nama kelas sudah digunakan. Silakan gunakan nama yang berbeda.',
+                'name.max' => 'Nama kelas tidak boleh lebih dari 255 karakter.',
+                'major.required' => 'Jurusan harus dipilih.',
+                'grade.integer' => 'Grade harus berupa angka.',
+                'grade.min' => 'Grade minimal adalah 1.',
+                'grade.max' => 'Grade maksimal adalah 12.',
             ]);
 
             // Generate kode dengan format CLS-XXXXXX
@@ -121,11 +180,49 @@ class ClassesController extends Controller
                 'major' => $request->major,
                 'code' => $code,
                 'academic_year' => $request->academic_year ?: AcademicYearHelper::getCurrentAcademicYear(),
+                'is_archived' => false,
                 'created_by' => Auth::id(),
             ]);
 
+            // Return JSON for AJAX requests
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Kelas berhasil dibuat.',
+                    'class' => [
+                        'id' => $classes->id,
+                        'name' => $classes->name,
+                        'major' => $classes->major,
+                        'code' => $classes->code,
+                        'grade' => $classes->grade,
+                        'academic_year' => $classes->academic_year,
+                    ]
+                ]);
+            }
+
             return redirect()->route('classes.index')->with('success', 'Kelas berhasil dibuat.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors specifically
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data yang dimasukkan tidak valid.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+
+            return redirect()->back()
+                           ->withErrors($e->errors())
+                           ->withInput();
         } catch (\Exception $e) {
+            // Return JSON for AJAX requests
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                ], 500);
+            }
+
             return redirect()->back()
                            ->withInput()
                            ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -391,10 +488,18 @@ class ClassesController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:classes,name,' . $id,
             'major' => 'required|string|max:255',
             'grade' => 'nullable|integer',
             'academic_year' => 'nullable|string|max:255',
+        ], [
+            'name.required' => 'Nama kelas harus diisi.',
+            'name.unique' => 'Nama kelas sudah digunakan. Silakan gunakan nama yang berbeda.',
+            'name.max' => 'Nama kelas tidak boleh lebih dari 255 karakter.',
+            'major.required' => 'Jurusan harus dipilih.',
+            'grade.integer' => 'Grade harus berupa angka.',
+            'grade.min' => 'Grade minimal adalah 1.',
+            'grade.max' => 'Grade maksimal adalah 12.',
         ]);
 
         try {
@@ -407,8 +512,45 @@ class ClassesController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
+            // Return JSON for AJAX requests
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Kelas berhasil diperbarui.',
+                    'class' => [
+                        'id' => $classes->id,
+                        'name' => $classes->name,
+                        'major' => $classes->major,
+                        'code' => $classes->code,
+                        'grade' => $classes->grade,
+                        'academic_year' => $classes->academic_year,
+                    ]
+                ]);
+            }
+
             return redirect()->route('classes.index')->with('success', 'Kelas berhasil diperbarui.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors specifically
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data yang dimasukkan tidak valid.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+
+            return redirect()->back()
+                           ->withErrors($e->errors())
+                           ->withInput();
         } catch (\Exception $e) {
+            // Return JSON for AJAX requests
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                ], 500);
+            }
+
             return redirect()->back()
                            ->withInput()
                            ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -422,9 +564,9 @@ class ClassesController extends Controller
             $class->update([
                 'is_archived' => !$class->is_archived
             ]);
-            
-            $status = $class->is_archived ? 'diarsipkan' : 'dikembalikan';
-            
+
+            $status = $class->is_archived ? 'diarsipkan' : 'dibatalkan dari arsip';
+
             return response()->json([
                 'success' => true,
                 'message' => 'Kelas berhasil ' . $status,
