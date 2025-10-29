@@ -7,23 +7,28 @@
         <div class="card-header-action">
             @can('classes.create')    
                 <div class="input-group">
-                    <button class="btn btn-primary" id="btn-create" data-toggle="modal" data-target="#newsModal" style="margin-right: 10px;" title="Tambah Berita">
+                    <button class="btn btn-primary" id="btn-create" data-toggle="tooltip" 
+                        style="margin-right: 10px;" title="Tambah Berita">
                         <i class="fas fa-plus"></i> Tambah Berita
                     </button>
                     <input type="text" class="form-control" placeholder="Cari judul/kategori..." 
-                        wire:model.debounce.500ms="search" autocomplete="off">
+                        id="search-input" autocomplete="off">
                     <div class="input-group-btn">
-                        <button type="button" class="btn btn-primary" style="margin-top: 1px;">
+                        <button type="button" class="btn btn-primary" id="search-button" style="margin-top: 1px;">
                             <i class="fas fa-search"></i>
+                        </button>
+                        <button type="button" class="btn btn-primary" id="clear-search" title="Clear Search" 
+                            style="display: none; margin-top: 1px;">
+                            <i class="fas fa-times"></i>
                         </button>
                     </div>
                 </div>
             @endcan
         </div>
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-striped">
+            <table class="table table-striped" id="news-table">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -43,9 +48,11 @@
                         <td>{{ $loop->iteration + (($news->currentPage() - 1) * $news->perPage()) }}</td>
                         <td>
                             @if($item->image)
-                                <img src="{{ asset('storage/' . $item->image) }}" alt="{{ $item->title }}" class="img-thumbnail" style="width: 80px; height: 60px; object-fit: cover;">
+                                <img src="{{ asset('storage/' . $item->image) }}" alt="{{ $item->title }}" 
+                                    class="img-thumbnail" style="width: 80px; height: 60px; object-fit: cover;">
                             @else
-                                <div class="bg-light d-flex align-items-center justify-content-center" style="width: 80px; height: 60px;">
+                                <div class="bg-light d-flex align-items-center justify-content-center" 
+                                    style="width: 80px; height: 60px;">
                                     <i class="fas fa-image"></i>
                                 </div>
                             @endif
@@ -68,21 +75,23 @@
                         </td>
                         <td>{{ $item->view_count ?? 0 }}</td>
                         <td>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-info" onclick="viewNews({{ $item->id }})" title="Lihat">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                @can('news.edit')
-                                <button type="button" class="btn btn-sm btn-primary" onclick="editNews({{ $item->id }})" title="Edit">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                @endcan
-                                @can('news.delete')
-                                <button type="button" class="btn btn-sm btn-danger" onclick="deleteNews({{ $item->id }})" title="Hapus">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                                @endcan
-                            </div>
+                            <button class="btn btn-primary btn-action mr-1 btn-edit"
+                                data-id="{{ $item->id }}" data-toggle="tooltip" title="Edit">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+
+                            <button type="button" class="btn btn-danger btn-action btn-delete" 
+                                data-id="{{ $item->id }}" 
+                                data-title="{{ $item->title }}"
+                                data-toggle="tooltip" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            
+                            <form id="delete-form-{{ $item->id }}" action="{{ route('news.destroy', $item->id) }}" 
+                                method="POST" style="display: none;">
+                                @csrf
+                                @method('DELETE')
+                            </form>
                         </td>
                     </tr>
                     @empty
@@ -93,9 +102,9 @@
                 </tbody>
             </table>
         </div>
-        <div class="mt-3">
-            {{ $news->links() }}
-        </div>
+    </div>
+    <div class="card-footer">
+        {{ $news->links() }}
     </div>
 </div>
 
@@ -109,118 +118,107 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form id="newsForm" enctype="multipart/form-data">
+            <form id="newsForm" enctype="multipart/form-data" method="POST">
                 @csrf
+                <input type="hidden" name="_method" id="form-method" value="POST">
                 <input type="hidden" id="news_id" name="id">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-12">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Judul <span class="text-danger">*</span></label>
-                                        <div class="col-sm-12 col-md-7">
-                                            <input type="text" class="form-control" id="title" name="title" required>
-                                            <div class="invalid-feedback" id="title-error"></div>
-                                        </div>
-                                    </div>
+                            <div class="form-group row mb-4">
+                                <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">
+                                    Judul <span class="text-danger">*</span>
+                                </label>
+                                <div class="col-sm-12 col-md-9">
+                                    <input type="text" class="form-control" id="title" name="title" required>
+                                    <div class="invalid-feedback" id="title-error"></div>
+                                </div>
+                            </div>
 
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Kategori <span class="text-danger">*</span></label>
-                                        <div class="col-sm-12 col-md-7">
-                                            <select class="form-control selectric" id="category" name="category" required>
-                                                <option value="">-- Pilih Kategori --</option>
-                                                <option value="Pendidikan">Pendidikan</option>
-                                                <option value="Kegiatan">Kegiatan</option>
-                                                <option value="Pengumuman">Pengumuman</option>
-                                                <option value="Prestasi">Prestasi</option>
-                                                <option value="Lainnya">Lainnya</option>
-                                            </select>
-                                            <div class="invalid-feedback" id="category-error"></div>
-                                        </div>
+                            <div class="form-group row mb-4">
+                                <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">
+                                    Gambar Sampul <span class="text-danger">*</span>
+                                </label>
+                                <div class="col-sm-12 col-md-9">
+                                    <input type="file" name="image" id="image" class="form-control" 
+                                        accept="image/jpeg,image/png,image/gif">
+                                    <small class="form-text text-muted">Ukuran maksimal 5MB. Format: JPG, PNG, GIF</small>
+                                    <div class="invalid-feedback" id="image-error"></div>
+                                    <div id="image-preview" class="mt-2" style="display: none;">
+                                        <img src="" alt="Preview" class="img-thumbnail" style="max-width: 200px;">
                                     </div>
+                                </div>
+                            </div>
 
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Isi Berita <span class="text-danger">*</span></label>
-                                        <div class="col-sm-12 col-md-9">
-                                            <textarea class="summernote-simple" id="content" name="content" required></textarea>
-                                            <div class="invalid-feedback" id="content-error"></div>
-                                        </div>
+                            <div class="form-group row mb-4">
+                                <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">
+                                    Kategori <span class="text-danger">*</span>
+                                </label>
+                                <div class="col-sm-12 col-md-9">
+                                    <select class="form-control selectric" id="category" name="category" required>
+                                        <option value="">-- Pilih Kategori --</option>
+                                        <option value="Pendidikan">Pendidikan</option>
+                                        <option value="Kegiatan">Kegiatan</option>
+                                        <option value="Pengumuman">Pengumuman</option>
+                                        <option value="Prestasi">Prestasi</option>
+                                        <option value="Lainnya">Lainnya</option>
+                                    </select>
+                                    <div class="invalid-feedback" id="category-error"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-group row mb-4">
+                                <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">
+                                    Ringkasan
+                                </label>
+                                <div class="col-sm-12 col-md-9">
+                                    <textarea class="form-control" id="excerpt" name="excerpt" rows="3" 
+                                        placeholder="Ringkasan singkat berita (opsional)"></textarea>
+                                    <div class="invalid-feedback" id="excerpt-error"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-group row mb-4">
+                                <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">
+                                    Isi Berita <span class="text-danger">*</span>
+                                </label>
+                                <div class="col-sm-12 col-md-9">
+                                    <textarea class="summernote" id="content" name="content" required></textarea>
+                                    <div class="invalid-feedback" id="content-error"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-group row mb-4">
+                                <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">
+                                    Status
+                                </label>
+                                <div class="col-sm-12 col-md-9">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" 
+                                            id="is_published" name="is_published" value="1" checked>
+                                        <label class="custom-control-label" for="is_published">Publikasikan</label>
                                     </div>
+                                </div>
+                            </div>
 
-                                    <div class="form-group row mb-4">
-                      <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Thumbnail</label>
-                      <div class="col-sm-12 col-md-7">
-                        <div id="image-preview" class="image-preview">
-                          <label for="image-upload" id="image-label">Choose File</label>
-                          <input type="file" name="image" id="image-upload" />
-                        </div>
-                      </div>
-                    </div>
-
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Tag</label>
-                                        <div class="col-sm-12 col-md-7">
-                                            <input type="text" class="form-control inputtags" id="tags" name="tags" placeholder="Tekan enter untuk menambahkan tag">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Status</label>
-                                        <div class="col-sm-12 col-md-7">
-                                            <select class="form-control selectric" id="is_published" name="is_published">
-                                                <option value="1">Publikasikan</option>
-                                                <option value="0">Draft</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Jadwal Publikasi</label>
-                                        <div class="col-sm-12 col-md-7">
-                                            <input type="datetime-local" class="form-control" id="published_at" name="published_at">
-                                            <small class="form-text text-muted">Biarkan kosong untuk mempublikasikan sekarang</small>
-                                            <div class="invalid-feedback" id="published_at-error"></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3"></label>
-                                        <div class="col-sm-12 col-md-7">
-                                            <button type="submit" class="btn btn-primary" id="submitBtn">Simpan Berita</button>
-                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                                        </div>
-                                    </div>
+                            <div class="form-group row mb-4">
+                                <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">
+                                    Tag
+                                </label>
+                                <div class="col-sm-12 col-md-9">
+                                    <input type="text" class="form-control inputtags" id="tags" name="tags" 
+                                        placeholder="contoh: prestasi, lomba, juara">
+                                    <small class="form-text text-muted">Pisahkan dengan koma</small>
                                 </div>
                             </div>
                         </div>
                     </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal untuk Preview -->
-<div class="modal fade" id="previewModal" tabindex="-1" role="dialog" aria-labelledby="previewModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="previewTitle">Judul Berita</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="previewContent">
-                <!-- Content will be loaded via AJAX -->
-                <div class="text-center my-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="sr-only">Memuat...</span>
-                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Simpan Berita</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -229,269 +227,398 @@
 
 @push('styles')
 <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css" rel="stylesheet">
 <style>
     .note-editor.note-frame .note-editing-area .note-editable {
         min-height: 200px;
     }
-    #image-preview {
-        max-width: 100%;
-        max-height: 200px;
-        margin-top: 10px;
-        display: none;
+    .bootstrap-tagsinput {
+        width: 100%;
+        padding: 6px 12px;
     }
-    #image-preview img {
-        max-width: 100%;
-        max-height: 200px;
-        object-fit: contain;
+    .bootstrap-tagsinput .tag {
+        padding: 3px 8px;
+        border-radius: 3px;
+        margin-right: 5px;
+        margin-bottom: 5px;
     }
 </style>
 @endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Inisialisasi Summernote
     $(document).ready(function() {
-        $('#content').summernote({
-            height: 300,
+        let isEditMode = false;
+        let editId = null;
+
+        // Initialize Summernote
+        $('.summernote').summernote({
+            height: 250,
             toolbar: [
                 ['style', ['style']],
-                ['font', ['bold', 'underline', 'clear']],
+                ['font', ['bold', 'italic', 'underline', 'clear']],
                 ['fontname', ['fontname']],
                 ['color', ['color']],
                 ['para', ['ul', 'ol', 'paragraph']],
                 ['table', ['table']],
-                ['insert', ['link', 'picture', 'video']],
-                ['view', ['fullscreen', 'codeview', 'help']],
-            ],
-            callbacks: {
-                onImageUpload: function(files) {
-                    uploadImage(files[0]);
-                }
-            }
+                ['insert', ['link', 'picture']],
+                ['view', ['fullscreen', 'codeview', 'help']]
+            ]
         });
 
-        // Preview image before upload
-        $('#image').change(function() {
+        // Initialize tagsinput
+        $('.inputtags').tagsinput({
+            tagClass: 'badge badge-primary',
+            confirmKeys: [13, 44, 32],
+            maxTags: 10,
+            maxChars: 25,
+            trimValue: true
+        });
+
+        // File input validation & preview
+        $('#image').on('change', function() {
             const file = this.files[0];
             if (file) {
+                // Validation
+                if (file.size > 5 * 1024 * 1024) {
+                    Swal.fire('Error', 'Ukuran file terlalu besar. Maksimal 5MB', 'error');
+                    this.value = '';
+                    return;
+                }
+                
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (!validTypes.includes(file.type)) {
+                    Swal.fire('Error', 'Format file tidak didukung. Gunakan format JPG, PNG, atau GIF', 'error');
+                    this.value = '';
+                    return;
+                }
+
+                // Preview
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    $('#image-preview').html('<img src="' + e.target.result + '" class="img-fluid">').show();
+                    $('#image-preview img').attr('src', e.target.result);
+                    $('#image-preview').show();
                 }
                 reader.readAsDataURL(file);
             }
         });
 
-        // Handle form submission
+        // Reset form function
+        function resetForm() {
+            $('#newsForm')[0].reset();
+            $('#news_id').val('');
+            $('.summernote').summernote('code', '');
+            if ($('.inputtags').data('tagsinput')) {
+                $('.inputtags').tagsinput('removeAll');
+            }
+            $('.is-invalid').removeClass('is-invalid');
+            $('.invalid-feedback').text('');
+            $('#image-preview').hide();
+            $('#image').prop('required', true);
+        }
+
+        // Create button click
+        $('#btn-create').on('click', function() {
+            resetForm();
+            isEditMode = false;
+            editId = null;
+            $('#newsModalLabel').text('Tulis Berita Baru');
+            $('#submitBtn').text('Simpan Berita');
+            $('#newsModal').modal('show');
+        });
+
+        // Edit button click (Event Delegation)
+        $(document).on('click', '.btn-edit', function() {
+            const id = $(this).data('id');
+            
+            Swal.fire({
+                title: 'Memuat data...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            $.get(`/news/${id}/edit`, function(response) {
+                Swal.close();
+                
+                resetForm();
+                isEditMode = true;
+                editId = id;
+                
+                $('#newsModalLabel').text('Edit Berita');
+                $('#submitBtn').text('Update Berita');
+                $('#title').val(response.title);
+                $('#category').val(response.category).trigger('change');
+                $('#excerpt').val(response.excerpt || '');
+                $('.summernote').summernote('code', response.content);
+                $('#is_published').prop('checked', response.is_published == 1);
+                
+                // Handle tags
+                if (response.tags) {
+                    $('.inputtags').tagsinput('removeAll');
+                    const tags = response.tags.split(',');
+                    tags.forEach(tag => {
+                        $('.inputtags').tagsinput('add', tag.trim());
+                    });
+                }
+
+                // Show image preview if exists
+                if (response.image) {
+                    $('#image-preview img').attr('src', '/storage/' + response.image);
+                    $('#image-preview').show();
+                }
+
+                // Image not required on edit
+                $('#image').prop('required', false);
+                
+                $('#newsModal').modal('show');
+            }).fail(function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'Gagal memuat data berita: ' + (xhr.responseJSON?.message || 'Terjadi kesalahan')
+                });
+            });
+        });
+
+        // Delete button click (Event Delegation)
+        $(document).on('click', '.btn-delete', function() {
+            const id = $(this).data('id');
+            const title = $(this).data('title');
+            
+            Swal.fire({
+                title: 'Hapus Berita',
+                html: `Apakah Anda yakin ingin menghapus berita: <br><b>${title}</b>?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Menghapus...',
+                        html: 'Sedang menghapus data berita',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    const form = document.getElementById(`delete-form-${id}`);
+                    const formData = new FormData(form);
+
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: 'Berita berhasil dihapus',
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire('Gagal', data.message || 'Terjadi kesalahan saat menghapus berita', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire('Error', 'Terjadi kesalahan saat menghapus berita', 'error');
+                    });
+                }
+            });
+        });
+
+        // Form submission
         $('#newsForm').on('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(this);
-            const isEdit = $('#news_id').val() !== '';
-            const url = isEdit ? "/news/" + $('#news_id').val() : "/news";
-            const method = isEdit ? 'POST' : 'POST';
+            const url = isEditMode ? `/news/${editId}` : '/news';
             
-            // Add _method for Laravel's form method spoofing
-            if (isEdit) {
+            Swal.fire({
+                title: 'Mohon Tunggu!',
+                html: 'Sedang memproses data...',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading()
+                },
+            });
+
+            if (isEditMode) {
                 formData.append('_method', 'PUT');
             }
-
-            // Show loading state
-            const submitBtn = $('#submitBtn');
-            const originalText = submitBtn.html();
-            submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
 
             // Clear previous errors
             $('.is-invalid').removeClass('is-invalid');
             $('.invalid-feedback').text('');
 
-            // Send AJAX request
+            // Disable submit button
+            $('#submitBtn').prop('disabled', true);
+
             $.ajax({
                 url: url,
-                type: method,
+                type: 'POST',
                 data: formData,
                 processData: false,
                 contentType: false,
                 success: function(response) {
-                    showAlert('success', 'Berhasil!', response.message);
                     $('#newsModal').modal('hide');
-                    // Reload the page to see changes
-                    setTimeout(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: response.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
                         window.location.reload();
-                    }, 1500);
+                    });
                 },
                 error: function(xhr) {
+                    Swal.close();
                     if (xhr.status === 422) {
                         const errors = xhr.responseJSON.errors;
                         Object.keys(errors).forEach(field => {
                             const errorMessage = errors[field][0];
                             $(`#${field}`).addClass('is-invalid');
-                            $(`#${field}-error`).text(errorMessage).removeClass('d-none');
+                            $(`#${field}-error`).text(errorMessage);
+                        });
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Terdapat kesalahan pada inputan Anda!'
                         });
                     } else {
-                        showAlert('error', 'Error!', 'Terjadi kesalahan. Silakan coba lagi.');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: xhr.responseJSON?.message || 'Terjadi kesalahan pada server!'
+                        });
                     }
                 },
                 complete: function() {
-                    submitBtn.prop('disabled', false).html(originalText);
+                    $('#submitBtn').prop('disabled', false);
                 }
             });
         });
-    });
 
-    // Function to handle image upload in Summernote
-    function uploadImage(file) {
-        const formData = new FormData();
-        formData.append('image', file);
-        
-        $.ajax({
-            url: '/news/upload-image',
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                const image = $('<img>').attr('src', response.url);
-                $('#content').summernote('insertNode', image[0]);
-            },
-            error: function(xhr) {
-                showAlert('error', 'Error!', 'Gagal mengunggah gambar. ' + (xhr.responseJSON?.message || ''));
-            }
-        });
-    }
-
-    // Function to view news
-    function viewNews(id) {
-        $('#previewModal').modal('show');
-        $('#previewTitle').text('Memuat...');
-        $('#previewContent').html(`
-            <div class="text-center my-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="sr-only">Memuat...</span>
-                </div>
-            </div>
-        `);
-
-        $.get(`/news/${id}`, function(response) {
-            $('#previewTitle').text(response.title);
-            $('#previewContent').html(`
-                <div class="text-center mb-4">
-                    <img src="${response.image ? '/storage/' + response.image : 'https://via.placeholder.com/800x400?text=No+Image'}" 
-                         class="img-fluid rounded" alt="${response.title}">
-                </div>
-                <div class="mb-3">
-                    <span class="badge badge-info">${response.category}</span>
-                    <span class="text-muted ml-2">
-                        <i class="far fa-user"></i> ${response.user?.name || 'Admin'} | 
-                        <i class="far fa-calendar-alt"></i> ${new Date(response.published_at).toLocaleDateString('id-ID', { 
-                            day: 'numeric', 
-                            month: 'long', 
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })}
-                    </span>
-                </div>
-                <div class="news-content">
-                    ${response.content}
-                </div>
-            `);
-        }).fail(function() {
-            showAlert('error', 'Error!', 'Gagal memuat detail berita.');
-            $('#previewModal').modal('hide');
-        });
-    }
-
-    // Function to edit news
-    function editNews(id) {
-        $.get(`/news/${id}/edit`, function(response) {
-            $('#newsModalLabel').text('Edit Berita');
-            $('#news_id').val(response.id);
-            $('#title').val(response.title);
-            $('#category').val(response.category);
-            $('#content').summernote('code', response.content);
-            $('#published_at').val(response.published_at ? new Date(response.published_at).toISOString().slice(0, 16) : '');
-            $('#is_published').prop('checked', response.is_published);
+        // Search functionality
+        let searchTimeout;
+        $('#search-input').on('input', function() {
+            const query = $(this).value.trim();
             
-            // Show image preview if exists
-            if (response.image) {
-                $('#image-preview')
-                    .html(`<img src="/storage/${response.image}" class="img-fluid">`)
-                    .show();
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                performSearch(query);
+            }, 300);
+
+            // Toggle clear button
+            if (query !== '') {
+                $('#clear-search').show();
+                $('#search-button').hide();
             } else {
-                $('#image-preview').hide().html('');
+                $('#clear-search').hide();
+                $('#search-button').show();
             }
+        });
+
+        $('#search-button').on('click', function() {
+            performSearch($('#search-input').val());
+        });
+
+        $('#clear-search').on('click', function() {
+            $('#search-input').val('');
+            $(this).hide();
+            $('#search-button').show();
+            performSearch('');
+        });
+
+        function performSearch(query) {
+            const tableBody = $('#news-table tbody');
+            tableBody.html('<tr><td colspan="9" class="text-center">Mencari data...</td></tr>');
             
-            $('#newsModal').modal('show');
-        }).fail(function() {
-            showAlert('error', 'Error!', 'Gagal memuat data berita.');
-        });
-    }
+            $.get('/news', {
+                q: query,
+                ajax: 1
+            }, function(data) {
+                updateTable(data.news, data.currentPage, data.perPage);
+            }).fail(function() {
+                tableBody.html('<tr><td colspan="9" class="text-center text-danger">Terjadi kesalahan saat mencari data</td></tr>');
+            });
+        }
 
-    // Function to delete news
-    function deleteNews(id) {
-        Swal.fire({
-            title: 'Apakah Anda yakin?',
-            text: "Anda tidak akan dapat mengembalikan data ini!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: `/news/${id}`,
-                    type: 'DELETE',
-                    data: {
-                        _token: $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        showAlert('success', 'Dihapus!', response.message);
-                        // Reload the page after a short delay
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1500);
-                    },
-                    error: function(xhr) {
-                        showAlert('error', 'Error!', 'Gagal menghapus berita. ' + (xhr.responseJSON?.message || ''));
-                    }
-                });
+        function updateTable(newsData, currentPage = 1, perPage = 10) {
+            const tableBody = $('#news-table tbody');
+            
+            if (newsData.length === 0) {
+                tableBody.html('<tr><td colspan="9" class="text-center">Tidak ada data berita</td></tr>');
+                return;
             }
-        });
-    }
 
-    // Function to show create form
-    function createNews() {
-        $('#newsForm')[0].reset();
-        $('#news_id').val('');
-        $('#newsModalLabel').text('Tambah Berita Baru');
-        $('#content').summernote('code', '');
-        $('#image-preview').hide().html('');
-        $('.is-invalid').removeClass('is-invalid');
-        $('.invalid-feedback').text('');
-        $('#newsModal').modal('show');
-    }
+            let html = '';
+            newsData.forEach((item, index) => {
+                const number = (currentPage - 1) * perPage + index + 1;
+                const imageHtml = item.image 
+                    ? `<img src="/storage/${item.image}" alt="${item.title}" class="img-thumbnail" style="width: 80px; height: 60px; object-fit: cover;">`
+                    : `<div class="bg-light d-flex align-items-center justify-content-center" style="width: 80px; height: 60px;"><i class="fas fa-image"></i></div>`;
+                
+                const statusBadge = item.is_published 
+                    ? '<span class="badge badge-success">Terbit</span>'
+                    : '<span class="badge badge-warning">Draft</span>';
 
-    // Helper function to show alerts
-    function showAlert(icon, title, text) {
-        Swal.fire({
-            icon: icon,
-            title: title,
-            text: text,
-            timer: icon === 'success' ? 2000 : null,
-            showConfirmButton: icon !== 'success'
-        });
-    }
-
-    // Event listener for create button
-    $('#btn-create').on('click', function() {
-        createNews();
+                html += `
+                    <tr>
+                        <td>${number}</td>
+                        <td>${imageHtml}</td>
+                        <td>
+                            <strong>${item.title}</strong><br>
+                            <small class="text-muted">${item.excerpt ? item.excerpt.substring(0, 50) + '...' : ''}</small>
+                        </td>
+                        <td><span class="badge badge-info">${item.category}</span></td>
+                        <td>${item.user?.name || 'N/A'}</td>
+                        <td>${item.published_at || '-'}</td>
+                        <td>${statusBadge}</td>
+                        <td>${item.view_count || 0}</td>
+                        <td>
+                            <button class="btn btn-primary btn-action mr-1 btn-edit"
+                                data-id="${item.id}" data-toggle="tooltip" title="Edit">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <button type="button" class="btn btn-danger btn-action btn-delete" 
+                                data-id="${item.id}" 
+                                data-title="${item.title}"
+                                data-toggle="tooltip" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <form id="delete-form-${item.id}" action="/news/${item.id}" method="POST" style="display: none;">
+                                <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').content}">
+                                <input type="hidden" name="_method" value="DELETE">
+                            </form>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.html(html);
+        }
     });
 </script>
 @endpush

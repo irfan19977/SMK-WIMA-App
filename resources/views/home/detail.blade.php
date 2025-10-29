@@ -30,30 +30,31 @@
           <div class="col-md-10 text-center hero-text">
             <div class="article-category-hero mb-3" data-aos="fade-up" data-aos-delay="200">
               <span class="badge bg-success bg-opacity-20 text-white px-3 py-2 rounded-pill">
-                <i class="bi bi-trophy me-2"></i>Prestasi
+                <i class="bi bi-{{ $news->category === 'Prestasi' ? 'trophy' : ($news->category === 'Berita' ? 'newspaper' : 'info-circle') }} me-2"></i>{{ $news->category }}
               </span>
             </div>
             <h1 class="display-4 fw-bold mb-4 text-white" data-aos="fade-up" data-aos-delay="300">
-              Siswa SMA XYZ Raih Juara 1 Olimpiade Sains Nasional 2024
+              {{ $news->title }}
             </h1>
-            <div class="article-meta-hero" data-aos="fade-up" data-aos-delay="400">
-              <div class="d-flex justify-content-center align-items-center flex-wrap gap-4">
-                <div class="meta-item">
-                  <i class="bi bi-calendar3 me-2"></i>
-                  <span>15 Januari 2024</span>
-                </div>
-                <div class="meta-item">
-                  <i class="bi bi-person me-2"></i>
-                  <span>Drs. Budi Santoso</span>
-                </div>
-                <div class="meta-item">
-                  <i class="bi bi-eye me-2"></i>
-                  <span>2,456 views</span>
-                </div>
-                <div class="meta-item">
-                  <i class="bi bi-clock me-2"></i>
-                  <span>5 min read</span>
-                </div>
+            <div class="article-meta d-inline-flex justify-content-center align-items-center flex-wrap gap-3 mb-4 px-4 py-2 rounded-pill bg-black bg-opacity-25" data-aos="fade-up" data-aos-delay="350">
+              <div class="meta-item text-white">
+                <i class="bi bi-calendar3 me-2"></i>
+                <span>{{ $news->published_at ? $news->published_at->translatedFormat('d F Y') : $news->created_at->translatedFormat('d F Y') }}</span>
+              </div>
+              <div class="meta-divider text-white">•</div>
+              <div class="meta-item text-white">
+                <i class="bi bi-person me-2"></i>
+                <span>{{ $news->user ? $news->user->name : 'Admin' }}</span>
+              </div>
+              <div class="meta-divider text-white">•</div>
+              <div class="meta-item text-white">
+                <i class="bi bi-eye me-2"></i>
+                <span>{{ number_format($news->view_count) }}x dilihat</span>
+              </div>
+              <div class="meta-divider text-white">•</div>
+              <div class="meta-item text-white">
+                <i class="bi bi-clock me-2"></i>
+                <span>{{ ceil(str_word_count(strip_tags($news->content)) / 250) }} min read</span>
               </div>
             </div>
           </div>
@@ -70,85 +71,66 @@
       <div class="col-lg-8">
         <!-- Featured Image -->
         <div class="article-featured-image mb-5" data-aos="fade-up">
-          <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" alt="Siswa SMA XYZ Raih Juara 1 Olimpiade Sains Nasional" class="img-fluid rounded-4 shadow-lg">
-          <div class="image-caption mt-3 text-center">
-            <small class="text-muted">Ahmad Rizki Pratama saat menerima penghargaan Juara 1 Olimpiade Sains Nasional bidang Fisika</small>
-          </div>
+          @if($news->image)
+            <img src="{{ asset('storage/' . $news->image) }}" alt="{{ $news->title }}" class="img-fluid rounded-4 shadow-lg">
+            @if($news->image_caption)
+              <div class="image-caption mt-3 text-center">
+                <small class="text-muted">{{ $news->image_caption }}</small>
+              </div>
+            @endif
+          @endif
         </div>
 
         <!-- Article Content -->
         <article class="article-content" data-aos="fade-up" data-aos-delay="200">
           <!-- Lead Paragraph -->
           <p class="lead text-muted mb-4">
-            Prestasi membanggakan kembali ditorehkan siswa Sekolah XYZ. Ahmad Rizki Pratama, siswa kelas XI IPA berhasil meraih juara 1 dalam Olimpiade Sains Nasional bidang Fisika yang diselenggarakan di Jakarta pada tanggal 10-14 Januari 2024.
+            {!! $news->excerpt !!}
           </p>
 
           <!-- Article Body -->
           <div class="article-body">
-            <p>
-              Kompetisi bergengsi tingkat nasional ini diikuti oleh lebih dari 500 siswa terbaik dari seluruh Indonesia. Ahmad Rizki berhasil unggul dengan skor sempurna dalam berbagai tes yang meliputi teori fisika, eksperimen laboratorium, dan pemecahan masalah kompleks.
-            </p>
-
-            <p>
-              "Saya sangat bangga dengan pencapaian Ahmad Rizki. Ini merupakan hasil dari kerja keras, dedikasi, dan dukungan penuh dari keluarga serta sekolah," ujar Drs. Budi Santoso, Kepala Sekolah XYZ saat memberikan apresiasi.
-            </p>
-
-            <blockquote class="blockquote-custom my-5">
-              <p class="mb-0">
-                "Kemenangan ini bukan hanya milik saya pribadi, tetapi juga milik sekolah dan seluruh komunitas Sekolah XYZ. Saya berterima kasih atas dukungan guru-guru dan teman-teman yang selalu memotivasi."
-              </p>
-              <footer class="blockquote-footer mt-3">
-                <cite title="Source Title">Ahmad Rizki Pratama, Juara 1 OSN Fisika 2024</cite>
-              </footer>
-            </blockquote>
-
-            <p>
-              Persiapan Ahmad Rizki untuk mengikuti olimpiade ini tidak mudah. Ia harus menjalani latihan intensif selama 6 bulan dengan bimbingan khusus dari guru-guru fisika terbaik sekolah. Setiap hari, Ahmad menghabiskan waktu 4-5 jam untuk mempelajari konsep-konsep fisika tingkat lanjut dan mengerjakan soal-soal olimpiade dari tahun-tahun sebelumnya.
-            </p>
-
-            <h3 class="h4 fw-bold mt-5 mb-3">Dukungan Sekolah yang Luar Biasa</h3>
-            
-            <p>
-              Sekolah XYZ memberikan dukungan penuh kepada Ahmad Rizki melalui berbagai program pengembangan bakat. Mulai dari menyediakan laboratorium fisika dengan peralatan canggih, menghadirkan mentor berpengalaman, hingga memfasilitasi Ahmad untuk mengikuti berbagai kompetisi persiapan di tingkat regional.
-            </p>
-
-            <div class="highlight-box my-5">
-              <h4 class="h5 fw-bold mb-3">
-                <i class="bi bi-lightbulb text-warning me-2"></i>
-                Prestasi Sekolah XYZ di Bidang Sains
-              </h4>
-              <ul class="list-unstyled">
-                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>3 Medali Emas OSN Fisika (2022-2024)</li>
-                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>2 Medali Perak OSN Kimia (2023-2024)</li>
-                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>1 Medali Perunggu OSN Matematika (2024)</li>
-                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Juara Umum Kompetisi Sains Regional 3 tahun berturut-turut</li>
-              </ul>
-            </div>
-
-            <p>
-              "Kami berkomitmen untuk terus mengembangkan potensi siswa di bidang sains dan teknologi. Prestasi Ahmad Rizki ini menjadi motivasi bagi siswa-siswa lainnya untuk terus berprestasi," tambah Dra. Siti Nurhaliza, Wakil Kepala Sekolah bidang Kurikulum.
-            </p>
-
-            <h3 class="h4 fw-bold mt-5 mb-3">Rencana Masa Depan</h3>
-            
-            <p>
-              Dengan prestasi gemilang ini, Ahmad Rizki berencana untuk melanjutkan studinya di bidang Fisika Teoretis di salah satu universitas terbaik di Indonesia. Ia juga akan mewakili Indonesia dalam International Physics Olympiad (IPhO) 2024 yang akan diselenggarakan di Tehran, Iran.
-            </p>
-
-            <p>
-              Sekolah XYZ juga berencana untuk mengembangkan program olimpiade sains yang lebih komprehensif, termasuk pembangunan laboratorium baru dan perekrutan mentor-mentor berpengalaman internasional.
-            </p>
+            @php
+              // Split content into paragraphs
+              $content = $news->content;
+              
+              // Create the achievements section HTML
+              $achievements = '
+              <div class="highlight-box my-5">
+                <h4 class="h5 fw-bold mb-3">
+                  <i class="bi bi-trophy text-warning me-2"></i>
+                  Prestasi ' . config('app.name') . ' di Bidang Sains
+                </h4>
+                <ul class="list-unstyled">
+                  <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>3 Medali Emas OSN Fisika (2022-2024)</li>
+                  <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>2 Medali Perak OSN Kimia (2023-2024)</li>
+                  <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>1 Medali Perunggu OSN Matematika (2024)</li>
+                  <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Juara Umum Kompetisi Sains Regional 3 tahun berturut-turut</li>
+                </ul>
+              </div>';
+              
+              // Insert achievements after the first closing paragraph tag
+              $content = preg_replace('/(<p>.*?<\/p>\s*<p>.*?<\/p>)/s', '$1' . $achievements, $content, 1);
+              
+              echo $content;
+            @endphp
           </div>
 
           <!-- Tags -->
           <div class="article-tags mt-5">
             <h6 class="fw-bold mb-3">Tags:</h6>
             <div class="d-flex flex-wrap gap-2">
-              <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">Olimpiade Sains</span>
-              <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">Prestasi</span>
-              <span class="badge bg-info bg-opacity-10 text-info px-3 py-2">Fisika</span>
-              <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2">Juara Nasional</span>
-              <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2">Pendidikan</span>
+              @if(is_string($news->tags))
+                @foreach(explode(',', $news->tags) as $tag)
+                  <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">{{ trim($tag) }}</span>
+                @endforeach
+              @elseif(is_array($news->tags) || is_object($news->tags))
+                @foreach($news->tags as $tag)
+                  <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">{{ is_object($tag) ? $tag->name : $tag }}</span>
+                @endforeach
+              @else
+                <span class="text-muted">Tidak ada tag</span>
+              @endif
             </div>
           </div>
 
@@ -156,20 +138,34 @@
           <div class="article-share mt-5 pt-4 border-top">
             <h6 class="fw-bold mb-3">Bagikan Artikel:</h6>
             <div class="d-flex gap-3">
-              <a href="#" class="btn btn-outline-primary btn-sm">
+              @php
+                  $currentUrl = url()->current();
+                  $shareText = urlencode($news->title . ' - ' . config('app.name'));
+                  $facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=' . urlencode($currentUrl);
+                  $twitterUrl = 'https://twitter.com/intent/tweet?url=' . urlencode($currentUrl) . '&text=' . $shareText;
+                  $whatsappUrl = 'https://wa.me/?text=' . $shareText . ' ' . urlencode($currentUrl);
+                  $emailUrl = 'mailto:?subject=' . urlencode($news->title) . '&body=' . $shareText . ' ' . $currentUrl;
+              @endphp
+
+              <a href="{{ $facebookUrl }}" target="_blank" class="btn btn-outline-primary btn-sm" onclick="window.open(this.href, 'popup', 'width=600,height=600'); return false;">
                 <i class="bi bi-facebook me-2"></i>Facebook
               </a>
-              <a href="#" class="btn btn-outline-info btn-sm">
-                <i class="bi bi-twitter me-2"></i>Twitter
+              <a href="{{ $twitterUrl }}" target="_blank" class="btn btn-outline-info btn-sm" onclick="window.open(this.href, 'popup', 'width=600,height=400'); return false;">
+                <i class="bi bi-twitter-x me-2"></i>Twitter
               </a>
-              <a href="#" class="btn btn-outline-success btn-sm">
+              <a href="{{ $whatsappUrl }}" target="_blank" class="btn btn-outline-success btn-sm">
                 <i class="bi bi-whatsapp me-2"></i>WhatsApp
               </a>
-              <a href="#" class="btn btn-outline-danger btn-sm">
+              <a href="{{ $emailUrl }}" class="btn btn-outline-danger btn-sm">
                 <i class="bi bi-envelope me-2"></i>Email
               </a>
-              <button class="btn btn-outline-secondary btn-sm" onclick="copyToClipboard()">
-                <i class="bi bi-link-45deg me-2"></i>Copy Link
+              <button class="btn btn-outline-secondary btn-sm" onclick="copyToClipboard('{{ $currentUrl }}')">
+                <i class="bi bi-link-45deg me-2"></i>Salin Tautan
+              </button>
+              
+              <!-- Native Share Button (will be hidden if not supported) -->
+              <button class="btn btn-outline-info btn-sm d-none" id="nativeShareBtn">
+                <i class="bi bi-share me-2"></i>Bagikan
               </button>
             </div>
           </div>
@@ -183,16 +179,32 @@
           <div class="author-card mb-4">
             <div class="card border-0 shadow-sm">
               <div class="card-body text-center p-4">
-                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80" alt="Drs. Budi Santoso" class="author-avatar-large mb-3">
-                <h5 class="fw-bold mb-1">Drs. Budi Santoso</h5>
-                <p class="text-muted small mb-3">Kepala Sekolah</p>
+                @if($news->user && $news->user->photo_path)
+                  <img src="{{ asset('storage/' . $news->user->photo_path) }}" alt="{{ $news->user->name }}" class="author-avatar-large mb-3">
+                @else
+                  <div class="author-avatar-large mb-3 bg-secondary d-flex align-items-center justify-content-center text-white">
+                    {{ strtoupper(substr($news->user ? $news->user->name : 'A', 0, 1)) }}
+                  </div>
+                @endif
+                <h5 class="fw-bold mb-1">{{ $news->user ? $news->user->name : 'Admin' }}</h5>
+                @if($news->user && $news->user->roles->isNotEmpty())
+                  <p class="text-muted small mb-3">{{ $news->user->roles->first()->name }}</p>
+                @else
+                  <p class="text-muted small mb-3">Penulis</p>
+                @endif
                 <p class="small text-muted">
-                  Memimpin Sekolah XYZ sejak 2015 dengan dedikasi tinggi dalam mengembangkan prestasi akademik dan non-akademik siswa.
+                  {{ $news->user && $news->user->bio ? $news->user->bio : 'Penulis artikel di ' . config('app.name') }}
                 </p>
                 <div class="social-links">
-                  <a href="#" class="text-decoration-none me-3"><i class="bi bi-envelope"></i></a>
-                  <a href="#" class="text-decoration-none me-3"><i class="bi bi-linkedin"></i></a>
-                  <a href="#" class="text-decoration-none"><i class="bi bi-twitter"></i></a>
+                  @if($news->user && $news->user->email)
+                    <a href="mailto:{{ $news->user->email }}" class="text-decoration-none me-3" title="Email"><i class="bi bi-envelope"></i></a>
+                  @endif
+                  @if($news->user && $news->user->linkedin)
+                    <a href="{{ $news->user->linkedin }}" class="text-decoration-none me-3" target="_blank" title="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                  @endif
+                  @if($news->user && $news->user->twitter)
+                    <a href="{{ $news->user->twitter }}" class="text-decoration-none" target="_blank" title="Twitter"><i class="bi bi-twitter"></i></a>
+                  @endif
                 </div>
               </div>
             </div>
@@ -205,62 +217,36 @@
               Berita Terkait
             </h5>
             
-            <div class="related-item mb-4">
-              <div class="row g-3">
-                <div class="col-4">
-                  <img src="https://images.unsplash.com/photo-1606127486207-9ba386ba6b49?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Tim Debat" class="img-fluid rounded-3">
-                </div>
-                <div class="col-8">
-                  <div class="article-category mb-2">
-                    <span class="badge bg-success bg-opacity-20 text-white small">Prestasi</span>
-                  </div>
-                  <h6 class="article-title mb-2">
-                    <a href="#" class="text-decoration-none">Tim Debat Bahasa Inggris Raih Juara Nasional</a>
-                  </h6>
-                  <div class="article-meta small text-muted">
-                    <i class="bi bi-calendar3 me-1"></i>14 Jan 2024
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="related-item mb-4">
-              <div class="row g-3">
-                <div class="col-4">
-                  <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Robotika" class="img-fluid rounded-3">
-                </div>
-                <div class="col-8">
-                  <div class="article-category mb-2">
-                    <span class="badge bg-success bg-opacity-20 text-white small">Prestasi</span>
-                  </div>
-                  <h6 class="article-title mb-2">
-                    <a href="#" class="text-decoration-none">Juara 1 Kompetisi Robotika Tingkat Provinsi</a>
-                  </h6>
-                  <div class="article-meta small text-muted">
-                    <i class="bi bi-calendar3 me-1"></i>5 Jan 2024
+            @forelse($relatedNews as $related)
+              <div class="related-item mb-4">
+                <div class="row g-3">
+                  @if($related->image)
+                    <div class="col-4">
+                      <img src="{{ asset('storage/' . $related->image) }}" alt="{{ $related->title }}" class="img-fluid rounded-3" style="width: 100%; height: 80px; object-fit: cover;">
+                    </div>
+                    <div class="col-8">
+                  @else
+                    <div class="col-12">
+                  @endif
+                    <div class="article-category mb-2">
+                      <span class="badge bg-{{ $related->category === 'Prestasi' ? 'success' : ($related->category === 'Berita' ? 'primary' : 'info') }} bg-opacity-20 text-{{ $related->category === 'Prestasi' ? 'success' : ($related->category === 'Berita' ? 'primary' : 'info') }}">
+                          {{ $related->category }}
+                      </span>
+                    </div>
+                    <h6 class="article-title mb-2">
+                      <a href="{{ route('berita.detail', $related->slug) }}" class="text-decoration-none">{{ $related->title }}</a>
+                    </h6>
+                    <div class="article-meta small text-muted">
+                      <i class="bi bi-calendar3 me-1"></i>
+                      {{ $related->published_at ? $related->published_at->translatedFormat('d M Y') : $related->created_at->translatedFormat('d M Y') }}
+                      <i class="bi bi-eye ms-2 me-1"></i>{{ number_format($related->view_count) }}x
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div class="related-item mb-4">
-              <div class="row g-3">
-                <div class="col-4">
-                  <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Alumni" class="img-fluid rounded-3">
-                </div>
-                <div class="col-8">
-                  <div class="article-category mb-2">
-                    <span class="badge bg-secondary bg-opacity-20 text-white small">Alumni</span>
-                  </div>
-                  <h6 class="article-title mb-2">
-                    <a href="#" class="text-decoration-none">Alumni XYZ Raih Beasiswa S2 di Harvard University</a>
-                  </h6>
-                  <div class="article-meta small text-muted">
-                    <i class="bi bi-calendar3 me-1"></i>7 Jan 2024
-                  </div>
-                </div>
-              </div>
-            </div>
+            @empty
+              <p class="text-muted">Tidak ada berita terkait.</p>
+            @endforelse
           </div>
 
           <!-- Popular Articles -->
@@ -271,45 +257,25 @@
             </h5>
             
             <div class="popular-list">
-              <div class="popular-item d-flex align-items-center mb-3">
-                <span class="popular-number me-3 text-black">1</span>
-                <div>
-                  <h6 class="mb-1"><a href="#" class="text-decoration-none">Pendaftaran Siswa Baru 2024/2025</a></h6>
-                  <small class="text-muted">3,245 views</small>
+              @forelse($popularNews as $index => $popular)
+                <div class="popular-item d-flex align-items-center mb-3">
+                  <span class="popular-number me-3">{{ $index + 1 }}</span>
+                  <div>
+                    <h6 class="mb-1">
+                      <a href="{{ route('berita.detail', $popular->slug) }}" class="text-decoration-none">
+                        {{ $popular->title }}
+                      </a>
+                    </h6>
+                    <div class="d-flex align-items-center gap-2 text-muted small">
+                      <span><i class="bi bi-eye"></i> {{ number_format($popular->view_count) }}x</span>
+                      <span>•</span>
+                      <span><i class="bi bi-calendar3"></i> {{ $popular->published_at ? $popular->published_at->translatedFormat('d M Y') : $popular->created_at->translatedFormat('d M Y') }}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              
-              <div class="popular-item d-flex align-items-center mb-3">
-                <span class="popular-number me-3 text-black">2</span>
-                <div>
-                  <h6 class="mb-1"><a href="#" class="text-decoration-none">Program Beasiswa Prestasi</a></h6>
-                  <small class="text-muted">2,856 views</small>
-                </div>
-              </div>
-              
-              <div class="popular-item d-flex align-items-center mb-3">
-                <span class="popular-number me-3 text-black">3</span>
-                <div>
-                  <h6 class="mb-1"><a href="#" class="text-decoration-none">Ekstrakurikuler Robotika</a></h6>
-                  <small class="text-muted">2,134 views</small>
-                </div>
-              </div>
-              
-              <div class="popular-item d-flex align-items-center mb-3">
-                <span class="popular-number me-3 text-black">4</span>
-                <div>
-                  <h6 class="mb-1"><a href="#" class="text-decoration-none">Study Tour ke Jepang</a></h6>
-                  <small class="text-muted">1,967 views</small>
-                </div>
-              </div>
-              
-              <div class="popular-item d-flex align-items-center">
-                <span class="popular-number me-3 text-black">5</span>
-                <div>
-                  <h6 class="mb-1"><a href="#" class="text-decoration-none">Lab Komputer Baru</a></h6>
-                  <small class="text-muted">1,823 views</small>
-                </div>
-              </div>
+              @empty
+                <p class="text-muted">Belum ada berita populer.</p>
+              @endforelse
             </div>
           </div>
         </div>
@@ -335,110 +301,62 @@
     </div>
 
     <div class="row g-4">
-      <!-- More News Item 1 -->
-      <div class="col-lg-4 col-md-6" data-aos="fade-up">
-        <article class="news-card">
-          <div class="news-image">
-            <img src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Festival Seni Budaya" class="img-fluid">
-            <div class="news-overlay">
-              <div class="news-category">
-                <span class="badge bg-warning">Kegiatan</span>
+      @forelse($randomNews as $item)
+      <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
+          <article class="news-card h-100">
+              <div class="news-image">
+                  @if($item->image && Storage::disk('public')->exists($item->image))
+                      <img src="{{ asset('storage/' . $item->image) }}" 
+                           alt="{{ $item->title }}" 
+                           class="img-fluid"
+                           onerror="this.src='{{ asset('assets/img/default-news.jpg') }}'">
+                  @else
+                      <img src="{{ asset('assets/img/default-news.jpg') }}" 
+                           alt="Default Image" 
+                           class="img-fluid">
+                  @endif
+                  <div class="news-overlay">
+                      <div class="news-category">
+                          <span class="badge bg-{{ $item->category === 'Prestasi' ? 'success' : ($item->category === 'Berita' ? 'primary' : 'info') }}">
+                              {{ $item->category }}
+                          </span>
+                      </div>
+                  </div>
               </div>
-            </div>
-          </div>
-          <div class="news-content">
-            <div class="news-meta">
-              <span class="news-date"><i class="bi bi-calendar3 me-1"></i>13 Jan 2024</span>
-              <span class="news-author"><i class="bi bi-person me-1"></i>Humas Sekolah</span>
-            </div>
-            <h4 class="news-title">
-              <a href="#" class="text-decoration-none">Festival Seni Budaya Nusantara 2024</a>
-            </h4>
-            <p class="news-excerpt">
-              Sekolah XYZ menggelar festival seni budaya dengan menampilkan beragam kesenian tradisional Indonesia...
-            </p>
-            <div class="news-footer">
-              <a href="#" class="read-more">
-                Baca Selengkapnya <i class="bi bi-arrow-right ms-1"></i>
-              </a>
-              <div class="news-stats">
-                <span><i class="bi bi-eye"></i> 1,245</span>
-                <span><i class="bi bi-heart"></i> 78</span>
+              <div class="news-content">
+                  <div class="news-meta">
+                      <span class="news-date">
+                          <i class="bi bi-calendar3 me-1"></i>
+                          {{ $item->published_at ? $item->published_at->translatedFormat('d M Y') : $item->created_at->translatedFormat('d M Y') }}
+                      </span>
+                      <span class="news-author">
+                          <i class="bi bi-person me-1"></i>{{ $item->user ? $item->user->name : 'Admin' }}
+                      </span>
+                  </div>
+                  <h4 class="news-title">
+                      <a href="{{ route('berita.detail', $item->slug) }}" class="text-decoration-none">
+                          {{ Str::limit($item->title, 60) }}
+                      </a>
+                  </h4>
+                  <p class="news-excerpt">
+                      {{ Str::limit(strip_tags($item->excerpt ?? $item->content), 120) }}
+                  </p>
+                  <div class="news-footer">
+                      <a href="{{ route('berita.detail', $item->slug) }}" class="read-more">
+                          Baca Selengkapnya <i class="bi bi-arrow-right ms-1"></i>
+                      </a>
+                      <div class="news-stats">
+                          <span><i class="bi bi-eye"></i> {{ number_format($item->view_count) }}</span>
+                      </div>
+                  </div>
               </div>
-            </div>
-          </div>
-        </article>
+          </article>
       </div>
-
-      <!-- More News Item 2 -->
-      <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
-        <article class="news-card">
-          <div class="news-image">
-            <img src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Perpustakaan Digital" class="img-fluid">
-            <div class="news-overlay">
-              <div class="news-category">
-                <span class="badge bg-info">Fasilitas</span>
-              </div>
-            </div>
-          </div>
-          <div class="news-content">
-            <div class="news-meta">
-              <span class="news-date"><i class="bi bi-calendar3 me-1"></i>11 Jan 2024</span>
-              <span class="news-author"><i class="bi bi-person me-1"></i>Admin</span>
-            </div>
-            <h4 class="news-title">
-              <a href="#" class="text-decoration-none">Perpustakaan Digital Berteknologi AI Diluncurkan</a>
-            </h4>
-            <p class="news-excerpt">
-              Sekolah XYZ meluncurkan perpustakaan digital canggih dengan teknologi AI untuk membantu siswa belajar...
-            </p>
-            <div class="news-footer">
-              <a href="#" class="read-more">
-                Baca Selengkapnya <i class="bi bi-arrow-right ms-1"></i>
-              </a>
-              <div class="news-stats">
-                <span><i class="bi bi-eye"></i> 967</span>
-                <span><i class="bi bi-heart"></i> 53</span>
-              </div>
-            </div>
-          </div>
-        </article>
+      @empty
+      <div class="col-12 text-center">
+          <p class="text-muted">Tidak ada berita lainnya untuk ditampilkan.</p>
       </div>
-
-      <!-- More News Item 3 -->
-      <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-        <article class="news-card">
-          <div class="news-image">
-            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Kurikulum Baru" class="img-fluid">
-            <div class="news-overlay">
-              <div class="news-category">
-                <span class="badge bg-primary">Pendidikan</span>
-              </div>
-            </div>
-          </div>
-          <div class="news-content">
-            <div class="news-meta">
-              <span class="news-date"><i class="bi bi-calendar3 me-1"></i>9 Jan 2024</span>
-              <span class="news-author"><i class="bi bi-person me-1"></i>Kurikulum</span>
-            </div>
-            <h4 class="news-title">
-              <a href="#" class="text-decoration-none">Implementasi Kurikulum Merdeka di Sekolah XYZ</a>
-            </h4>
-            <p class="news-excerpt">
-              Sekolah XYZ resmi menerapkan Kurikulum Merdeka untuk meningkatkan kualitas pembelajaran siswa...
-            </p>
-            <div class="news-footer">
-              <a href="#" class="read-more">
-                Baca Selengkapnya <i class="bi bi-arrow-right ms-1"></i>
-              </a>
-              <div class="news-stats">
-                <span><i class="bi bi-eye"></i> 1,456</span>
-                <span><i class="bi bi-heart"></i> 89</span>
-              </div>
-            </div>
-          </div>
-        </article>
-      </div>
+      @endforelse
     </div>
 
     <!-- View All News Button -->
@@ -452,8 +370,87 @@
   </div>
 </section>
 
+@push('scripts')
+<script>
+function copyToClipboard(text) {
+  // Create a temporary input element
+  const tempInput = document.createElement('input');
+  tempInput.value = text;
+  document.body.appendChild(tempInput);
+  
+  // Select the text
+  tempInput.select();
+  tempInput.setSelectionRange(0, 99999); // For mobile devices
+  
+  try {
+    // Execute the copy command
+    const successful = document.execCommand('copy');
+    const message = successful ? 'Tautan berhasil disalin!' : 'Gagal menyalin tautan';
+    
+    // Show feedback to user
+    const originalText = event.target.innerHTML;
+    event.target.innerHTML = '<i class="bi bi-check2 me-2"></i>Tersalin!';
+    
+    // Revert button text after 2 seconds
+    setTimeout(() => {
+      event.target.innerHTML = originalText;
+    }, 2000);
+    
+  } catch (err) {
+    console.error('Gagal menyalin teks: ', err);
+  }
+  
+  // Clean up
+  document.body.removeChild(tempInput);
+}
+
+// Check for Web Share API support and show native share button if available
+if (navigator.share) {
+  const shareData = {
+    title: '{{ addslashes($news->title) }}',
+    text: '{{ addslashes(strip_tags($news->excerpt ?? $news->content)) }}',
+    url: '{{ url()->current() }}'
+  };
+
+  const nativeShareBtn = document.getElementById('nativeShareBtn');
+  if (nativeShareBtn) {
+    nativeShareBtn.classList.remove('d-none');
+    
+    nativeShareBtn.addEventListener('click', async () => {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    });
+  }
+}
+</script>
+
 <!-- Custom Styles -->
 <style>
+/* Meta Info Styles */
+.article-meta {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0.5rem 1.5rem;
+  margin: 0 auto;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.meta-divider {
+  margin: 0 0.5rem;
+  font-weight: bold;
+}
+
 /* Floating Shapes Animation */
 .floating-shapes {
   position: absolute;

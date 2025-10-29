@@ -3,22 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class News extends Model
 {
-    protected $fillable = [
-        'title',
-        'slug',
-        'content',
-        'image',
-        'category',
-        'user_id',
-        'is_published',
-        'published_at',
-        'view_count'
-    ];
+    use SoftDeletes, HasUuids;
+
+    public $incrementing = false;
+    protected $keyType = 'string';
+    protected $guarded = [];
 
     protected $casts = [
         'is_published' => 'boolean',
@@ -44,22 +40,38 @@ class News extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function getExcerptAttribute()
+    public function getExcerptAttribute($value)
     {
+        if ($value) {
+            return $value;
+        }
         return Str::limit(strip_tags($this->content), 150);
+    }
+    
+    public function getImageUrlAttribute()
+    {
+        if ($this->image) {
+            return asset('storage/' . $this->image);
+        }
+        return asset('assets/img/default-news.jpg');
+    }
+    
+    public function getThumbnailUrlAttribute()
+    {
+        if ($this->thumbnail) {
+            return asset('storage/' . $this->thumbnail);
+        }
+        return $this->image_url;
+    }
+    
+    public function tags()
+    {
+        return $this->morphToMany(\Spatie\Tags\Tag::class, 'taggable');
     }
 
     public function getPublishedDateAttribute()
     {
         return $this->published_at ? $this->published_at->format('d M Y') : null;
-    }
-
-    public function getImageUrlAttribute()
-    {
-        if (empty($this->image)) {
-            return asset('storage/news/default.jpg');
-        }
-        return asset('storage/' . $this->image);
     }
 
     public function incrementViewCount()

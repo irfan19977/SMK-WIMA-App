@@ -15,9 +15,11 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('title');
             $table->string('slug')->unique();
+            $table->text('excerpt')->nullable();
             $table->text('content');
             $table->string('image')->nullable();
             $table->string('category');
+            $table->text('tags')->nullable(); // Add this line
             $table->uuid('user_id');
             $table->foreign('user_id')
                   ->references('id')

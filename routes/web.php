@@ -33,9 +33,10 @@ Route::get('/', function () {
     return view('home.index');
 })->name('/');
 
-// Berita Routes
+// Berita Routes - Keep these and remove duplicates below
 Route::get('/berita', [BeritaController::class, 'index'])->name('berita.index');
-Route::get('/berita/{slug}', [BeritaController::class, 'detail'])->name('berita.detail');
+Route::get('/berita/kategori/{category}', [BeritaController::class, 'byCategory'])->name('berita.category');
+Route::get('/berita/{slug}', [BeritaController::class, 'show'])->name('berita.detail'); // Changed from .detail to .show
 Route::get('/profile-sekolah', function () {
     return view('home.profile');
 })->name('profile-sekolah.index');
@@ -55,9 +56,6 @@ Route::get('/kimia-industri', function () {
 Route::get('/teknik-bisnis-sepeda-motor', function () {
     return view('home.tbsm');
 })->name('tbsm.index');
-
-Route::get('/berita', [BeritaController::class, 'index'])->name('berita.index');
-Route::get('/berita-detail', [BeritaController::class, 'detail'])->name('berita.detail');
 
 Route::get('/contact', function () {
     return view('home.contact');
