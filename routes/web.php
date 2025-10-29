@@ -125,27 +125,6 @@ Route::group(['middleware' => 'auth'], function () {
         Route::resource('/', StudentGradesController::class);
     });
 
-    // Tahfiz Management Routes
-    Route::prefix('tahfiz')->name('tahfiz.')->group(function () {
-        Route::get('get-students', [TahfizController::class, 'getStudents'])->name('getStudents');
-        Route::get('get-tahfiz-records', [TahfizController::class, 'getTahfizRecords'])->name('getTahfizRecords');
-        Route::post('bulk-update', [TahfizController::class, 'bulkUpdate'])->name('bulkUpdate');
-        Route::get('statistics', [TahfizController::class, 'getStatistics'])->name('getStatistics');
-        Route::resource('/', TahfizController::class);
-    });
-
-    // Asrama Management Routes
-    Route::prefix('asrama')->name('asrama.')->group(function() {
-        Route::resource('/', AsramaController::class)->parameters(['' => 'asrama']);
-        Route::post('/{asrama}/bulk-assign', [AsramaController::class, 'bulkAssign'])->name('bulk-assign'); 
-        Route::delete('/{asrama}/remove-student', [AsramaController::class, 'removeStudent'])->name('remove-student'); 
-        Route::get('/{asrama}/grades', [AsramaController::class, 'getGrades'])->name('get-grades');     
-        Route::post('/grades', [AsramaController::class, 'storeGrade'])->name('store-grade');     
-        Route::put('/grades/{grade}', [AsramaController::class, 'updateGrade'])->name('update-grade');     
-        Route::delete('/grades/{grade}', [AsramaController::class, 'deleteGrade'])->name('delete-grade');     
-        Route::post('/grades/bulk-update', [AsramaController::class, 'bulkUpdateGrades'])->name('bulk-update-grades');
-    });
-    
     // Schedule Management Routes
     Route::prefix('schedules')->name('schedules.')->group(function() {
         Route::resource('/', ScheduleController::class);

@@ -113,42 +113,30 @@
                 @csrf
                 <input type="hidden" id="news_id" name="id">
                 <div class="modal-body">
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Judul <span class="text-danger">*</span></label>
-                                        <div class="col-sm-12 col-md-7">
-                                            <input type="text" class="form-control" id="title" name="title" required>
-                                            <div class="invalid-feedback" id="title-error"></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Kategori <span class="text-danger">*</span></label>
-                                        <div class="col-sm-12 col-md-7">
-                                            <select class="form-control selectric" id="category" name="category" required>
-                                                <option value="">-- Pilih Kategori --</option>
-                                                <option value="Pendidikan">Pendidikan</option>
-                                                <option value="Kegiatan">Kegiatan</option>
-                                                <option value="Pengumuman">Pengumuman</option>
-                                                <option value="Prestasi">Prestasi</option>
-                                                <option value="Lainnya">Lainnya</option>
-                                            </select>
-                                            <div class="invalid-feedback" id="category-error"></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Isi Berita <span class="text-danger">*</span></label>
-                                        <div class="col-sm-12 col-md-9">
-                                            <textarea class="summernote-simple" id="content" name="content" required></textarea>
-                                            <div class="invalid-feedback" id="content-error"></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group row mb-4">
+                    <div class="card-body">
+                    <div class="form-group row mb-4">
+                      <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Title</label>
+                      <div class="col-sm-12 col-md-7">
+                        <input type="text" class="form-control">
+                      </div>
+                    </div>
+                    <div class="form-group row mb-4">
+                      <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Category</label>
+                      <div class="col-sm-12 col-md-7">
+                        <select class="form-control selectric">
+                          <option>Tech</option>
+                          <option>News</option>
+                          <option>Political</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group row mb-4">
+                      <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Content</label>
+                      <div class="col-sm-12 col-md-7">
+                        <textarea class="summernote-simple"></textarea>
+                      </div>
+                    </div>
+                    <div class="form-group row mb-4">
                       <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Thumbnail</label>
                       <div class="col-sm-12 col-md-7">
                         <div id="image-preview" class="image-preview">
@@ -157,44 +145,30 @@
                         </div>
                       </div>
                     </div>
-
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Tag</label>
-                                        <div class="col-sm-12 col-md-7">
-                                            <input type="text" class="form-control inputtags" id="tags" name="tags" placeholder="Tekan enter untuk menambahkan tag">
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Status</label>
-                                        <div class="col-sm-12 col-md-7">
-                                            <select class="form-control selectric" id="is_published" name="is_published">
-                                                <option value="1">Publikasikan</option>
-                                                <option value="0">Draft</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Jadwal Publikasi</label>
-                                        <div class="col-sm-12 col-md-7">
-                                            <input type="datetime-local" class="form-control" id="published_at" name="published_at">
-                                            <small class="form-text text-muted">Biarkan kosong untuk mempublikasikan sekarang</small>
-                                            <div class="invalid-feedback" id="published_at-error"></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group row mb-4">
-                                        <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3"></label>
-                                        <div class="col-sm-12 col-md-7">
-                                            <button type="submit" class="btn btn-primary" id="submitBtn">Simpan Berita</button>
-                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="form-group row mb-4">
+                      <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Tags</label>
+                      <div class="col-sm-12 col-md-7">
+                        <input type="text" class="form-control inputtags">
+                      </div>
                     </div>
+                    <div class="form-group row mb-4">
+                      <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3">Status</label>
+                      <div class="col-sm-12 col-md-7">
+                        <select class="form-control selectric">
+                          <option>Publish</option>
+                          <option>Draft</option>
+                          <option>Pending</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group row mb-4">
+                      <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3"></label>
+                      <div class="col-sm-12 col-md-7">
+                        <button class="btn btn-primary">Create Post</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
             </form>
         </div>
     </div>

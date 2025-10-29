@@ -48,20 +48,6 @@ class Student extends Model
                     ->withTimestamps()
                     ->withPivot('created_by', 'updated_by', 'deleted_by');
     }
-
-    public function assignAsrama()
-    {
-        return $this->hasOne(AssignAsrama::class, 'student_id');
-    }
-
-    /**
-     * Get the asrama through assignment.
-     */
-    public function asrama()
-    {
-        return $this->hasOneThrough(Asrama::class, AssignAsrama::class, 'student_id', 'id', 'id', 'asrama_id');
-    } 
-    
     
     public function ekstrakurikulerAssign()
     {

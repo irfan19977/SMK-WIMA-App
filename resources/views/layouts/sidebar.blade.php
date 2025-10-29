@@ -155,38 +155,14 @@
         @endcanany
 
         {{-- Non Akademik --}}
-        @canany(['tahfiz.index', 'asrama.index', 'ekstrakurikuler.index'])
-            <li class="dropdown {{ Request::is('tahfiz*') || Request::is('asrama*') || Request::is('ekstrakurikuler*') ? 'active' : '' }}">
-                <a href="#" class="menu-toggle nav-link has-dropdown">
-                    <i class="fas fa-book-reader"></i><span>Non Akademik</span>
+        
+        @can('ekstrakurikuler.index')
+            <li class="dropdown {{ Request::is('ekstrakurikuler*') ? 'active' : '' }}">
+                <a href="{{ route('ekstrakurikuler.index') }}" class="nav-link">
+                    <i class="fas fa-futbol"></i><span>Ekstrakurikuler</span>
                 </a>
-                <ul class="dropdown-menu">
-                    @can('tahfiz.index')
-                        <li class="dropdown {{ Request::is('tahfiz*') ? 'active' : '' }}">
-                            <a href="{{ route('tahfiz.index') }}" class="nav-link">
-                                <i class="fas fa-quran"></i><span>Kompetensi Tahfiz</span>
-                            </a>
-                        </li>
-                    @endcan
-
-                    @can('asrama.index')
-                        <li class="dropdown {{ Request::is('asrama*') ? 'active' : '' }}">
-                            <a href="{{ route('asrama.index') }}" class="nav-link">
-                                <i class="fas fa-building"></i><span>Asrama</span>
-                            </a>
-                        </li>
-                    @endcan
-
-                    @can('ekstrakurikuler.index')
-                        <li class="dropdown {{ Request::is('ekstrakurikuler*') ? 'active' : '' }}">
-                            <a href="{{ route('ekstrakurikuler.index') }}" class="nav-link">
-                                <i class="fas fa-futbol"></i><span>Ekstrakurikuler</span>
-                            </a>
-                        </li>
-                    @endcan
-                </ul>
             </li>
-        @endcanany
+        @endcan
 
         {{-- Manajemen Biometrik --}}
         @can('face_recognition.create')
