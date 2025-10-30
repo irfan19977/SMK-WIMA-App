@@ -26,9 +26,13 @@ class BeritaController extends Controller
             ->get();
 
         // Get paginated latest news (excluding featured and side news)
+        $category = request('category');
         $latestNews = News::with('user')
             ->where('is_published', true)
             ->whereNotIn('id', $featuredNews->pluck('id')->merge($sideNews->pluck('id')))
+            ->when($category, function($query) use ($category) {
+                return $query->where('category', 'like', '%' . $category . '%');
+            })
             ->latest('published_at')
             ->paginate(6);
 
@@ -47,6 +51,16 @@ class BeritaController extends Controller
             ->filter()
             ->toArray();
 
+        // If it's an AJAX request, return JSON response
+        if (request()->ajax()) {
+            return response()->json([
+                'html' => view('home.partials.news-grid', compact('latestNews'))->render(),
+                'nextPageUrl' => $latestNews->nextPageUrl(),
+                'currentPage' => $latestNews->currentPage(),
+                'lastPage' => $latestNews->lastPage()
+            ]);
+        }
+
         return view('home.berita', compact(
             'featuredNews', 
             'latestNews', 
@@ -55,23 +69,79 @@ class BeritaController extends Controller
             'categories'
         ));
     }
-
-    public function detail($slug)
+    
+    public function byCategory($category)
     {
-        $news = News::where('slug', $slug)
+        $news = News::with('user')
             ->where('is_published', true)
-            ->firstOrFail();
-
-        // Increment view count
-        $news->incrementViewCount();
-
-        $relatedNews = News::where('category', $news->category)
-            ->where('id', '!=', $news->id)
-            ->where('is_published', true)
+            ->where('category', $category)
             ->latest('published_at')
-            ->take(3)
-            ->get();
+            ->paginate(6);
+            
+        if (request()->ajax()) {
+            return response()->json([
+                'html' => view('home.partials.news-grid', ['latestNews' => $news])->render(),
+                'nextPageUrl' => $news->nextPageUrl(),
+                'currentPage' => $news->currentPage(),
+                'lastPage' => $news->lastPage()
+            ]);
+        }
+        
+        return view('home.berita', [
+            'latestNews' => $news,
+            'categories' => News::where('is_published', true)
+                ->select('category')
+                ->distinct()
+                ->pluck('category')
+                ->filter()
+                ->toArray(),
+            'featuredNews' => collect([]),
+            'sideNews' => collect([]),
+            'trendingNews' => collect([])
+        ]);
+    }
 
-        return view('home.detail', compact('news', 'relatedNews'));
+    public function show($slug)
+    {
+        try {
+            $news = News::where('slug', $slug)
+                       ->where('is_published', true)
+                       ->firstOrFail();
+            
+            // Increment view count
+            $news->increment('view_count');
+            
+            // Get related news based on same category
+            $relatedNews = News::where('category', $news->category)
+                ->where('id', '!=', $news->id)
+                ->where('is_published', true)
+                ->latest('published_at')
+                ->take(3)
+                ->get();
+                
+            // Get popular news - top 5 most viewed
+            $popularNews = News::where('is_published', true)
+                ->where('id', '!=', $news->id)
+                ->orderBy('view_count', 'desc')
+                ->take(5)
+                ->get();
+                
+            // Get 3 random news items excluding current, related and popular news
+            $excludeIds = collect([$news->id])
+                ->merge($relatedNews->pluck('id'))
+                ->merge($popularNews->pluck('id'));
+                
+            $randomNews = News::where('is_published', true)
+                ->whereNotIn('id', $excludeIds)
+                ->inRandomOrder()
+                ->take(3)
+                ->get();
+
+            return view('home.detail', compact('news', 'relatedNews', 'popularNews', 'randomNews'));
+
+        } catch (\Exception $e) {
+            return redirect()->route('home')
+                           ->with('error', 'Berita tidak ditemukan');
+        }
     }
 }

@@ -12,283 +12,184 @@ use Intervention\Image\Facades\Image;
 
 class NewsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
-        $query = News::with('user')->latest();
-
-        // Search functionality
-        if ($request->has('q') && $request->q != '') {
-            $search = $request->q;
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', '%' . $search . '%')
-                  ->orWhere('category', 'like', '%' . $search . '%')
-                  ->orWhere('content', 'like', '%' . $search . '%');
+        $query = News::latest();
+        
+        if ($request->has('q')) {
+            $searchTerm = $request->q;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('title', 'like', "%{$searchTerm}%")
+                  ->orWhere('excerpt', 'like', "%{$searchTerm}%")
+                  ->orWhere('category', 'like', "%{$searchTerm}%");
             });
         }
-
+        
         $news = $query->paginate(10);
-
-        // Return JSON for AJAX requests
-        if ($request->wantsJson() || $request->ajax()) {
+        
+        if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'posts' => $news->items(),
-                'currentPage' => $news->currentPage(),
-                'perPage' => $news->perPage(),
-                'total' => $news->total()
+                'data' => $news->items(),
+                'pagination' => [
+                    'total' => $news->total(),
+                    'per_page' => $news->perPage(),
+                    'current_page' => $news->currentPage(),
+                    'last_page' => $news->lastPage()
+                ]
             ]);
         }
 
         return view('news.index', compact('news'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        return view('news.create');
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'title' => 'required|string|max:255',
             'category' => 'required|string|max:100',
             'content' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_published' => 'required|boolean'
-        ], [
-            'title.required' => 'Judul harus diisi',
-            'title.max' => 'Judul maksimal 255 karakter',
-            'category.required' => 'Kategori harus dipilih',
-            'content.required' => 'Konten harus diisi',
-            'image.image' => 'File harus berupa gambar',
-            'image.mimes' => 'Format gambar harus jpeg, png, jpg, atau gif',
-            'image.max' => 'Ukuran gambar maksimal 2MB',
+            'excerpt' => 'nullable|string|max:255',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+            'is_published' => 'boolean',
         ]);
 
         try {
-            // Generate slug
-            $slug = Str::slug($validated['title']);
-            $slugCount = News::where('slug', 'like', $slug . '%')->count();
-            if ($slugCount > 0) {
-                $slug = $slug . '-' . ($slugCount + 1);
-            }
-
-            // Handle image upload
-            $imagePath = null;
+            $data = $request->all();
+            $data['slug'] = Str::slug($request->title);
+            $data['user_id'] = Auth::id();
+            $data['is_published'] = $request->has('is_published');
+            $data['published_at'] = $data['is_published'] ? now() : null;
+            
             if ($request->hasFile('image')) {
-                $image = $request->file('image');
-                $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
-                
-                // Resize image using Intervention Image
-                $img = Image::make($image->getRealPath());
-                $img->resize(800, null, function ($constraint) {
-                    $constraint->aspectRatio();
-                    $constraint->upsize();
-                });
-                
-                // Save to storage
-                $img->save(storage_path('app/public/news/' . $imageName));
-                $imagePath = 'news/' . $imageName;
+                $imagePath = $request->file('image')->store('news', 'public');
+                $data['image'] = $imagePath;
             }
+            
+            $news = News::create($data);
 
-            // Create news
-            $news = News::create([
-                'title' => $validated['title'],
-                'slug' => $slug,
-                'content' => $validated['content'],
-                'category' => $validated['category'],
-                'image' => $imagePath,
-                'user_id' => Auth::id(),
-                'is_published' => $validated['is_published'],
-                'published_at' => $validated['is_published'] ? now() : null,
-                'view_count' => 0
-            ]);
-
-            if ($request->wantsJson() || $request->ajax()) {
+            if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'News berhasil ditambahkan',
+                    'message' => 'Berita berhasil disimpan',
                     'data' => $news
                 ]);
             }
 
-            return redirect()->route('news.index')
-                ->with('success', 'News berhasil ditambahkan');
-
+            return redirect()->route('news.index')->with('success', 'Berita berhasil disimpan');
+            
         } catch (\Exception $e) {
-            if ($request->wantsJson() || $request->ajax()) {
+            if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Gagal menambahkan news: ' . $e->getMessage()
+                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
                 ], 500);
             }
 
-            return redirect()->back()
-                ->with('error', 'Gagal menambahkan news: ' . $e->getMessage())
-                ->withInput();
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(News $news)
+    public function edit($id)
     {
-        // Increment view count
-        $news->increment('view_count');
-        
-        return view('news.show', compact('news'));
+        $news = News::findOrFail($id);
+        return response()->json($news);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(News $news)
+    public function update(Request $request, $id)
     {
-        if (request()->wantsJson() || request()->ajax()) {
-            return response()->json([
-                'success' => true,
-                'title' => 'Edit News',
-                'post' => $news
-            ]);
-        }
-
-        return view('news.edit', compact('news'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, News $news)
-    {
-        $validated = $request->validate([
+        $request->validate([
             'title' => 'required|string|max:255',
             'category' => 'required|string|max:100',
             'content' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_published' => 'required|boolean'
-        ], [
-            'title.required' => 'Judul harus diisi',
-            'title.max' => 'Judul maksimal 255 karakter',
-            'category.required' => 'Kategori harus dipilih',
-            'content.required' => 'Konten harus diisi',
-            'image.image' => 'File harus berupa gambar',
-            'image.mimes' => 'Format gambar harus jpeg, png, jpg, atau gif',
-            'image.max' => 'Ukuran gambar maksimal 2MB',
+            'excerpt' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+            'is_published' => 'boolean',
         ]);
 
         try {
-            // Generate new slug if title changed
-            if ($news->title !== $validated['title']) {
-                $slug = Str::slug($validated['title']);
-                $slugCount = News::where('slug', 'like', $slug . '%')
-                    ->where('id', '!=', $news->id)
-                    ->count();
-                if ($slugCount > 0) {
-                    $slug = $slug . '-' . ($slugCount + 1);
-                }
-                $validated['slug'] = $slug;
+            $news = News::findOrFail($id);
+            $data = $request->except(['_token', '_method']);
+            
+            if ($request->title != $news->title) {
+                $data['slug'] = $this->createSlug($request->title, $news->id);
             }
-
-            // Handle image upload
+            
+            $data['is_published'] = $request->has('is_published');
+            $data['published_at'] = $data['is_published'] ? now() : null;
+            
             if ($request->hasFile('image')) {
                 // Delete old image
-                if ($news->image && Storage::disk('public')->exists($news->image)) {
-                    Storage::disk('public')->delete($news->image);
+                if ($news->image) {
+                    Storage::delete('public/' . $news->image);
                 }
-
-                $image = $request->file('image');
-                $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
                 
-                // Resize image
-                $img = Image::make($image->getRealPath());
-                $img->resize(800, null, function ($constraint) {
-                    $constraint->aspectRatio();
-                    $constraint->upsize();
-                });
-                
-                // Save to storage
-                $img->save(storage_path('app/public/news/' . $imageName));
-                $validated['image'] = 'news/' . $imageName;
+                $imagePath = $request->file('image')->store('news', 'public');
+                $data['image'] = $imagePath;
             }
-
-            // Update published_at if status changed
-            if ($validated['is_published'] && !$news->is_published) {
-                $validated['published_at'] = now();
-            } elseif (!$validated['is_published']) {
-                $validated['published_at'] = null;
-            }
-
-            // Update news
-            $news->update($validated);
-
-            if ($request->wantsJson() || $request->ajax()) {
+            
+            $news->update($data);
+            
+            if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'News berhasil diperbarui',
+                    'message' => 'Berita berhasil diperbarui',
                     'data' => $news
                 ]);
             }
 
-            return redirect()->route('news.index')
-                ->with('success', 'News berhasil diperbarui');
-
+            return redirect()->route('news.index')->with('success', 'Berita berhasil diperbarui');
+            
         } catch (\Exception $e) {
-            if ($request->wantsJson() || $request->ajax()) {
+            if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Gagal memperbarui news: ' . $e->getMessage()
+                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
                 ], 500);
             }
 
-            return redirect()->back()
-                ->with('error', 'Gagal memperbarui news: ' . $e->getMessage())
-                ->withInput();
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(News $news)
+    public function destroy($id)
     {
         try {
-            // Delete image if exists
-            if ($news->image && Storage::disk('public')->exists($news->image)) {
-                Storage::disk('public')->delete($news->image);
+            $news = News::findOrFail($id);
+            if ($news->image) {
+                Storage::delete('public/' . $news->image);
             }
-
+            
             $news->delete();
-
-            if (request()->wantsJson() || request()->ajax()) {
+            
+            if (request()->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'News berhasil dihapus'
+                    'message' => 'Berita berhasil dihapus'
                 ]);
             }
 
-            return redirect()->route('news.index')
-                ->with('success', 'News berhasil dihapus');
-
+            return redirect()->route('news.index')->with('success', 'Berita berhasil dihapus');
+            
         } catch (\Exception $e) {
-            if (request()->wantsJson() || request()->ajax()) {
+            if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Gagal menghapus news: ' . $e->getMessage()
+                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
                 ], 500);
             }
 
-            return redirect()->back()
-                ->with('error', 'Gagal menghapus news: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+    
+    private function createSlug($title, $id = 0)
+    {
+        $slug = Str::slug($title);
+        $count = News::where('slug', 'LIKE', $slug . '%')
+            ->where('id', '<>', $id)
+            ->count();
+            
+        return $count ? "{$slug}-{$count}" : $slug;
     }
 }

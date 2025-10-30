@@ -1,7 +1,7 @@
 @extends('home.layouts.app')
 
 @section('content')
-    <main id="main">
+<main id="main">
 
     <!-- ======= Hero Section ======= -->
     <section class="hero-section inner-page position-relative overflow-hidden">
@@ -67,7 +67,17 @@
                 <img src="{{ $firstNews->image_url }}" alt="{{ $firstNews->title }}" class="img-fluid rounded-4">
                 <div class="article-overlay">
                   <div class="article-category">
-                    <span class="badge bg-success">{{ $firstNews->category }}</span>
+                    @php
+                      $badgeClass = [
+                        'prestasi' => 'bg-success',
+                        'kegiatan' => 'bg-warning',
+                        'fasilitas' => 'bg-info',
+                        'pendidikan' => 'bg-primary',
+                        'alumni' => 'bg-secondary',
+                        'umum' => 'bg-dark'
+                      ][strtolower($firstNews->category)] ?? 'bg-primary';
+                    @endphp
+                    <span class="badge {{ $badgeClass }} rounded-3 py-1">{{ $firstNews->category }}</span>
                   </div>
                   <div class="article-date">
                     <i class="bi bi-calendar3 me-2"></i>{{ $firstNews->published_at->translatedFormat('d F Y') }}
@@ -79,7 +89,7 @@
                   <a href="{{ route('berita.detail', $firstNews->slug) }}" class="text-decoration-none">{{ $firstNews->title }}</a>
                 </h3>
                 <p class="article-excerpt">
-                  {{ $firstNews->excerpt }}
+                  {{ $firstNews->excerpt ?? Str::limit(strip_tags($firstNews->content), 150) }}
                 </p>
                 <div class="article-meta">
                   <div class="author-info">
@@ -116,16 +126,22 @@
                           'kegiatan' => 'bg-warning',
                           'fasilitas' => 'bg-info',
                           'pendidikan' => 'bg-primary',
-                          'alumni' => 'bg-secondary'
+                          'alumni' => 'bg-secondary',
+                          'umum' => 'bg-dark'
                         ][strtolower($news->category)] ?? 'bg-primary';
                       @endphp
-                      <span class="badge {{ $badgeClass }} bg-opacity-20 text-white">{{ $news->category }}</span>
+                      <span class="badge {{ $badgeClass }} text-white rounded-3 py-1">{{ $news->category }}</span>
                     </div>
                     <h5 class="article-title" style="font-size: 0.9rem; line-height: 1.3;">
                       <a href="{{ route('berita.detail', $news->slug) }}" class="text-decoration-none">{{ Str::limit($news->title, 45) }}</a>
                     </h5>
-                    <div class="article-meta small text-muted">
-                      <i class="bi bi-calendar3 me-1"></i>{{ $news->published_at->format('d M Y') }}
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div class="article-meta small text-muted">
+                        <i class="bi bi-calendar3 me-1"></i>{{ $news->published_at->format('d M Y') }}
+                      </div>
+                      <div class="article-views small text-muted">
+                        <i class="bi bi-eye me-1"></i>{{ number_format($news->view_count) }}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -144,11 +160,13 @@
                 <div class="trending-list">
                   @foreach($trendingNews as $index => $news)
                   <div class="trending-item">
-                    <span class="trending-number text-black">{{ $index + 1 }}</span>
-                    <a href="{{ route('berita.detail', $news->slug) }}" class="trending-link" title="{{ $news->title }}">
-                      {{ Str::limit($news->title, 30) }}
+                    <span class="trending-number text-dark">{{ $index + 1 }}</span>
+                    <div>
+                      <a href="{{ route('berita.detail', $news->slug) }}" class="trending-link" title="{{ $news->title }}">
+                        {{ Str::limit($news->title, 35) }}
+                      </a>
                       <span class="badge bg-secondary bg-opacity-10 text-muted small ms-2">{{ number_format($news->view_count) }}x</span>
-                    </a>
+                    </div>
                   </div>
                   @endforeach
                 </div>
@@ -189,7 +207,7 @@
         <div class="row mb-5" data-aos="fade-up" data-aos-delay="100">
           <div class="col-12">
             <div class="category-filter text-center">
-              <button class="filter-btn active" data-filter="all">
+              <button class="filter-btn {{ !request('category') ? 'active' : '' }}" data-category="">
                 <i class="bi bi-grid-3x3-gap me-2"></i>Semua Berita
               </button>
               @foreach($categories as $category)
@@ -205,7 +223,7 @@
                   ];
                   $icon = $icons[$category] ?? 'newspaper';
                 @endphp
-                <button class="filter-btn" data-filter="{{ strtolower($category) }}">
+                <button class="filter-btn {{ request('category') == strtolower($category) ? 'active' : '' }}" data-category="{{ strtolower($category) }}">
                   <i class="bi bi-{{ $icon }} me-2"></i>{{ $category }}
                 </button>
               @endforeach
@@ -215,56 +233,7 @@
 
         <!-- News Grid -->
         <div class="row g-4" id="news-grid">
-          @forelse($latestNews as $index => $news)
-          <div class="col-lg-4 col-md-6 news-item" data-category="{{ strtolower($news->category) }}" data-aos="fade-up" @if($index > 0 && $index % 3 == 0) data-aos-delay="200" @elseif($index % 2 == 0) data-aos-delay="100" @endif>
-            <article class="news-card">
-              <div class="news-image">
-                <img src="{{ $news->image_url }}" alt="{{ $news->title }}" class="img-fluid">
-                <div class="news-overlay">
-                  <div class="news-category">
-                    @php
-                      $badgeClass = [
-                        'prestasi' => 'bg-success',
-                        'kegiatan' => 'bg-warning',
-                        'fasilitas' => 'bg-info',
-                        'pendidikan' => 'bg-primary',
-                        'alumni' => 'bg-secondary'
-                      ][strtolower($news->category)] ?? 'bg-primary';
-                    @endphp
-                    <span class="badge {{ $badgeClass }}">{{ $news->category }}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="news-content">
-                <div class="news-meta">
-                  <span class="news-date"><i class="bi bi-calendar3 me-1"></i>{{ $news->published_at->format('d M Y') }}</span>
-                  <span class="news-author"><i class="bi bi-person me-1"></i>{{ $news->user->name }}</span>
-                </div>
-                <h4 class="news-title">
-                  <a href="{{ route('berita.detail', $news->slug) }}" class="text-decoration-none">{{ $news->title }}</a>
-                </h4>
-                <p class="news-excerpt">
-                  {{ Str::limit(strip_tags($news->content), 120) }}
-                </p>
-                <div class="news-footer">
-                  <a href="{{ route('berita.detail', $news->slug) }}" class="read-more">
-                    Baca Selengkapnya <i class="bi bi-arrow-right ms-1"></i>
-                  </a>
-                  <div class="news-stats">
-                    <span><i class="bi bi-eye"></i> {{ number_format($news->view_count) }}</span>
-                    <span><i class="bi bi-chat-left-text"></i> {{ $news->comments_count ?? 0 }}</span>
-                  </div>
-                </div>
-              </div>
-            </article>
-          </div>
-          @empty
-          <div class="col-12 text-center py-5">
-            <div class="alert alert-info">
-              <i class="bi bi-info-circle me-2"></i> Belum ada berita yang tersedia.
-            </div>
-          </div>
-          @endforelse
+          @include('home.partials.news-grid', ['latestNews' => $latestNews])
         </div>
 
         <!-- Pagination -->
@@ -273,18 +242,20 @@
           <div class="col-12">
             <nav aria-label="News pagination">
               <ul class="pagination justify-content-center">
+                {{-- Previous Page Link --}}
                 @if($latestNews->onFirstPage())
                   <li class="page-item disabled">
                     <span class="page-link"><i class="bi bi-chevron-left"></i></span>
                   </li>
                 @else
                   <li class="page-item">
-                    <a class="page-link" href="{{ $latestNews->previousPageUrl() }}" aria-label="Previous">
+                    <a class="page-link" href="{{ $latestNews->appends(request()->query())->previousPageUrl() }}" aria-label="Previous">
                       <i class="bi bi-chevron-left"></i>
                     </a>
                   </li>
                 @endif
 
+                {{-- Pagination Elements --}}
                 @foreach($latestNews->getUrlRange(1, $latestNews->lastPage()) as $page => $url)
                   @if($page == $latestNews->currentPage())
                     <li class="page-item active" aria-current="page">
@@ -292,14 +263,15 @@
                     </li>
                   @else
                     <li class="page-item">
-                      <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                      <a class="page-link" href="{{ $latestNews->appends(request()->query())->url($page) }}">{{ $page }}</a>
                     </li>
                   @endif
                 @endforeach
 
+                {{-- Next Page Link --}}
                 @if($latestNews->hasMorePages())
                   <li class="page-item">
-                    <a class="page-link" href="{{ $latestNews->nextPageUrl() }}" aria-label="Next">
+                    <a class="page-link" href="{{ $latestNews->appends(request()->query())->nextPageUrl() }}" aria-label="Next">
                       <i class="bi bi-chevron-right"></i>
                     </a>
                   </li>
@@ -313,15 +285,6 @@
           </div>
         </div>
         @endif
-
-        <!-- Load More Button -->
-        <div class="row mt-5">
-          <div class="col-12 text-center" data-aos="fade-up">
-            <button class="btn btn-outline-primary btn-lg rounded-pill px-5" id="loadMore">
-              <i class="bi bi-arrow-down-circle me-2"></i>Muat Lebih Banyak
-            </button>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -354,7 +317,7 @@
                       <span class="input-group-text bg-white border-0">
                         <i class="bi bi-envelope text-muted"></i>
                       </span>
-                      <input type="email" class="form-control border-0" placeholder="Masukkan email Anda">
+                      <input type="email" class="form-control border-0" placeholder="Masukkan email Anda" required>
                     </div>
                   </div>
                   <div class="col-md-auto">
@@ -398,7 +361,6 @@
     </section>
 
   </main><!-- End #main -->
-
   <!-- Custom Styles -->
   <style>
 
@@ -999,8 +961,112 @@
   </style>
 
   <!-- JavaScript -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      // Handle category filter click
+      $('.filter-btn').on('click', function(e) {
+        e.preventDefault();
+        
+        // Update active button
+        $('.filter-btn').removeClass('active');
+        $(this).addClass('active');
+        
+        const category = $(this).data('category');
+        const url = category ? "/berita/kategori/" + category : "/berita";
+        
+        // Show loading state
+        $('#news-grid').html('<div class="col-12 text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+        
+        // Update URL without page reload
+        const newUrl = category ? '{{ url()->current() }}?category=' + category : '{{ route('berita.index') }}';
+        window.history.pushState({ path: newUrl }, '', newUrl);
+        
+        // Load news by category
+        loadNews(url);
+      });
+      
+      // Handle browser back/forward buttons
+      window.onpopstate = function(event) {
+        if (event.state && event.state.path) {
+          window.location.href = event.state.path;
+        }
+      };
+      
+      // Load more news when clicking the load more button
+      $(document).on('click', '.load-more', function() {
+        const $button = $(this);
+        const nextPage = $button.data('next-page');
+        const lastPage = $button.data('last-page');
+        const currentUrl = window.location.pathname + window.location.search;
+        const isCategoryPage = currentUrl.includes('/kategori/');
+        
+        if (nextPage > lastPage) {
+          $button.prop('disabled', true).text('Tidak ada berita lagi');
+          return;
+        }
+        
+        $button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Memuat...');
+        
+        let url = currentUrl + (currentUrl.includes('?') ? '&' : '?') + 'page=' + nextPage;
+        
+        if (isCategoryPage) {
+          // For category pages, use the byCategory method
+          const category = currentUrl.split('/').pop().split('?')[0];
+          url = '/berita/kategori/' + category + '?page=' + nextPage;
+        }
+        
+        $.ajax({
+          url: url,
+          type: 'GET',
+          dataType: 'json',
+          success: function(response) {
+            if (response.html) {
+              // Remove the load more button
+              $('.load-more-container').remove();
+              
+              // Append new news items
+              $('#news-grid').append($(response.html));
+              
+              // If there are more pages, update the load more button
+              if (response.nextPageUrl) {
+                $button.data('next-page', response.currentPage + 1);
+                $button.data('last-page', response.lastPage);
+                $button.prop('disabled', false).html('Muat Lebih Banyak');
+              } else {
+                $button.prop('disabled', true).text('Tidak ada berita lagi');
+              }
+            }
+          },
+          error: function(xhr) {
+            console.error('Error loading more news:', xhr);
+            $button.prop('disabled', false).html('Muat Lebih Banyak <i class="bi bi-arrow-clockwise"></i>');
+          }
+        });
+      });
+      
+      // Function to load news by URL
+      function loadNews(url) {
+        $.ajax({
+          url: url,
+          type: 'GET',
+          dataType: 'json',
+          success: function(response) {
+            if (response.html) {
+              $('#news-grid').html(response.html);
+              
+              // Smooth scroll to the news grid
+              $('html, body').animate({
+                scrollTop: $('#news-grid').offset().top - 100
+              }, 500);
+            }
+          },
+          error: function(xhr) {
+            console.error('Error loading news:', xhr);
+            $('#news-grid').html('<div class="col-12 text-center py-5"><div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i> Gagal memuat berita. Silakan coba lagi.</div></div>');
+          }
+        });
+      }
       // Elements
       const filterButtons = document.querySelectorAll('.filter-btn');
       const newsItems = document.querySelectorAll('.news-item'); // Menggunakan class news-item yang sesuai dengan struktur HTML

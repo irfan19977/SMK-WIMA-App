@@ -36,7 +36,7 @@
 
       <div class="logo d-flex align-items-center">
         <!-- Uncomment below if you prefer to use an image logo -->
-        <a href="index.html" class="me-3"><img src="{{ asset('frontend/assets/img/Logo-Tut-Wuri-Handayani-PNG-Warna.png') }}" alt="" class="img-fluid" style="height: 50px;"></a>
+        <a href="index.html" class="me-3"><img src="{{ asset('backend/assets/img/logo yayasan.png') }}" alt="" class="img-fluid" style="height: 50px;"></a>
         <h1 class="mb-0"><a href="index.html">SMK PGRI LAWANG</a></h1>
       </div>
 
