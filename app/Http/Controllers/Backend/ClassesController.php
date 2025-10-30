@@ -8,6 +8,7 @@ use App\Models\Attendance;
 use App\Models\Classes;
 use App\Models\Student;
 use Carbon\Carbon;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,7 @@ use Illuminate\Support\Str;
 
 class ClassesController extends Controller
 {
+    use AuthorizesRequests;
 
     /**
      * Search for classes based on query
@@ -69,6 +71,7 @@ class ClassesController extends Controller
 
     public function index(Request $request)
     {
+        $this->authorize('classes.index');
         if (Auth::check()) {
             // Check if user has student role by checking if they have a student record
             $student = \App\Models\Student::where('user_id', Auth::id())->first();

@@ -6,14 +6,14 @@
     <div class="card-header d-flex justify-content-between align-items-center">
       <h4>Detail Siswa</h4>
       <div>
-        <a href="{{ route('students.index') }}" class="btn btn-light">
+        <a href="{{ route('pendaftaran-siswa.index') }}" class="btn btn-light">
           <i class="fas fa-arrow-left"></i> Kembali
         </a>
-        @isset($student->id)
+        {{-- @isset($student->id)
         <a href="{{ route('students.edit', $student->id) }}" class="btn btn-primary">
           <i class="fas fa-edit"></i> Edit
         </a>
-        @endisset
+        @endisset --}}
       </div>
     </div>
     <div class="card-body">

@@ -102,9 +102,6 @@
             </table>
         </div>
     </div>
-    <div class="card-footer">
-        {{ $news->links() }}
-    </div>
 </div>
 
 <!-- Modal untuk Create/Edit -->
@@ -163,17 +160,17 @@
                     </div>
 
                     <div class="form-group">
-                        <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" id="is_published" name="is_published" value="1" checked>
-                            <label class="custom-control-label" for="is_published">Publikasikan berita</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
                         <label for="tags">Tag</label>
                         <input type="text" class="form-control inputtags" id="tags" name="tags" 
                             placeholder="Tambahkan tag berita (pisahkan dengan koma)">
                         <div class="invalid-feedback d-none" id="tags-error"></div>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="is_published" name="is_published" value="1" checked>
+                            <label class="custom-control-label" for="is_published">Publikasikan berita</label>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -619,7 +616,7 @@
                     </td>
                     <td class="text-center align-middle">
                         <div class="small">
-                            <div class="mb-1">${item.published_at || '-'}</div>
+                            <div class="mb-1">${formatDate(item.published_at) || '-'}</div>
                             <div class="text-muted">${item.user?.name || 'N/A'}</div>
                             <div class="text-muted small">${item.view_count || 0} views</div>
                         </div>
@@ -648,8 +645,26 @@
         $('[data-toggle="tooltip"]').tooltip();
     }
 
-    // Make performSearch available globally
+    // Helper function to format date
+    function formatDate(dateString) {
+        if (!dateString) return null;
+        
+        // If date is already in the correct format (from server-side formatting)
+        if (typeof dateString === 'string' && dateString.match(/^\d{2} \w{3} \d{4}$/)) {
+            return dateString;
+        }
+        
+        // If date is in ISO format (2025-10-30T09:05:35.000000Z)
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString; // Return original if invalid date
+        
+        const options = { day: '2-digit', month: 'short', year: 'numeric' };
+        return date.toLocaleDateString('id-ID', options);
+    }
+
+    // Make functions available globally
     window.performSearch = performSearch;
+    window.formatDate = formatDate;
 });
 </script>
 @endpush

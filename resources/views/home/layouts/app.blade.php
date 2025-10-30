@@ -5,13 +5,13 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-  <title>SMK PGRI Lawang</title>
+  <title>SMK PGRI LAWANG</title>
   <meta content="" name="description">
   <meta content="" name="keywords">
 
   <!-- Favicons -->
-<link href="{{ asset('frontend/assets/img/favicon.png') }}" rel="icon">
-<link href="{{ asset('frontend/assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+<link href="{{ asset('frontend/assets/img/logo 1.png') }}" rel="icon">
+<link href="{{ asset('frontend/assets/img/logo 1.png') }}" rel="apple-touch-icon">
 
 <!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
@@ -36,7 +36,7 @@
 
       <div class="logo d-flex align-items-center">
         <!-- Uncomment below if you prefer to use an image logo -->
-        <a href="index.html" class="me-3"><img src="{{ asset('backend/assets/img/logo yayasan.png') }}" alt="" class="img-fluid" style="height: 50px;"></a>
+        <a href="index.html" class="me-3"><img src="{{ asset('backend/assets/img/logo 1.png') }}" alt="" class="img-fluid" style="height: 50px;"></a>
         <h1 class="mb-0"><a href="index.html">SMK PGRI LAWANG</a></h1>
       </div>
 
@@ -49,15 +49,15 @@
               Jurusan <i class="bi bi-chevron-down"></i>
             </a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="{{ route('kimia.index') }}">Teknik Kimia Industri</a></li>
-              <li><a class="dropdown-item" href="{{ route('tkj.index') }}">Teknik Komputer & Jaringan</a></li>
               <li><a class="dropdown-item" href="{{ route('tkr.index') }}">Teknik Kendaraan Ringan</a></li>
               <li><a class="dropdown-item" href="{{ route('tbsm.index') }}">Teknik Bisnis Sepeda Motor</a></li>
+              <li><a class="dropdown-item" href="{{ route('kimia.index') }}">Teknik Kimia Industri</a></li>
+              <li><a class="dropdown-item" href="{{ route('tkj.index') }}">Teknik Komputer & Jaringan</a></li>
             </ul>
           </li>
           <li><a class="{{ request()->routeIs('pendaftaran.*') ? 'active' : '' }}" href="{{ route('pendaftaran.index') }}">Pendaftaran</a></li>
           <li><a class="{{ request()->routeIs('berita.*') ? 'active' : '' }}" href="{{ route('berita.index') }}">Berita</a></li>
-          <li><a class="{{ request()->is('contact.*') ? 'active' : '' }}" href="{{ route('contact.index') }}">Contact Us</a></li>
+          <li><a class="{{ request()->is('contact.*') ? 'active' : '' }}" href="{{ route('contact.index') }}">Kontak</a></li>
           <li><a class="{{ request()->routeIs('login') ? 'active' : '' }}" href="{{ route('login') }}">Login</a></li>
         </ul>
         <i class="bi bi-list mobile-nav-toggle"></i>

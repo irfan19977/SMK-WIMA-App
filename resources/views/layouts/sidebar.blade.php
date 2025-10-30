@@ -1,7 +1,7 @@
 <aside id="sidebar-wrapper">
     <div class="sidebar-brand">
         <a href="{{ route('/') }}">
-            <img alt="" src="{{ asset('assets/img/logo.png') }}" class="header-logo" />
+            <img alt="" src="{{ asset('backend/assets/img/logo 1.png') }}" class="header-logo" />
             <span class="logo-name">SMK PGRI</span>
         </a>
     </div>
@@ -25,7 +25,7 @@
         @endcan
         
         {{-- Berita --}}
-        @can('classes.index')
+        @can('news.index')
             <li class="dropdown {{ Request::is('news*') ? 'active' : '' }}">
                 <a href="{{ route('news.index') }}" class="nav-link">
                     <i class="fas fa-newspaper"></i><span>Berita</span>
@@ -33,8 +33,8 @@
             </li>
         @endcan
         
-        {{-- Pengumuman --}}
-        @can('announcements.index')
+        {{-- Pendaftaran --}}
+        @can('pendaftaran-siswa.index')
             <li class="dropdown {{ Request::is('pendaftaran*') ? 'active' : '' }}">
                 <a href="{{ route('pendaftaran-siswa.index') }}" class="nav-link">
                     <i class="fas fa-user-plus"></i><span>Pendaftaran</span>

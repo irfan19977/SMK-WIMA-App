@@ -449,7 +449,7 @@ class StudentController extends Controller
         try {
             DB::beginTransaction();
 
-            $student = Student::findOrFail($id);
+            $student = Student::withTrashed()->findOrFail($id);
 
             // Pastikan hanya siswa dengan status 'siswa' yang bisa dihapus
             if ($student->status !== 'siswa') {
@@ -457,9 +457,50 @@ class StudentController extends Controller
             }
 
             $user = $student->user;
+            
+            // Hapus foto profil user jika ada
+            if ($user->photo_path) {
+                $userPhotoPath = storage_path('app/public/' . $user->photo_path);
+                if (file_exists($userPhotoPath)) {
+                    unlink($userPhotoPath);
+                    
+                    // Hapus direktori foto profil jika kosong
+                    $userPhotoDir = dirname($userPhotoPath);
+                    if (is_dir($userPhotoDir) && count(glob($userPhotoDir . '/*')) === 0) {
+                        rmdir($userPhotoDir);
+                    }
+                }
+            }
+            
+            // Daftar field dokumen yang perlu dihapus
+            $documentFields = [
+                'face_photo',
+                'ktp',
+                'kartu_keluarga',
+                'ijazah',
+                'akte_lahir',
+                'sertifikat'
+            ];
 
-            $student->delete(); // Delete student first
-            $user->delete(); // Then delete user
+            // Hapus semua file dokumen yang ada
+            foreach ($documentFields as $field) {
+                if (!empty($student->$field)) {
+                    $filePath = storage_path('app/public/' . $student->$field);
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
+                    
+                    // Hapus direktori dokumen jika kosong
+                    $directory = dirname($filePath);
+                    if (is_dir($directory) && count(glob($directory . '/*')) === 0) {
+                        rmdir($directory);
+                    }
+                }
+            }
+
+            // Hapus data student dan user
+            $student->forceDelete(); // Force delete untuk menghapus permanen
+            $user->delete(); // Hapus user
 
             DB::commit();
             return response()->json(['success' => true]);

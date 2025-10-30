@@ -9,11 +9,15 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\Facades\Image;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class NewsController extends Controller
 {
+    use AuthorizesRequests;
+    
     public function index(Request $request)
     {
+        $this->authorize('news.index');
         $query = News::latest();
         
         if ($request->has('q')) {
@@ -28,9 +32,25 @@ class NewsController extends Controller
         $news = $query->paginate(10);
         
         if ($request->ajax()) {
+            $formattedNews = collect($news->items())->map(function($item) {
+                return [
+                    'id' => $item->id,
+                    'title' => $item->title,
+                    'excerpt' => $item->excerpt,
+                    'category' => $item->category,
+                    'image' => $item->image,
+                    'is_published' => $item->is_published,
+                    'published_at' => $item->published_at ? $item->published_at->format('d M Y') : '-',
+                    'user' => $item->user ? ['name' => $item->user->name] : null,
+                    'view_count' => $item->view_count ?? 0,
+                    'created_at' => $item->created_at->format('d M Y'),
+                    'updated_at' => $item->updated_at->format('d M Y')
+                ];
+            });
+
             return response()->json([
                 'success' => true,
-                'data' => $news->items(),
+                'data' => $formattedNews,
                 'pagination' => [
                     'total' => $news->total(),
                     'per_page' => $news->perPage(),

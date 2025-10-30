@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
-    <title>Otika - Admin Dashboard Template</title>
+    <title>Login - SMK PGRI LAWANG</title>
     <!-- General CSS Files -->
     <link rel="stylesheet" href="{{ asset('backend/assets/css/app.min.css') }}">
     <link rel="stylesheet" href="{{ asset('backend/assets/bundles/bootstrap-social/bootstrap-social.css') }}">
@@ -16,7 +16,7 @@
     <!-- Custom style CSS -->
     <link rel="stylesheet" href="{{ asset('backend/assets/css/custom.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css">
-    <link rel='shortcut icon' type='image/x-icon' href='{{ asset('logo.png') }}' />
+    <link rel='shortcut icon' type='image/x-icon' href='{{ asset('backend/assets/img/logo 1.png') }}' />
     <style>
         .custom-whatsapp:hover {
             background-color: #28a745 !important;

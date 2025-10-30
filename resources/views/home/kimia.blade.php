@@ -260,7 +260,7 @@
 
         <div class="col-lg-3 col-md-6">
           <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop" alt="Process Equipment" class="img-fluid rounded-3">
+            <img src="{{ asset('frontend/assets/img/TKI 1.jpg') }}" alt="Process Equipment" class="img-fluid rounded-3">
             <div class="gallery-overlay">
               <div class="gallery-content">
                 <i class="bi bi-gear-wide-connected"></i>
@@ -273,7 +273,7 @@
 
         <div class="col-lg-3 col-md-6">
           <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&h=300&fit=crop" alt="Quality Control" class="img-fluid rounded-3">
+            <img src="{{ asset('frontend/assets/img/TKI 2.jpg') }}" class="img-fluid rounded-3">
             <div class="gallery-overlay">
               <div class="gallery-content">
                 <i class="bi bi-search"></i>

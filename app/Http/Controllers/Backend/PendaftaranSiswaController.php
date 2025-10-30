@@ -11,11 +11,14 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class PendaftaranSiswaController extends Controller
 {
+    use AuthorizesRequests;
     public function index(Request $request)
     {
+        $this->authorize('pendaftaran-siswa.index');
         $studentsQuery = Student::with('user')
             ->where('status', 'calon siswa');
 

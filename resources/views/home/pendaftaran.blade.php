@@ -163,10 +163,10 @@
                                         </label>
                                         <select class="form-select @error('jurusan_utama') is-invalid @enderror" id="jurusan_utama" name="jurusan_utama" required>
                                             <option value="">-- Pilih Jurusan Utama --</option>
-                                            <option value="Teknik Komputer dan Jaringan" {{ old('jurusan_utama') == 'Teknik Komputer dan Jaringan' ? 'selected' : '' }}>Teknik Komputer dan Jaringan (TKJ)</option>
                                             <option value="Teknik Kendaraan Ringan" {{ old('jurusan_utama') == 'Teknik Kendaraan Ringan' ? 'selected' : '' }}>Teknik Kendaraan Ringan (TKR)</option>
-                                            <option value="Teknik Kimia Industri" {{ old('jurusan_utama') == 'Teknik Kimia Industri' ? 'selected' : '' }}>Teknik Kimia Industri (TKI)</option>
                                             <option value="Teknik Bisnis Sepeda Motor" {{ old('jurusan_utama') == 'Teknik Bisnis Sepeda Motor' ? 'selected' : '' }}>Teknik Bisnis Sepeda Motor (TBSM)</option>
+                                            <option value="Teknik Kimia Industri" {{ old('jurusan_utama') == 'Teknik Kimia Industri' ? 'selected' : '' }}>Teknik Kimia Industri (TKI)</option>
+                                            <option value="Teknik Komputer dan Jaringan" {{ old('jurusan_utama') == 'Teknik Komputer dan Jaringan' ? 'selected' : '' }}>Teknik Komputer dan Jaringan (TKJ)</option>
                                         </select>
                                         @error('jurusan_utama')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -180,10 +180,10 @@
                                         </label>
                                         <select class="form-select @error('jurusan_cadangan') is-invalid @enderror" id="jurusan_cadangan" name="jurusan_cadangan">
                                             <option value="">-- Pilih Jurusan Cadangan --</option>
-                                            <option value="Teknik Komputer dan Jaringan" {{ old('jurusan_cadangan') == 'Teknik Komputer dan Jaringan' ? 'selected' : '' }}>Teknik Komputer dan Jaringan (TKJ)</option>
                                             <option value="Teknik Kendaraan Ringan" {{ old('jurusan_cadangan') == 'Teknik Kendaraan Ringan' ? 'selected' : '' }}>Teknik Kendaraan Ringan (TKR)</option>
-                                            <option value="Teknik Kimia Industri" {{ old('jurusan_cadangan') == 'Teknik Kimia Industri' ? 'selected' : '' }}>Teknik Kimia Industri (TKI)</option>
                                             <option value="Teknik Bisnis Sepeda Motor" {{ old('jurusan_cadangan') == 'Teknik Bisnis Sepeda Motor' ? 'selected' : '' }}>Teknik Bisnis Sepeda Motor (TBSM)</option>
+                                            <option value="Teknik Kimia Industri" {{ old('jurusan_cadangan') == 'Teknik Kimia Industri' ? 'selected' : '' }}>Teknik Kimia Industri (TKI)</option>
+                                            <option value="Teknik Komputer dan Jaringan" {{ old('jurusan_cadangan') == 'Teknik Komputer dan Jaringan' ? 'selected' : '' }}>Teknik Komputer dan Jaringan (TKJ)</option>
                                         </select>
                                         @error('jurusan_cadangan')
                                             <div class="invalid-feedback">{{ $message }}</div>

@@ -34,9 +34,9 @@ class PermissionsSeeder extends Seeder
             'lesson_attendances.index', 'lesson_attendances.create', 'lesson_attendances.edit',
             'face_recognition.index', 'face_recognition.create', 'face_recognition.edit',
             'student-grades.index', 'student-grades.create', 'student-grades.edit',
-            'tahfiz.index', 'tahfiz.edit',
-            'asrama.index', 'asrama.create', 'asrama.edit',
-            'ekstrakurikuler.index', 'ekstrakurikuler.create', 'ekstrakurikuler.edit'
+            'ekstrakurikuler.index', 'ekstrakurikuler.create', 'ekstrakurikuler.edit',
+            'pendaftaran-siswa.index', 'pendaftaran-siswa.export',
+            'news.index', 'news.create', 'news.edit',
         ];
 
         // Buat semua permissions
@@ -66,9 +66,9 @@ class PermissionsSeeder extends Seeder
                 'lesson_attendances.index', 'lesson_attendances.create', 'lesson_attendances.edit',
                 'face_recognition.index', 'face_recognition.create', 'face_recognition.edit',
                 'student-grades.index', 'student-grades.create', 'student-grades.edit',
-                'tahfiz.index', 'tahfiz.edit',
-                'asrama.index', 'asrama.create', 'asrama.edit',
                 'ekstrakurikuler.index', 'ekstrakurikuler.create', 'ekstrakurikuler.edit',
+                'pendaftaran-siswa.index', 'pendaftaran-siswa.export',
+                'news.index', 'news.create', 'news.edit',
             ],
             
             'teacher' => [
@@ -80,6 +80,9 @@ class PermissionsSeeder extends Seeder
                 'parents.index', // hanya bisa melihat data orang tua
                 'face_recognition.index',
                 'student-grades.index', 'student-grades.create', 'student-grades.edit',
+                'ekstrakurikuler.index', 'ekstrakurikuler.create', 'ekstrakurikuler.edit',
+                'pendaftaran-siswa.index', 'pendaftaran-siswa.export',
+                'news.index', 'news.create', 'news.edit',
             ],
             
             'student' => [

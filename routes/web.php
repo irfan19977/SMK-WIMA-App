@@ -10,6 +10,7 @@ use App\Http\Controllers\Backend\FaceRecognitionController;
 use App\Http\Controllers\Backend\LessonAttendanceController;
 use App\Http\Controllers\Backend\ParentsController;
 use App\Http\Controllers\Frontend\PendaftaranController;
+use App\Http\Controllers\Frontend\ContactController;
 use App\Http\Controllers\Backend\PermissionController;
 use App\Http\Controllers\Backend\ProfileController;
 use App\Http\Controllers\Backend\RegistrationController;
@@ -37,6 +38,11 @@ Route::get('/', function () {
 Route::get('/berita', [BeritaController::class, 'index'])->name('berita.index');
 Route::get('/berita/kategori/{category}', [BeritaController::class, 'byCategory'])->name('berita.category');
 Route::get('/berita/{slug}', [BeritaController::class, 'show'])->name('berita.detail'); // Changed from .detail to .show
+
+// Contact Routes
+Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
 Route::get('/profile-sekolah', function () {
     return view('home.profile');
 })->name('profile-sekolah.index');
