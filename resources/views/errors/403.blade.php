@@ -26,7 +26,7 @@
           <div class="page-inner">
             <h1>403</h1>
             <div class="page-description">
-                Anda tidak memiliki izin untuk mengakses halaman ini.
+                 Halaman ini lagi main petak umpet kayanya 🙈 Mimin ganteng juga bingung nyarinya dimana 😂 Yuk balik ke home dulu!
             </div>
             <div class="page-search">
               <div class="mt-3">

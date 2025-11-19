@@ -9,7 +9,7 @@
             </div>
             <div class="card-body">
                 <!-- Filter Section -->
-                <div class="row mb-3">
+                <div class="row mb-3 align-items-end">
                     <div class="col-md-3">
                         <label for="kelasFilter" class="form-label">Filter Kelas:</label>
                         <select id="kelasFilter" class="form-control">
@@ -26,6 +26,14 @@
                             @foreach($subjects as $subject)
                                 <option value="{{ $subject->id }}" data-name="{{ $subject->name }}">{{ $subject->name }}</option>
                             @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="assessmentTypeFilter" class="form-label">Jenis Penilaian:</label>
+                        <select id="assessmentTypeFilter" class="form-control">
+                            <option value="bulanan" selected>Nilai Bulanan</option>
+                            <option value="uts">UTS</option>
+                            <option value="uas">UAS</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -47,6 +55,14 @@
                         </select>
                     </div>
                     <div class="col-md-3">
+                        <label for="semesterFilter" class="form-label">Semester:</label>
+                        <select id="semesterFilter" class="form-control" disabled>
+                            <option value="">Pilih Semester</option>
+                            <option value="ganjil">Ganjil</option>
+                            <option value="genap">Genap</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
                         <label for="academicYearFilter" class="form-label">Tahun Akademik:</label>
                         <select id="academicYearFilter" class="form-control">
                             <option value="">Pilih Tahun Akademik</option>
@@ -55,22 +71,22 @@
                             @endforeach
                         </select>
                     </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <button type="button" id="resetFilters" class="btn btn-secondary">
-                            <i class="fas fa-sync-alt"></i> Reset Filter
-                        </button>
-                        <button type="button" id="editModeBtn" class="btn btn-warning" style="display: none;">
-                            <i class="fas fa-edit"></i> Mode Edit
-                        </button>
-                        <button type="button" id="saveAllBtn" class="btn btn-primary" style="display: none;">
-                            <i class="fas fa-save"></i> Simpan Semua
-                        </button>
+                    <div class="col-md-auto">
+                        <div class="form-group mb-0">
+                            <button type="button" id="resetFilters" class="btn btn-secondary mr-2">
+                                <i class="fas fa-sync-alt"></i> Reset Filter
+                            </button>
+                            <button type="button" id="editModeBtn" class="btn btn-warning mr-2" style="display: none;">
+                                <i class="fas fa-edit"></i> Mode Edit
+                            </button>
+                            <button type="button" id="saveAllBtn" class="btn btn-primary" style="display: none;">
+                                <i class="fas fa-save"></i> Simpan Semua
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Action Buttons moved next to filters above -->
 
                 <!-- Status Info -->
                 <div class="row mb-3">
@@ -88,17 +104,17 @@
                                 <th>No Absen</th>
                                 <th>Nama Siswa</th>
                                 <th>NISN</th>
-                                <th>H1</th>
-                                <th>H2</th>
-                                <th>H3</th>
-                                <th>K1</th>
-                                <th>K2</th>
-                                <th>K3</th>
-                                <th>CK</th>
-                                <th>P</th>
-                                <th>K</th>
-                                <th>Aktif</th>
-                                <th>Nilai</th>
+                                <th id="colH1">H1</th>
+                                <th id="colH2">H2</th>
+                                <th id="colH3">H3</th>
+                                <th id="colK1">K1</th>
+                                <th id="colK2">K2</th>
+                                <th id="colK3">K3</th>
+                                <th id="colCK">CK</th>
+                                <th id="colP">P</th>
+                                <th id="colK">K</th>
+                                <th id="colAktif">Aktif</th>
+                                <th id="colNilai">Nilai</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -269,7 +285,9 @@
                 class_id: '',
                 subject_id: '',
                 month: '',
-                academic_year: ''
+                semester: '',
+                academic_year: '',
+                assessment_type: 'bulanan'
             };
 
             // Initialize DataTable
@@ -283,6 +301,49 @@
                 "ordering": false
             });
 
+            // Set initial columns based on default assessment type
+            updateColumnsForAssessmentType(currentFilters.assessment_type);
+
+            // Assessment type change
+            $('#assessmentTypeFilter').change(function() {
+                const type = $(this).val();
+                currentFilters.assessment_type = type;
+
+                // Toggle month/semester controls
+                if (type === 'bulanan') {
+                    $('#bulanFilter').prop('disabled', false);
+                    $('#semesterFilter').val('').prop('disabled', true);
+                    currentFilters.semester = '';
+                } else {
+                    $('#bulanFilter').val('').prop('disabled', true);
+                    $('#semesterFilter').prop('disabled', false);
+                    currentFilters.month = '';
+                }
+
+                // Update columns to reflect type
+                updateColumnsForAssessmentType(type);
+
+                // Reset data view
+                hideActionButtons();
+                clearTable();
+                $('#statusInfo').hide();
+
+                // Reload data depending on state
+                if (currentFilters.class_id && currentFilters.subject_id) {
+                    if (type === 'bulanan') {
+                        // wait for month selection
+                        loadStudents();
+                        updateStatus(`Pilih bulan untuk input nilai bulanan`);
+                    } else if (currentFilters.semester) {
+                        updateStatus(`Mode ${type.toUpperCase()} - Pilih semester untuk input nilai`);
+                        loadGrades();
+                    } else {
+                        loadStudents();
+                        updateStatus(`Pilih semester untuk input nilai ${type.toUpperCase()}`);
+                    }
+                }
+            });
+
             // Filter Events
             $('#kelasFilter').change(function() {
                 const classId = $(this).val();
@@ -293,8 +354,10 @@
                 // Reset dependent fields when class changes
                 $('#matpelFilter').empty().append('<option value="">Pilih Mata Pelajaran</option>').prop('disabled', true);
                 $('#bulanFilter').val('').prop('disabled', true);
+                $('#semesterFilter').val('').prop('disabled', currentFilters.assessment_type === 'bulanan');
                 currentFilters.subject_id = '';
                 currentFilters.month = '';
+                currentFilters.semester = '';
                 
                 // Hide action buttons
                 hideActionButtons();
@@ -323,8 +386,10 @@
                 currentFilters.subject_id = subjectId;
                 
                 // Reset month field when subject changes
-                $('#bulanFilter').val('').prop('disabled', true);
+                $('#bulanFilter').val('').prop('disabled', currentFilters.assessment_type !== 'bulanan');
+                $('#semesterFilter').val('').prop('disabled', currentFilters.assessment_type === 'bulanan' ? true : false);
                 currentFilters.month = '';
+                currentFilters.semester = '';
                 
                 // Hide action buttons
                 hideActionButtons();
@@ -332,8 +397,13 @@
                 // Clear grades data but keep students
                 if (currentFilters.class_id) {
                     if (subjectId) {
-                        updateStatus(`Mata pelajaran: ${subjectName} - Pilih bulan untuk input/edit nilai`);
-                        $('#bulanFilter').prop('disabled', false);
+                        if (currentFilters.assessment_type === 'bulanan') {
+                            updateStatus(`Mata pelajaran: ${subjectName} - Pilih bulan untuk input/edit nilai`);
+                            $('#bulanFilter').prop('disabled', false);
+                        } else {
+                            updateStatus(`Mata pelajaran: ${subjectName} - Pilih semester untuk input nilai ${currentFilters.assessment_type.toUpperCase()}`);
+                            $('#semesterFilter').prop('disabled', false);
+                        }
                         // Reload students to show clean table without grades
                         loadStudents();
                     } else {
@@ -349,20 +419,38 @@
                 
                 currentFilters.month = month;
                 
-                if (month && currentFilters.class_id && currentFilters.subject_id) {
+                if (currentFilters.assessment_type === 'bulanan' && month && currentFilters.class_id && currentFilters.subject_id) {
                     updateStatus(`Bulan: ${monthName} - Mode CRUD aktif`);
                     showActionButtons();
                     loadGrades();
                 } else {
                     hideActionButtons();
                     // If month is cleared but we still have class and subject, show students
-                    if (currentFilters.class_id && currentFilters.subject_id) {
+                    if (currentFilters.assessment_type === 'bulanan' && currentFilters.class_id && currentFilters.subject_id) {
                         const subjectName = $('#matpelFilter').find('option:selected').data('name');
                         updateStatus(`Mata pelajaran: ${subjectName} - Pilih bulan untuk input/edit nilai`);
                         loadStudents();
                     } else if (currentFilters.class_id) {
                         const className = $('#kelasFilter').find('option:selected').data('name');
                         updateStatus(`Menampilkan siswa di kelas: ${className}`);
+                        loadStudents();
+                    }
+                }
+            });
+
+            $('#semesterFilter').change(function() {
+                const semester = $(this).val();
+                currentFilters.semester = semester;
+
+                if (currentFilters.assessment_type !== 'bulanan' && semester && currentFilters.class_id && currentFilters.subject_id) {
+                    updateStatus(`Semester: ${semester} - Mode ${currentFilters.assessment_type.toUpperCase()} aktif`);
+                    showActionButtons();
+                    loadGrades();
+                } else {
+                    hideActionButtons();
+                    if (currentFilters.class_id && currentFilters.subject_id) {
+                        const subjectName = $('#matpelFilter').find('option:selected').data('name');
+                        updateStatus(`Mata pelajaran: ${subjectName} - Pilih semester untuk input nilai ${currentFilters.assessment_type.toUpperCase()}`);
                         loadStudents();
                     }
                 }
@@ -433,18 +521,22 @@
                     class_id: '',
                     subject_id: '',
                     month: '',
-                    academic_year: $('#academicYearFilter').val() || '{{ date("Y") }}/{{ date("Y") + 1 }}'
+                    semester: '',
+                    academic_year: $('#academicYearFilter').val() || '{{ date("Y") }}/{{ date("Y") + 1 }}',
+                    assessment_type: $('#assessmentTypeFilter').val() || 'bulanan'
                 };
                 
                 $('#kelasFilter').val('');
                 $('#matpelFilter').empty().append('<option value="">Pilih Mata Pelajaran</option>').prop('disabled', true);
                 $('#bulanFilter').val('').prop('disabled', true);
+                $('#semesterFilter').val('').prop('disabled', currentFilters.assessment_type === 'bulanan');
                 // Don't reset academic year as it should persist
                 
                 $('#statusInfo').hide();
                 hideActionButtons();
                 clearTable();
                 currentMode = 'view';
+                updateColumnsForAssessmentType(currentFilters.assessment_type);
             }
 
             function showActionButtons() {
@@ -598,7 +690,7 @@
                         student.name,
                         student.nisn,
                         '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-',
-                        '<span class="text-muted">Pilih mata pelajaran dan bulan</span>'
+                        '<span class="text-muted">Pilih mata pelajaran dan ' + (currentFilters.assessment_type === 'bulanan' ? 'bulan' : 'semester') + '</span>'
                     ]);
                 });
                 
@@ -609,27 +701,36 @@
                 table.clear();
                 
                 grades.forEach(function(grade, index) {
-                    // Calculate P, K, and Nilai with corrected logic
-                    const calculatedValues = calculateGradeValues(grade);
-                    
-                    const row = [
-                        grade.no_absen || '-',
-                        grade.student_name,
-                        grade.student_nisn,
-                        formatGrade(grade.h1),
-                        formatGrade(grade.h2),
-                        formatGrade(grade.h3),
-                        formatGrade(grade.k1),
-                        formatGrade(grade.k2),
-                        formatGrade(grade.k3),
-                        formatGrade(grade.ck),
-                        formatGrade(calculatedValues.p),
-                        formatGrade(calculatedValues.k),
-                        formatGrade(grade.aktif),
-                        formatGrade(calculatedValues.nilai, true),
-                        generateActionButtons(grade)
-                    ];
-                    
+                    const type = currentFilters.assessment_type;
+
+                    let row;
+                    if (type === 'bulanan') {
+                        row = [
+                            grade.no_absen || '-',
+                            grade.student_name,
+                            grade.student_nisn,
+                            formatGrade(grade.tugas1), // col 3 (H1 renamed later)
+                            formatGrade(grade.tugas2), // col 4 (H2 renamed later)
+                            '-', // H3 hidden for bulanan
+                            '-', '-', '-', // K1-K3 hidden
+                            '-', // CK hidden
+                            '-', // P hidden
+                            formatGrade(grade.sikap), // K column reused as Sikap
+                            '-', // Aktif hidden for now
+                            '-', // Nilai left empty for bulanan
+                            generateActionButtons(grade)
+                        ];
+                    } else {
+                        row = [
+                            grade.no_absen || '-',
+                            grade.student_name,
+                            grade.student_nisn,
+                            '-', '-', '-', '-', '-', '-', '-', '-', '-', '-',
+                            formatGrade(grade.nilai, true),
+                            generateActionButtons(grade)
+                        ];
+                    }
+
                     const addedRow = table.row.add(row);
                     
                     // CRITICAL: Store student_id as data attribute
@@ -644,6 +745,24 @@
                 
                 // Verify student IDs are stored
                 console.log('Total rows with student IDs:', $('#mainTable tbody tr[data-student-id]').length);
+            }
+
+            function updateColumnsForAssessmentType(type) {
+                // Reset all headers to default first
+                $('#colH1').text(type === 'bulanan' ? 'Tugas 1' : 'H1');
+                $('#colH2').text(type === 'bulanan' ? 'Tugas 2' : 'H2');
+                $('#colK').text(type === 'bulanan' ? 'Sikap' : 'K');
+
+                const showForBulanan = [0,1,2,3,4,11,13,14];
+                const showForUjian = [0,1,2,13,14];
+                const totalCols = 15; // 0..14
+
+                const visibleCols = type === 'bulanan' ? showForBulanan : showForUjian;
+
+                for (let i = 0; i < totalCols; i++) {
+                    const shouldShow = visibleCols.indexOf(i) !== -1;
+                    table.column(i).visible(shouldShow);
+                }
             }
 
             // New function to calculate P, K, and Nilai based on the correct logic

@@ -24,9 +24,12 @@ use App\Http\Controllers\Backend\RoleController;
 use App\Http\Controllers\Backend\StudentGradesController;
 use App\Http\Controllers\Backend\TahfizController;
 use App\Http\Controllers\Backend\NewsController;
+use App\Http\Controllers\Backend\GalleryController;
+use App\Http\Controllers\Backend\AcademicReportController;
 use App\Http\Controllers\Frontend\BeritaController;
 use App\Models\Ekstrakurikuler;
 use App\Models\Student;
+use App\Models\Gallery;
 use Illuminate\Support\Facades\Route;
 
 // Frontend Routes
@@ -47,21 +50,51 @@ Route::get('/profile-sekolah', function () {
     return view('home.profile');
 })->name('profile-sekolah.index');
 
+// Route untuk halaman jurusan
 Route::get('/teknik-komputer-jaringan', function () {
-    return view('home.tkj');
+    $galleries = Gallery::where('jurusan', 'Teknik Komputer dan Jaringan')->latest()->take(8)->get();
+    return view('home.tkj', compact('galleries'));
 })->name('tkj.index');
 
+// Route untuk galeri lengkap per jurusan
+Route::get('/galeri/teknik-komputer-jaringan', function () {
+    $jurusan = 'Teknik Komputer dan Jaringan';
+    $galleries = Gallery::where('jurusan', $jurusan)->latest()->paginate(12);
+    return view('home.gallery', compact('galleries', 'jurusan'));
+})->name('gallery.tkj');
+
 Route::get('/teknik-kendaraan-ringan', function () {
-    return view('home.tkr');
+    $galleries = Gallery::where('jurusan', 'Teknik Kendaraan Ringan')->latest()->take(8)->get();
+    return view('home.tkr', compact('galleries'));
 })->name('tkr.index');
 
+Route::get('/galeri/teknik-kendaraan-ringan', function () {
+    $jurusan = 'Teknik Kendaraan Ringan';
+    $galleries = Gallery::where('jurusan', $jurusan)->latest()->paginate(12);
+    return view('home.gallery', compact('galleries', 'jurusan'));
+})->name('gallery.tkr');
+
 Route::get('/kimia-industri', function () {
-    return view('home.kimia');
+    $galleries = Gallery::where('jurusan', 'Teknik Kimia Industri')->latest()->take(8)->get();
+    return view('home.kimia', compact('galleries'));
 })->name('kimia.index');
 
+Route::get('/galeri/kimia-industri', function () {
+    $jurusan = 'Teknik Kimia Industri';
+    $galleries = Gallery::where('jurusan', $jurusan)->latest()->paginate(12);
+    return view('home.gallery', compact('galleries', 'jurusan'));
+})->name('gallery.kimia');
+
 Route::get('/teknik-bisnis-sepeda-motor', function () {
-    return view('home.tbsm');
+    $galleries = Gallery::where('jurusan', 'Teknik Bisnis Sepeda Motor')->latest()->take(8)->get();
+    return view('home.tbsm', compact('galleries'));
 })->name('tbsm.index');
+
+Route::get('/galeri/teknik-bisnis-sepeda-motor', function () {
+    $jurusan = 'Teknik Bisnis Sepeda Motor';
+    $galleries = Gallery::where('jurusan', $jurusan)->latest()->paginate(12);
+    return view('home.gallery', compact('galleries', 'jurusan'));
+})->name('gallery.tbsm');
 
 Route::get('/contact', function () {
     return view('home.contact');
@@ -76,6 +109,9 @@ Route::resource('/pendaftaran', PendaftaranController::class);
 Route::group(['middleware' => 'auth'], function () {
     // Admin News Management
     Route::resource('news', NewsController::class);
+
+    // Admin Galleries Management
+    Route::resource('galleries', GalleryController::class);
 
     // Dashboard Routes
     Route::prefix('dashboard')->name('dashboard')->group(function() {
@@ -127,6 +163,15 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('statistics', [StudentGradesController::class, 'getStatistics'])->name('statistics');            
         Route::get('get-subjects-by-class', [StudentGradesController::class, 'getSubjectsByClass'])->name('get-subjects-by-class');
         Route::resource('/', StudentGradesController::class);
+    });
+
+    // Academic Reports Routes
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('academic', [AcademicReportController::class, 'index'])->name('academic');
+        Route::get('academic/semester-data', [AcademicReportController::class, 'semesterData'])->name('academic.semester-data');
+        Route::get('academic/all-subjects-data', [AcademicReportController::class, 'allSubjectsData'])->name('academic.all-subjects-data');
+        Route::get('academic/export-pdf', [AcademicReportController::class, 'exportPdf'])->name('academic.export-pdf');
+        Route::get('academic/export-excel', [AcademicReportController::class, 'exportExcel'])->name('academic.export-excel');
     });
 
     // Schedule Management Routes

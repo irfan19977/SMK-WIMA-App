@@ -154,21 +154,21 @@
             <li>Industry Standard Certification</li>
           </ul>
 
-          <div class="certification-box mt-4 p-3 bg-light rounded">
-            <h6><i class="bi bi-award text-warning me-2"></i>Sertifikasi yang Didapat</h6>
-            <div class="row mt-2">
-              <div class="col-6">
-                <small class="text-muted">• Motorcycle Technician</small><br>
-                <small class="text-muted">• Business Management</small><br>
-                <small class="text-muted">• Sales & Marketing</small>
-              </div>
-              <div class="col-6">
-                <small class="text-muted">• BNSP Certified</small><br>
-                <small class="text-muted">• Customer Service</small><br>
-                <small class="text-muted">• Entrepreneurship</small>
-              </div>
-            </div>
-          </div>
+          <!--<div class="certification-box mt-4 p-3 bg-light rounded">-->
+          <!--  <h6><i class="bi bi-award text-warning me-2"></i>Sertifikasi yang Didapat</h6>-->
+          <!--  <div class="row mt-2">-->
+          <!--    <div class="col-6">-->
+          <!--      <small class="text-muted">• Motorcycle Technician</small><br>-->
+          <!--      <small class="text-muted">• Business Management</small><br>-->
+          <!--      <small class="text-muted">• Sales & Marketing</small>-->
+          <!--    </div>-->
+          <!--    <div class="col-6">-->
+          <!--      <small class="text-muted">• BNSP Certified</small><br>-->
+          <!--      <small class="text-muted">• Customer Service</small><br>-->
+          <!--      <small class="text-muted">• Entrepreneurship</small>-->
+          <!--    </div>-->
+          <!--  </div>-->
+          <!--</div>-->
         </div>
       </div>
     </div>
@@ -245,113 +245,24 @@
       </div>
 
       <div class="row g-3">
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop" alt="Workshop Motor" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-tools"></i>
-                <h6 class="text-white mt-2">Workshop</h6>
-                <p class="text-white-50 small">Praktik perbaikan motor</p>
+        @foreach($galleries as $g)
+          <div class="col-lg-3 col-md-6">
+            <div class="gallery-item">
+              <img src="{{ $g->image ? asset('storage/' . $g->image) : asset('assets/img/default-news.jpg') }}" alt="{{ $g->title }}" class="img-fluid rounded-3">
+              <div class="gallery-overlay">
+                <div class="gallery-content">
+                  <i class="bi bi-images"></i>
+                  <h6 class="text-white mt-2">{{ $g->title }}</h6>
+                  <p class="text-white-50 small">{{ Str::limit(strip_tags($g->description), 80) }}</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop" alt="Showroom" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-shop"></i>
-                <h6 class="text-white mt-2">Showroom</h6>
-                <p class="text-white-50 small">Display dan penjualan motor</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1550355191-aa8a80b41353?w=400&h=300&fit=crop" alt="Parts Center" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-box-seam"></i>
-                <h6 class="text-white mt-2">Parts Center</h6>
-                <p class="text-white-50 small">Manajemen suku cadang</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1486754735734-325b5831c3ad?w=400&h=300&fit=crop" alt="Business Training" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-graph-up"></i>
-                <h6 class="text-white mt-2">Business</h6>
-                <p class="text-white-50 small">Pelatihan bisnis dan marketing</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=400&h=300&fit=crop" alt="Customer Service" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-people"></i>
-                <h6 class="text-white mt-2">Service</h6>
-                <p class="text-white-50 small">Pelayanan customer service</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1561736778-92e52a7769ef?w=400&h=300&fit=crop" alt="Team Project" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-lightbulb"></i>
-                <h6 class="text-white mt-2">Innovation</h6>
-                <p class="text-white-50 small">Pengembangan ide bisnis</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop" alt="Team Collaboration" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-handshake"></i>
-                <h6 class="text-white mt-2">Collaboration</h6>
-                <p class="text-white-50 small">Kerja sama tim dan partner</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&h=300&fit=crop" alt="Certification" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-award"></i>
-                <h6 class="text-white mt-2">Sertifikasi</h6>
-                <p class="text-white-50 small">Program sertifikasi kompetensi</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        @endforeach
       </div>
 
       <div class="text-center mt-5">
-        <a href="#" class="btn btn-outline-primary btn-lg">
+        <a href="{{ route('gallery.tbsm') }}" class="btn btn-outline-primary btn-lg">
           <i class="bi bi-images me-2"></i>
           Lihat Galeri Lengkap
         </a>

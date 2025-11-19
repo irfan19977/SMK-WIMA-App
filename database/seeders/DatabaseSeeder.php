@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
             PermissionsSeeder::class,
             // AttendanceXTKJSeeder::class,
             // AttendanceXITKJSeeder::class
-            NewsSeeder::class,
+            // NewsSeeder::class,
         ]);
     }
 }

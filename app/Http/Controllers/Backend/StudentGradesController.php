@@ -7,6 +7,7 @@ use App\Models\Classes;
 use App\Models\Student;
 use App\Models\StudentGrades;
 use App\Models\Subject;
+use App\Helpers\AcademicYearHelper;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -89,7 +90,8 @@ class StudentGradesController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'class_id' => 'required|string|exists:classes,id',
-                'academic_year' => 'nullable|string'
+                'academic_year' => 'nullable|string',
+                'semester' => 'nullable|in:ganjil,genap'
             ]);
 
             if ($validator->fails()) {
@@ -100,7 +102,8 @@ class StudentGradesController extends Controller
                 ], 422);
             }
 
-            $academicYear = $request->academic_year ?: date('Y') . '/' . (date('Y') + 1);
+            $academicYear = $request->academic_year ?: AcademicYearHelper::getCurrentAcademicYear();
+
             $user = Auth::user();
 
             // Query mata pelajaran yang dijadwalkan untuk kelas tertentu
@@ -128,6 +131,20 @@ class StudentGradesController extends Controller
                 }
                 
                 $query->where('schedule.teacher_id', $teacherId);
+            }
+
+            // Jika semester ditentukan, batasi ke mapel yang punya entri nilai di semester tsb (opsional)
+            if ($request->filled('semester')) {
+                $semester = $request->semester;
+                $classId = $request->class_id;
+                $query->whereExists(function($q) use ($semester, $classId, $academicYear) {
+                    $q->from('student_grades as sg')
+                      ->whereRaw('sg.subject_id = subject.id')
+                      ->where('sg.class_id', $classId)
+                      ->where('sg.academic_year', $academicYear)
+                      ->where('sg.semester', $semester)
+                      ->whereNull('sg.deleted_at');
+                });
             }
 
             $subjects = $query->distinct()
@@ -284,8 +301,10 @@ class StudentGradesController extends Controller
             $validator = Validator::make($request->all(), [
                 'class_id' => 'required|string|exists:classes,id',
                 'subject_id' => 'required|string|exists:subject,id',
-                'month' => 'required|integer|min:1|max:12',
-                'academic_year' => 'nullable|string'
+                'academic_year' => 'nullable|string',
+                'assessment_type' => 'nullable|in:bulanan,uts,uas',
+                'month' => 'nullable|integer|min:1|max:12',
+                'semester' => 'nullable|in:ganjil,genap'
             ]);
 
             if ($validator->fails()) {
@@ -296,7 +315,26 @@ class StudentGradesController extends Controller
                 ], 422);
             }
 
-            $academicYear = $request->academic_year ?: date('Y') . '/' . (date('Y') + 1);
+            $academicYear = $request->academic_year ?: AcademicYearHelper::getCurrentAcademicYear();
+            $assessmentType = $request->input('assessment_type') ?: 'bulanan';
+            $requestMonth = $request->input('month');
+            $requestSemester = $request->input('semester');
+
+            if ($assessmentType === 'bulanan') {
+                if (!$requestMonth) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Month is required for bulanan assessment'
+                    ], 422);
+                }
+            } else {
+                if (!$requestSemester) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Semester is required for UTS/UAS assessment'
+                    ], 422);
+                }
+            }
             $user = Auth::user();
             
             // Validasi akses teacher (kode existing...)
@@ -345,47 +383,85 @@ class StudentGradesController extends Controller
                 ->get();
 
             // Get existing grades
-            $existingGrades = StudentGrades::where('class_id', $request->class_id)
+            $existingQuery = StudentGrades::where('class_id', $request->class_id)
                 ->where('subject_id', $request->subject_id)
-                ->where('month', $request->month)
                 ->where('academic_year', $academicYear)
-                ->whereNull('deleted_at')
-                ->get()
-                ->keyBy('student_id');
+                ->where('assessment_type', $assessmentType)
+                ->whereNull('deleted_at');
+
+            if ($assessmentType === 'bulanan') {
+                $existingQuery->where('month', $requestMonth);
+            } else {
+                $existingQuery->where('semester', $requestSemester);
+            }
+
+            $existingGrades = $existingQuery->get()->keyBy('student_id');
 
             // Combine student data with grades and attendance
-            $gradesData = $students->map(function ($student) use ($existingGrades, $request, $academicYear) {
+            $gradesData = $students->map(function ($student) use ($existingGrades, $request, $academicYear, $assessmentType) {
                 $grade = $existingGrades->get($student->student_id);
                 
-                // Hitung attendance percentage untuk nilai aktif
-                $attendancePercentage = $this->calculateAttendancePercentage(
-                    $student->student_id,
-                    $request->class_id,
-                    $request->subject_id,
-                    $request->month,
-                    $academicYear
-                );
-                
-                return [
-                    'id' => $grade->id ?? null,
-                    'student_id' => $student->student_id,
-                    'student_name' => $student->student_name,
-                    'student_nisn' => $student->student_nisn,
-                    'no_absen' => $student->no_absen,
-                    'h1' => $grade->h1 ?? null,
-                    'h2' => $grade->h2 ?? null,
-                    'h3' => $grade->h3 ?? null,
-                    'k1' => $grade->k1 ?? null,
-                    'k2' => $grade->k2 ?? null,
-                    'k3' => $grade->k3 ?? null,
-                    'ck' => $grade->ck ?? null,
-                    'p' => $grade->p ?? null,
-                    'k' => $grade->k ?? null,
-                    'aktif' => $attendancePercentage, // Gunakan attendance percentage
-                    'nilai' => $grade->nilai ?? null,
-                    'created_at' => $grade->created_at ?? null,
-                    'updated_at' => $grade->updated_at ?? null,
-                ];
+                if ($assessmentType === 'bulanan') {
+                    // Hitung attendance percentage untuk nilai aktif
+                    $attendancePercentage = $this->calculateAttendancePercentage(
+                        $student->student_id,
+                        $request->class_id,
+                        $request->subject_id,
+                        $request->month,
+                        $academicYear
+                    );
+
+                    return [
+                        'id' => $grade->id ?? null,
+                        'student_id' => $student->student_id,
+                        'student_name' => $student->student_name,
+                        'student_nisn' => $student->student_nisn,
+                        'no_absen' => $student->no_absen,
+                        // map ke format lama untuk kompatibilitas tampilan saat ini
+                        'h1' => null,
+                        'h2' => null,
+                        'h3' => null,
+                        'k1' => null,
+                        'k2' => null,
+                        'k3' => null,
+                        'ck' => null,
+                        'p' => null,
+                        'k' => null,
+                        'aktif' => $attendancePercentage,
+                        // nilai bulanan tidak dihitung di sini; biarkan null
+                        'nilai' => null,
+                        // kirimkan komponen baru juga untuk UI baru (opsional)
+                        'tugas1' => $grade->tugas1 ?? null,
+                        'tugas2' => $grade->tugas2 ?? null,
+                        'sikap' => $grade->sikap ?? null,
+                        'created_at' => $grade->created_at ?? null,
+                        'updated_at' => $grade->updated_at ?? null,
+                    ];
+                } else {
+                    // UTS/UAS: tampilkan 1 nilai di kolom Nilai
+                    $examScore = $assessmentType === 'uts' ? ($grade->uts ?? null) : ($grade->uas ?? null);
+
+                    return [
+                        'id' => $grade->id ?? null,
+                        'student_id' => $student->student_id,
+                        'student_name' => $student->student_name,
+                        'student_nisn' => $student->student_nisn,
+                        'no_absen' => $student->no_absen,
+                        'h1' => null,
+                        'h2' => null,
+                        'h3' => null,
+                        'k1' => null,
+                        'k2' => null,
+                        'k3' => null,
+                        'ck' => null,
+                        'p' => null,
+                        'k' => null,
+                        'aktif' => null,
+                        'nilai' => $examScore,
+                        'created_at' => $grade->created_at ?? null,
+                        'updated_at' => $grade->updated_at ?? null,
+                    ];
+                }
             });
 
             return response()->json([
@@ -416,8 +492,9 @@ class StudentGradesController extends Controller
                 'class_id' => 'required|string|exists:classes,id',
                 'subject_id' => 'required|string|exists:subject,id',
                 'academic_year' => 'required|string',
-                'semester' => 'required|in:ganjil,genap',
-                'month' => 'required|integer|min:1|max:12',
+                'semester' => 'nullable|in:ganjil,genap',
+                'assessment_type' => 'nullable|in:bulanan,uts,uas',
+                'month' => 'nullable|integer|min:1|max:12',
                 'h1' => 'nullable|numeric|min:0|max:100',
                 'h2' => 'nullable|numeric|min:0|max:100',
                 'h3' => 'nullable|numeric|min:0|max:100',
@@ -428,7 +505,13 @@ class StudentGradesController extends Controller
                 'p' => 'nullable|numeric|min:0|max:100',
                 'k' => 'nullable|numeric|min:0|max:100',
                 'aktif' => 'nullable|numeric|min:0|max:100',
-                'nilai' => 'nullable|numeric|min:0|max:100'
+                'nilai' => 'nullable|numeric|min:0|max:100',
+                // New schema
+                'tugas1' => 'nullable|numeric|min:0|max:100',
+                'tugas2' => 'nullable|numeric|min:0|max:100',
+                'sikap' => 'nullable|numeric|min:0|max:100',
+                'uts' => 'nullable|numeric|min:0|max:100',
+                'uas' => 'nullable|numeric|min:0|max:100'
             ]);
 
             if ($validator->fails()) {
@@ -469,14 +552,22 @@ class StudentGradesController extends Controller
                 }
             }
 
-            // Check if grade already exists
-            $existingGrade = StudentGrades::where([
+            // Check if grade already exists based on assessment type
+            $gradeQuery = StudentGrades::where([
                 'student_id' => $request->student_id,
                 'subject_id' => $request->subject_id,
                 'class_id' => $request->class_id,
                 'academic_year' => $request->academic_year,
-                'month' => $request->month
-            ])->first();
+                'assessment_type' => $requestAssessmentType,
+            ]);
+
+            if ($requestAssessmentType === 'bulanan') {
+                $gradeQuery->where('month', $requestMonth);
+            } else { // uts/uas
+                $gradeQuery->where('semester', $requestSemester);
+            }
+
+            $existingGrade = $gradeQuery->first();
 
             if ($existingGrade) {
                 return response()->json([
@@ -493,28 +584,41 @@ class StudentGradesController extends Controller
                 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
             ];
 
-            $grade = StudentGrades::create([
+            // Prepare payload per assessment type
+            $basePayload = [
                 'id' => Str::uuid(),
                 'student_id' => $request->student_id,
                 'class_id' => $request->class_id,
                 'subject_id' => $request->subject_id,
                 'academic_year' => $request->academic_year,
-                'semester' => $request->semester,
-                'month' => $request->month,
-                'month_name' => $monthNames[$request->month],
-                'h1' => $request->h1,
-                'h2' => $request->h2,
-                'h3' => $request->h3,
-                'k1' => $request->k1,
-                'k2' => $request->k2,
-                'k3' => $request->k3,
-                'ck' => $request->ck,
-                'p' => $request->p,
-                'k' => $request->k,
-                'aktif' => $request->aktif,
-                'nilai' => $request->nilai,
-                'created_by' => Auth::id()
-            ]);
+                'semester' => $requestAssessmentType === 'bulanan' ? ($requestSemester ?? AcademicYearHelper::getCurrentSemester()) : $requestSemester,
+                'assessment_type' => $requestAssessmentType,
+                'created_by' => Auth::id(),
+            ];
+
+            if ($requestAssessmentType === 'bulanan') {
+                $payload = array_merge($basePayload, [
+                    'month' => $requestMonth,
+                    'month_name' => $monthNames[$requestMonth] ?? null,
+                    'tugas1' => $request->tugas1,
+                    'tugas2' => $request->tugas2,
+                    'sikap' => $request->sikap,
+                ]);
+            } elseif ($requestAssessmentType === 'uts') {
+                $payload = array_merge($basePayload, [
+                    'month' => null,
+                    'month_name' => null,
+                    'uts' => $request->uts,
+                ]);
+            } else { // uas
+                $payload = array_merge($basePayload, [
+                    'month' => null,
+                    'month_name' => null,
+                    'uas' => $request->uas,
+                ]);
+            }
+
+            $grade = StudentGrades::create($payload);
 
             DB::commit();
 
@@ -551,7 +655,13 @@ class StudentGradesController extends Controller
                 'p' => 'nullable|numeric|min:0|max:100',
                 'k' => 'nullable|numeric|min:0|max:100',
                 'aktif' => 'nullable|numeric|min:0|max:100',
-                'nilai' => 'nullable|numeric|min:0|max:100'
+                'nilai' => 'nullable|numeric|min:0|max:100',
+                // New schema
+                'tugas1' => 'nullable|numeric|min:0|max:100',
+                'tugas2' => 'nullable|numeric|min:0|max:100',
+                'sikap' => 'nullable|numeric|min:0|max:100',
+                'uts' => 'nullable|numeric|min:0|max:100',
+                'uas' => 'nullable|numeric|min:0|max:100'
             ]);
 
             if ($validator->fails()) {
@@ -607,6 +717,12 @@ class StudentGradesController extends Controller
                 'k' => $request->k,
                 'aktif' => $request->aktif,
                 'nilai' => $request->nilai,
+                // New schema
+                'tugas1' => $request->tugas1,
+                'tugas2' => $request->tugas2,
+                'sikap' => $request->sikap,
+                'uts' => $request->uts,
+                'uas' => $request->uas,
                 'updated_by' => Auth::id()
             ]);
 
@@ -791,8 +907,9 @@ class StudentGradesController extends Controller
                 'grades.*.class_id' => 'required|string|exists:classes,id',
                 'grades.*.subject_id' => 'required|string|exists:subject,id',
                 'grades.*.academic_year' => 'required|string',
-                'grades.*.semester' => 'required|in:ganjil,genap',
-                'grades.*.month' => 'required|integer|min:1|max:12',
+                'grades.*.semester' => 'nullable|in:ganjil,genap',
+                'grades.*.assessment_type' => 'nullable|in:bulanan,uts,uas',
+                'grades.*.month' => 'nullable|integer|min:1|max:12',
                 'grades.*.h1' => 'nullable|numeric|min:0|max:100',
                 'grades.*.h2' => 'nullable|numeric|min:0|max:100',
                 'grades.*.h3' => 'nullable|numeric|min:0|max:100',
@@ -802,6 +919,12 @@ class StudentGradesController extends Controller
                 'grades.*.ck' => 'nullable|numeric|min:0|max:100',
                 'grades.*.aktif' => 'nullable|numeric|min:0|max:100',
                 // Remove p, k, nilai from validation as they are calculated
+                // New schema
+                'grades.*.tugas1' => 'nullable|numeric|min:0|max:100',
+                'grades.*.tugas2' => 'nullable|numeric|min:0|max:100',
+                'grades.*.sikap' => 'nullable|numeric|min:0|max:100',
+                'grades.*.uts' => 'nullable|numeric|min:0|max:100',
+                'grades.*.uas' => 'nullable|numeric|min:0|max:100',
             ]);
 
             if ($validator->fails()) {
@@ -867,83 +990,81 @@ class StudentGradesController extends Controller
             $created = 0;
 
             foreach ($request->grades as $gradeData) {
-                // Calculate P (average of H1, H2, H3 that are not null/0)
-                $hValues = array_filter([
-                    $gradeData['h1'] ?? null, 
-                    $gradeData['h2'] ?? null, 
-                    $gradeData['h3'] ?? null
-                ], function($value) {
-                    return $value !== null && $value !== '' && $value > 0;
-                });
-                
-                $pValue = count($hValues) > 0 ? array_sum($hValues) / count($hValues) : null;
-                
-                // Calculate K (average of K1, K2, K3 that are not null/0)
-                $kValuesArray = array_filter([
-                    $gradeData['k1'] ?? null, 
-                    $gradeData['k2'] ?? null, 
-                    $gradeData['k3'] ?? null
-                ], function($value) {
-                    return $value !== null && $value !== '' && $value > 0;
-                });
-                
-                $kValue = count($kValuesArray) > 0 ? array_sum($kValuesArray) / count($kValuesArray) : null;
-                
-                // Calculate final grade (average of P and K if both exist)
-                $finalGradeValues = array_filter([$pValue, $kValue], function($value) {
-                    return $value !== null && $value > 0;
-                });
-                
-                $finalGrade = count($finalGradeValues) > 0 ? array_sum($finalGradeValues) / count($finalGradeValues) : null;
+                $assessmentType = $gradeData['assessment_type'] ?? 'bulanan';
 
-                // Find existing grade
-                $existingGrade = StudentGrades::where([
+                // Validate required fields conditionally
+                if ($assessmentType === 'bulanan') {
+                    if (empty($gradeData['month'])) {
+                        continue; // skip invalid row
+                    }
+                } else { // uts/uas
+                    if (empty($gradeData['semester'])) {
+                        continue; // skip invalid row
+                    }
+                }
+
+                // Find existing grade by combination
+                $existingQuery = StudentGrades::where([
                     'student_id' => $gradeData['student_id'],
                     'subject_id' => $gradeData['subject_id'],
                     'class_id' => $gradeData['class_id'],
                     'academic_year' => $gradeData['academic_year'],
-                    'month' => $gradeData['month']
-                ])->first();
+                    'assessment_type' => $assessmentType,
+                ]);
 
-                // Prepare update data
-                $updateData = [
-                    'h1' => $gradeData['h1'] ?? null,
-                    'h2' => $gradeData['h2'] ?? null,
-                    'h3' => $gradeData['h3'] ?? null,
-                    'k1' => $gradeData['k1'] ?? null,
-                    'k2' => $gradeData['k2'] ?? null,
-                    'k3' => $gradeData['k3'] ?? null,
-                    'ck' => $gradeData['ck'] ?? null,
-                    'p' => $pValue,
-                    'k' => $kValue,
-                    'aktif' => $gradeData['aktif'] ?? null,
-                    'nilai' => $finalGrade
-                ];
+                if ($assessmentType === 'bulanan') {
+                    $existingQuery->where('month', $gradeData['month']);
+                } else {
+                    $existingQuery->where('semester', $gradeData['semester']);
+                }
+
+                $existingGrade = $existingQuery->first();
+
+                // Prepare update data per type
+                if ($assessmentType === 'bulanan') {
+                    $updateData = [
+                        'tugas1' => $gradeData['tugas1'] ?? null,
+                        'tugas2' => $gradeData['tugas2'] ?? null,
+                        'sikap' => $gradeData['sikap'] ?? null,
+                        'aktif' => $gradeData['aktif'] ?? null,
+                        // nilai final semester dihitung di laporan; nilai per baris bulanan dibiarkan null
+                    ];
+                } elseif ($assessmentType === 'uts') {
+                    $updateData = [
+                        'uts' => $gradeData['uts'] ?? null,
+                    ];
+                } else { // uas
+                    $updateData = [
+                        'uas' => $gradeData['uas'] ?? null,
+                    ];
+                }
 
                 if ($existingGrade) {
-                    // Update existing grade
                     $existingGrade->update(array_merge($updateData, [
                         'updated_by' => Auth::id()
                     ]));
                     $updated++;
                 } else {
-                    // Create new grade only if there's at least one grade value
-                    $hasValues = array_filter($updateData, function($value) { 
-                        return $value !== null && $value !== '' && $value > 0; 
+                    // Determine if there is any value to persist
+                    $hasValues = array_filter($updateData, function($value) {
+                        return $value !== null && $value !== '' && $value >= 0;
                     });
-                    
+
                     if (count($hasValues) > 0) {
-                        StudentGrades::create(array_merge($updateData, [
+                        $createPayload = array_merge($updateData, [
                             'id' => Str::uuid(),
                             'student_id' => $gradeData['student_id'],
                             'class_id' => $gradeData['class_id'],
                             'subject_id' => $gradeData['subject_id'],
                             'academic_year' => $gradeData['academic_year'],
-                            'semester' => $gradeData['semester'],
-                            'month' => $gradeData['month'],
-                            'month_name' => $monthNames[$gradeData['month']],
-                            'created_by' => Auth::id()
-                        ]));
+                            'semester' => $assessmentType === 'bulanan' ? ($gradeData['semester'] ?? AcademicYearHelper::getCurrentSemester()) : $gradeData['semester'],
+                            'assessment_type' => $assessmentType,
+                            'month' => $assessmentType === 'bulanan' ? $gradeData['month'] : null,
+                            'month_name' => $assessmentType === 'bulanan' && !empty($gradeData['month']) ? $monthNames[$gradeData['month']] : null,
+                            'created_by' => Auth::id(),
+                        ]);
+
+                        StudentGrades::create($createPayload);
                         $created++;
                     }
                 }

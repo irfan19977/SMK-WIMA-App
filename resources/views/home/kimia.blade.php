@@ -154,21 +154,21 @@
             <li>Industrial Automation</li>
           </ul>
 
-          <div class="certification-box mt-4 p-3 bg-light rounded">
-            <h6><i class="bi bi-award text-warning me-2"></i>Sertifikasi yang Didapat</h6>
-            <div class="row mt-2">
-              <div class="col-6">
-                <small class="text-muted">• Chemical Process Safety</small><br>
-                <small class="text-muted">• ISO 9001 Auditor</small><br>
-                <small class="text-muted">• HAZOP Certified</small>
-              </div>
-              <div class="col-6">
-                <small class="text-muted">• BNSP Certified</small><br>
-                <small class="text-muted">• DCS/SCADA Operator</small><br>
-                <small class="text-muted">• Environmental Analyst</small>
-              </div>
-            </div>
-          </div>
+          <!--<div class="certification-box mt-4 p-3 bg-light rounded">-->
+          <!--  <h6><i class="bi bi-award text-warning me-2"></i>Sertifikasi yang Didapat</h6>-->
+          <!--  <div class="row mt-2">-->
+          <!--    <div class="col-6">-->
+          <!--      <small class="text-muted">• Chemical Process Safety</small><br>-->
+          <!--      <small class="text-muted">• ISO 9001 Auditor</small><br>-->
+          <!--      <small class="text-muted">• HAZOP Certified</small>-->
+          <!--    </div>-->
+          <!--    <div class="col-6">-->
+          <!--      <small class="text-muted">• BNSP Certified</small><br>-->
+          <!--      <small class="text-muted">• DCS/SCADA Operator</small><br>-->
+          <!--      <small class="text-muted">• Environmental Analyst</small>-->
+          <!--    </div>-->
+          <!--  </div>-->
+          <!--</div>-->
         </div>
       </div>
     </div>
@@ -245,113 +245,24 @@
       </div>
 
       <div class="row g-3">
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=400&h=300&fit=crop" alt="Lab Kimia" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-flask"></i>
-                <h6 class="text-white mt-2">Lab Kimia</h6>
-                <p class="text-white-50 small">Praktik analisis kimia</p>
+        @foreach($galleries as $g)
+          <div class="col-lg-3 col-md-6">
+            <div class="gallery-item">
+              <img src="{{ $g->image ? asset('storage/' . $g->image) : asset('assets/img/default-news.jpg') }}" alt="{{ $g->title }}" class="img-fluid rounded-3">
+              <div class="gallery-overlay">
+                <div class="gallery-content">
+                  <i class="bi bi-images"></i>
+                  <h6 class="text-white mt-2">{{ $g->title }}</h6>
+                  <p class="text-white-50 small">{{ Str::limit(strip_tags($g->description), 80) }}</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="{{ asset('frontend/assets/img/TKI 1.jpg') }}" alt="Process Equipment" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-gear-wide-connected"></i>
-                <h6 class="text-white mt-2">Process Lab</h6>
-                <p class="text-white-50 small">Unit operation dan reactor</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="{{ asset('frontend/assets/img/TKI 2.jpg') }}" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-search"></i>
-                <h6 class="text-white mt-2">QC Lab</h6>
-                <p class="text-white-50 small">Kontrol kualitas produk</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop" alt="Industrial Plant" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-building"></i>
-                <h6 class="text-white mt-2">Plant Visit</h6>
-                <p class="text-white-50 small">Kunjungan industri kimia</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1517180102446-f3ece451e9d8?w=400&h=300&fit=crop" alt="Chemical Research" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-lightbulb"></i>
-                <h6 class="text-white mt-2">R&D</h6>
-                <p class="text-white-50 small">Penelitian dan pengembangan</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1561736778-92e52a7769ef?w=400&h=300&fit=crop" alt="Safety Training" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-shield-check"></i>
-                <h6 class="text-white mt-2">Safety</h6>
-                <p class="text-white-50 small">Pelatihan keselamatan kerja</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop" alt="Team Project" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-people"></i>
-                <h6 class="text-white mt-2">Team Project</h6>
-                <p class="text-white-50 small">Kerja sama tim dalam project</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6">
-          <div class="gallery-item">
-            <img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&h=300&fit=crop" alt="Certification" class="img-fluid rounded-3">
-            <div class="gallery-overlay">
-              <div class="gallery-content">
-                <i class="bi bi-award"></i>
-                <h6 class="text-white mt-2">Sertifikasi</h6>
-                <p class="text-white-50 small">Program sertifikasi industri</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        @endforeach
       </div>
 
       <div class="text-center mt-5">
-        <a href="#" class="btn btn-outline-primary btn-lg">
+        <a href="{{ route('gallery.kimia') }}" class="btn btn-outline-primary btn-lg">
           <i class="bi bi-images me-2"></i>
           Lihat Galeri Lengkap
         </a>

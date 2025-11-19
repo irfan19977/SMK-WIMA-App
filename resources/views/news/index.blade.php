@@ -106,7 +106,7 @@
 
 <!-- Modal untuk Create/Edit -->
 <div class="modal fade" id="newsModal" tabindex="-1" role="dialog" aria-labelledby="newsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="newsModalLabel">Tambah Berita</h5>
@@ -200,6 +200,14 @@
         border-radius: 3px;
         margin-right: 5px;
         margin-bottom: 5px;
+    }
+    /* Ensure modal content scrolls, not the background */
+    .modal-open {
+        overflow: hidden;
+    }
+    .modal .modal-body {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
     }
 </style>
 @endpush

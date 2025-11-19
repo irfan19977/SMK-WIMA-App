@@ -75,7 +75,8 @@ class NewsController extends Controller
         ]);
 
         try {
-            $data = $request->all();
+            // Whitelist allowed fields only
+            $data = $request->only(['title','category','content','excerpt','tags','is_published']);
             $data['slug'] = Str::slug($request->title);
             $data['user_id'] = Auth::id();
             $data['is_published'] = $request->has('is_published');
@@ -129,7 +130,8 @@ class NewsController extends Controller
 
         try {
             $news = News::findOrFail($id);
-            $data = $request->except(['_token', '_method']);
+            // Whitelist allowed fields only
+            $data = $request->only(['title','category','content','excerpt','tags','is_published']);
             
             if ($request->title != $news->title) {
                 $data['slug'] = $this->createSlug($request->title, $news->id);

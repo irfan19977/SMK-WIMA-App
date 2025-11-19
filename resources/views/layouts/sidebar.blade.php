@@ -230,7 +230,7 @@
                         </a>
                     </li>
                     <li class="dropdown {{ Request::is('reports/academic*') ? 'active' : '' }}">
-                        <a href="#" class="nav-link">
+                        <a href="{{ route('reports.academic') }}" class="nav-link">
                             <i class="fas fa-graduation-cap"></i><span>Laporan Akademik</span>
                         </a>
                     </li>

@@ -37,7 +37,13 @@ class StudentGrades extends Model
         'k' => 'decimal:2',
         'aktif' => 'decimal:2',
         'nilai' => 'decimal:2',
-        'month' => 'integer'
+        'month' => 'integer',
+        // New grading schema
+        'tugas1' => 'decimal:2',
+        'tugas2' => 'decimal:2',
+        'sikap' => 'decimal:2',
+        'uts' => 'decimal:2',
+        'uas' => 'decimal:2'
     ];
 
     protected $dates = [

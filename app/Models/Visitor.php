@@ -67,7 +67,7 @@ class Visitor extends Model
      */
     public static function getWeeklyVisitors()
     {
-        return static::where('visited_at', '>=', Carbon::now()->startOfWeek())->count();
+        return static::where('visited_at', '>=', Carbon::now()->subDays(6)->startOfDay())->count();
     }
 
     /**
@@ -104,12 +104,18 @@ class Visitor extends Model
         $url = request()->fullUrl();
         $referer = request()->header('referer');
 
-        // Check if this is a unique visitor for today
+        // Check if this visitor (IP + User Agent) has already been recorded today
         $existingVisitor = static::where('ip_address', $ip)
+            ->where('user_agent', $userAgent)
             ->whereDate('visited_at', Carbon::today())
             ->first();
 
-        $isUnique = !$existingVisitor;
+        // If already recorded today, do not create another record
+        if ($existingVisitor) {
+            return $existingVisitor;
+        }
+
+        $isUnique = true;
 
         // Get browser and OS info from user agent
         $browser = static::getBrowser($userAgent);
