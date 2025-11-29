@@ -30,12 +30,32 @@ use App\Http\Controllers\Frontend\BeritaController;
 use App\Models\Ekstrakurikuler;
 use App\Models\Student;
 use App\Models\Gallery;
+use App\Models\News;
 use Illuminate\Support\Facades\Route;
 
 // Frontend Routes
 Route::get('/', function () {
-    return view('home.index');
+    // Ambil 1 berita terbaru untuk bagian atas
+    $featuredNews = News::published()
+        ->latest('published_at')
+        ->first();
+        
+    // Ambil 3 berita terbaru untuk bagian informasi terbaru
+    $latestNews = News::published()
+        ->latest('published_at')
+        ->skip(1) // Lewati berita yang sudah diambil untuk featured
+        ->take(3)
+        ->get();
+
+    $categoriesNews = News::published()
+        ->latest('published_at')
+        ->where('category', 'Kegiatan')
+        ->take(3)
+        ->get();
+
+    return view('home.index', compact('featuredNews', 'latestNews', 'categoriesNews'));
 })->name('/');
+
 
 // Berita Routes - Keep these and remove duplicates below
 Route::get('/berita', [BeritaController::class, 'index'])->name('berita.index');
@@ -52,7 +72,7 @@ Route::get('/profile-sekolah', function () {
 
 // Route untuk halaman jurusan
 Route::get('/teknik-komputer-jaringan', function () {
-    $galleries = Gallery::where('jurusan', 'Teknik Komputer dan Jaringan')->latest()->take(8)->get();
+    $galleries = Gallery::where('jurusan', 'Teknik Komputer dan Jaringan')->latest()->take(3)->get();
     return view('home.tkj', compact('galleries'));
 })->name('tkj.index');
 

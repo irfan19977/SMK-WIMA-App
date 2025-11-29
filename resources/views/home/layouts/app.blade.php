@@ -1,145 +1,205 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <title>SMK PGRI LAWANG</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="{{ asset('frontend/images/logo 1.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('frontend/images/logo 1.png') }}">
+    
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
 
-<head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <link rel="stylesheet" href="{{ asset('frontend/css/open-iconic-bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('frontend/css/animate.css') }}">
+    
+    <link rel="stylesheet" href="{{ asset('frontend/css/owl.carousel.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('frontend/css/owl.theme.default.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('frontend/css/magnific-popup.css') }}">
 
-  <title>SMK PGRI LAWANG</title>
-  <meta content="" name="description">
-  <meta content="" name="keywords">
+    <link rel="stylesheet" href="{{ asset('frontend/css/aos.css') }}">
 
-  <!-- Favicons -->
-<link href="{{ asset('frontend/assets/img/logo 1.png') }}" rel="icon">
-<link href="{{ asset('frontend/assets/img/logo 1.png') }}" rel="apple-touch-icon">
+    <link rel="stylesheet" href="{{ asset('frontend/css/ionicons.min.css') }}">
 
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('frontend/css/bootstrap-datepicker.css') }}">
+    <link rel="stylesheet" href="{{ asset('frontend/css/jquery.timepicker.css') }}">
 
-<!-- Vendor CSS Files -->
-<link href="{{ asset('frontend/assets/vendor/aos/aos.css') }}" rel="stylesheet">
-<link href="{{ asset('frontend/assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
-<link href="{{ asset('frontend/assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
-<link href="{{ asset('frontend/assets/vendor/boxicons/css/boxicons.min.css') }}" rel="stylesheet">
-<link href="{{ asset('frontend/assets/vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{{ asset('frontend/css/flaticon.css') }}">
+    <link rel="stylesheet" href="{{ asset('frontend/css/icomoon.css') }}">
+    <link rel="stylesheet" href="{{ asset('frontend/css/style.css') }}">
 
-<!-- Template Main CSS File -->
-<link href="{{ asset('frontend/assets/css/style.css') }}" rel="stylesheet">
-@stack('styles')
-</head>
+    @stack('styles')
 
-<body>
+  </head>
+  <body>
+    
+  <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        <img src="{{ asset('frontend/images/logo 1.png') }}" alt="" style="height:40px; width:40px; margin-right:10px;">
+        <div>
+          <strong>SMK PGRI LAWANG</strong><br>
+          <small>Sekolah Masadepan</small>
+        </div>
+      </a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="oi oi-menu"></span> 
+      </button>
 
-  <!-- ======= Header ======= -->
-  <header id="header" class="fixed-top d-flex align-items-center">
-    <div class="container d-flex justify-content-between align-items-center">
+      <div class="collapse navbar-collapse" id="ftco-nav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item {{ request()->routeIs('/') ? 'active' : '' }}"><a href="{{ route('/') }}" class="nav-link">Home</a></li>
+          <li class="nav-item {{ request()->routeIs('profile-sekolah.*') ? 'active' : '' }}"><a href="{{ route('profile-sekolah.index') }}" class="nav-link">Profile</a></li>
+          <li class="nav-item {{ request()->routeIs('pendaftaran.*') ? 'active' : '' }}"><a href="{{ route('pendaftaran.index') }}" class="nav-link">Pendaftaran</a></li>
+          @php
+              $isJurusanPage = request()->is('teknik-kendaraan-ringan*') || 
+                              request()->is('teknik-bisnis-sepeda-motor*') || 
+                              request()->is('kimia-industri*') || 
+                              request()->is('teknik-komputer-jaringan*') ||
+                              request()->is('galeri/teknik-kendaraan-ringan*') ||
+                              request()->is('galeri/teknik-bisnis-sepeda-motor*') ||
+                              request()->is('galeri/kimia-industri*') ||
+                              request()->is('galeri/teknik-komputer-jaringan*');
+          @endphp
 
-      <div class="logo d-flex align-items-center">
-        <!-- Uncomment below if you prefer to use an image logo -->
-        <a href="index.html" class="me-3"><img src="{{ asset('backend/assets/img/logo 1.png') }}" alt="" class="img-fluid" style="height: 50px;"></a>
-        <h1 class="mb-0"><a href="index.html">SMK PGRI LAWANG</a></h1>
-      </div>
-
-      <nav id="navbar" class="navbar">
-        <ul>
-          <li><a class="{{ request()->routeIs('/') ? 'active' : '' }}" href="{{ route('/') }}">Home</a></li>
-          <li><a class="{{ request()->routeIs('profile-sekolah.*') ? 'active' : '' }}" href="{{ route('profile-sekolah.index') }}">Profile</a></li>
-          <li class="dropdown">
-            <a href="#" data-bs-toggle="dropdown">
-              Jurusan <i class="bi bi-chevron-down"></i>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="{{ route('tkr.index') }}">Teknik Kendaraan Ringan</a></li>
-              <li><a class="dropdown-item" href="{{ route('tbsm.index') }}">Teknik Bisnis Sepeda Motor</a></li>
-              <li><a class="dropdown-item" href="{{ route('kimia.index') }}">Teknik Kimia Industri</a></li>
-              <li><a class="dropdown-item" href="{{ route('tkj.index') }}">Teknik Komputer & Jaringan</a></li>
-            </ul>
+          <li class="nav-item dropdown {{ $isJurusanPage ? 'active' : '' }}">
+              <a class="nav-link dropdown-toggle" 
+                href="#" id="jurusanDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Jurusan
+              </a>
+              <div class="dropdown-menu" aria-labelledby="jurusanDropdown">
+                  <a class="dropdown-item {{ request()->is('teknik-kendaraan-ringan*') || request()->is('galeri/teknik-kendaraan-ringan*') ? 'active' : '' }}" 
+                    href="{{ route('tkr.index') }}">Teknik Kendaraan Ringan</a>
+                  
+                  <a class="dropdown-item {{ request()->is('teknik-bisnis-sepeda-motor*') || request()->is('galeri/teknik-bisnis-sepeda-motor*') ? 'active' : '' }}" 
+                    href="{{ route('tbsm.index') }}">Teknik Bisnis Sepeda Motor</a>
+                  
+                  <a class="dropdown-item {{ request()->is('kimia-industri*') || request()->is('galeri/kimia-industri*') ? 'active' : '' }}" 
+                    href="{{ route('kimia.index') }}">Teknik Kimia Industri</a>
+                  
+                  <a class="dropdown-item {{ request()->is('teknik-komputer-jaringan*') || request()->is('galeri/teknik-komputer-jaringan*') ? 'active' : '' }}" 
+                    href="{{ route('tkj.index') }}">Teknik Komputer dan Jaringan</a>
+              </div>
           </li>
-          <li><a class="{{ request()->routeIs('pendaftaran.*') ? 'active' : '' }}" href="{{ route('pendaftaran.index') }}">Pendaftaran</a></li>
-          <li><a class="{{ request()->routeIs('berita.*') ? 'active' : '' }}" href="{{ route('berita.index') }}">Berita</a></li>
-          <li><a class="{{ request()->is('contact.*') ? 'active' : '' }}" href="{{ route('contact.index') }}">Kontak</a></li>
-          <li><a class="{{ request()->routeIs('login') ? 'active' : '' }}" href="{{ route('login') }}">Login</a></li>
+          <li class="nav-item {{ request()->routeIs('berita.*') ? 'active' : '' }}"><a href="{{ route('berita.index') }}" class="nav-link">Berita</a></li>
+          <li class="nav-item {{ request()->routeIs('contact.*') ? 'active' : '' }}"><a href="{{ route('contact.index') }}" class="nav-link">Kontak</a></li>
+          <li class="nav-item cta"><a href="{{ route('pendaftaran.index') }}" class="nav-link"><span>Daftar Sekarang!</span></a></li>
         </ul>
-        <i class="bi bi-list mobile-nav-toggle"></i>
-      </nav><!-- .navbar -->
-
+      </div>
     </div>
-  </header><!-- End Header -->
-
+  </nav>
+    <!-- END nav -->
+    
     @yield('content')
 
-  <!-- ======= Footer ======= -->
-  <footer class="footer" role="contentinfo">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-4 mb-4 mb-md-0">
-          <h3>Tentang SMK PGRI Lawang</h3>
-          <p>SMK PGRI Lawang adalah lembaga pendidikan vokasi yang berkomitmen untuk mencetak generasi muda yang terampil dan berdaya saing tinggi di era digital.</p>
-          <p class="social">
-            <a href="#"><span class="bi bi-twitter"></span></a>
-            <a href="#"><span class="bi bi-facebook"></span></a>
-            <a href="#"><span class="bi bi-instagram"></span></a>
-            <a href="#"><span class="bi bi-linkedin"></span></a>
-          </p>
-        </div>
-        <div class="col-md-7 ms-auto">
-          <div class="row site-section pt-0">
-            <div class="col-md-4 mb-4 mb-md-0">
-              <h3>Profil Sekolah</h3>
-              <ul class="list-unstyled">
-                <li><a href="#">Sejarah Sekolah</a></li>
-                <li><a href="#">Visi & Misi</a></li>
-                <li><a href="#">Fasilitas</a></li>
-                <li><a href="#">Tenaga Pendidik</a></li>
+    <footer class="ftco-footer ftco-bg-dark ftco-section img" style="background-image: url(images/bg_2.jpg); background-attachment:fixed;">
+    	<div class="overlay"></div>
+      <div class="container">
+        <div class="row mb-5">
+          <div class="col-md-3">
+            <div class="ftco-footer-widget mb-4">
+              <h2>
+                <a class="navbar-brand d-flex align-items-center" href="index.html">
+                  <img src="{{ asset('frontend/images/logo 1.png') }}" alt="SMK PGRI LAWANG" style="height:40px; width:40px; margin-right:10px;">
+                  <div>
+                    <strong>SMK PGRI LAWANG</strong><br>
+                    <small>Sekolah Masadepan</small>
+                  </div>
+                </a>
+              </h2>
+              <p>SMK PGRI Lawang mencetak lulusan terampil dan siap kerja dengan fasilitas lengkap serta tenaga pengajar profesional.</p>
+              <ul class="ftco-footer-social list-unstyled float-md-left float-lft mt-5">
+                <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
               </ul>
             </div>
-            <div class="col-md-4 mb-4 mb-md-0">
-              <h3>Akademik</h3>
+          </div>
+          <div class="col-md-4">
+            <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Info Terbaru</h2>
+                @php
+                    $footerNews = \App\Models\News::latest('published_at')
+                        ->take(2)
+                        ->get();
+                @endphp
+
+                @if($footerNews->count() > 0)
+                    @foreach($footerNews as $news)
+                    <div class="block-21 mb-4 d-flex">
+                        @if($news->thumbnail_url)
+                        <a href="{{ route('berita.detail', $news->slug) }}" class="blog-img mr-4" style="background-image: url({{ $news->thumbnail_url }});"></a>
+                        @endif
+                        <div class="text">
+                            <h3 class="heading"><a href="{{ route('berita.detail', $news->slug) }}">{{ $news->title }}</a></h3>
+                            <div class="meta">
+                                <div><a href="#"><span class="icon-calendar"></span> {{ $news->published_at->format('d M Y') }}</a></div>
+                                <div><a href="#"><span class="icon-person"></span> {{ $news->author->name ?? 'Admin' }}</a></div>
+                                <div><a href="#"><span class="icon-eye"></span> {{ $news->view_count ?? 0 }}</a></div>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                @else
+                    <p>Tidak ada berita terbaru.</p>
+                @endif
+            </div>
+          </div>
+          <div class="col-md-2">
+             <div class="ftco-footer-widget mb-4 ml-md-4">
+              <h2 class="ftco-heading-2">Site Links</h2>
               <ul class="list-unstyled">
-                <li><a href="#">Program Keahlian</a></li>
-                <li><a href="#">Kurikulum</a></li>
-                <li><a href="#">Kegiatan Siswa</a></li>
-                <li><a href="#">Prestasi</a></li>
+                <li><a href="#" class="py-2 d-block">Home</a></li>
+                <li><a href="#" class="py-2 d-block">About</a></li>
+                <li><a href="#" class="py-2 d-block">Courses</a></li>
+                <li><a href="#" class="py-2 d-block">Students</a></li>
+                <li><a href="#" class="py-2 d-block">Video</a></li>
               </ul>
             </div>
-            <div class="col-md-4 mb-4 mb-md-0">
-              <h3>Jurusan</h3>
-              <ul class="list-unstyled">
-                <li><a href="#">Teknik Kimia Industri</a></li>
-                <li><a href="#">Teknik Komputer & Jaringan</a></li>
-                <li><a href="#">Teknik Kendaraan Ringan</a></li>
-                <li><a href="#">Teknik Bisnis Sepeda Motor</a></li>
-              </ul>
+          </div>
+          <div class="col-md-3">
+            <div class="ftco-footer-widget mb-4">
+            	<h2 class="ftco-heading-2">Have a Questions?</h2>
+            	<div class="block-23 mb-3">
+	              <ul>
+	                <li><span class="icon icon-map-marker"></span><span class="text">Jl. DR. Wahidin No.17, Krajan, Kalirejo, Kec. Lawang, Kabupaten Malang</span></li>
+	                <li><a href="#"><span class="icon icon-phone"></span><span class="text">(0341) 4395005</span></a></li>
+	                <li><a href="#"><span class="icon icon-envelope"></span><span class="text">info@smkpgrilawang.sch.id</span></a></li>
+	              </ul>
+	            </div>
             </div>
           </div>
         </div>
       </div>
+    </footer>
+    
+  
 
-      <div class="row justify-content-center text-center">
-        <div class="col-md-7">
-          <p class="copyright">&copy; {{ date('Y') }} SMK PGRI Lawang. All Rights Reserved</p>
-          <div class="credits">
-            Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
-          </div>
-        </div>
-      </div>
+  <!-- loader -->
+  <div id="ftco-loader" class="show fullscreen"><svg class="circular" width="48px" height="48px"><circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/><circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#F96D00"/></svg></div>
 
-    </div>
-  </footer>
 
-  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+  <script src="{{ asset('frontend/js/jquery.min.js') }}"></script>
+  <script src="{{ asset('frontend/js/jquery-migrate-3.0.1.min.js') }}"></script>
+  <script src="{{ asset('frontend/js/popper.min.js') }}"></script>
+  <script src="{{ asset('frontend/js/bootstrap.min.js') }}"></script>
+  <script src="{{ asset('frontend/js/jquery.easing.1.3.js') }}"></script>
+  <script src="{{ asset('frontend/js/jquery.waypoints.min.js') }}"></script>
+  <script src="{{ asset('frontend/js/jquery.stellar.min.js') }}"></script>
+  <script src="{{ asset('frontend/js/owl.carousel.min.js') }}"></script>
+  <script src="{{ asset('frontend/js/jquery.magnific-popup.min.js') }}"></script>
+  <script src="{{ asset('frontend/js/aos.js') }}"></script>
+  <script src="{{ asset('frontend/js/jquery.animateNumber.min.js') }}"></script>
+  <script src="{{ asset('frontend/js/bootstrap-datepicker.js') }}"></script>
+  <script src="{{ asset('frontend/js/jquery.timepicker.min.js') }}"></script>
+  <script src="{{ asset('frontend/js/scrollax.min.js') }}"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&sensor=false"></script>
+  <script src="{{ asset('frontend/js/google-map.js') }}"></script>
+  <script src="{{ asset('frontend/js/main.js') }}"></script>
 
-<!-- Vendor JS Files -->
-<script src="{{ asset('frontend/assets/vendor/aos/aos.js') }}"></script>
-<script src="{{ asset('frontend/assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ asset('frontend/assets/vendor/swiper/swiper-bundle.min.js') }}"></script>
-<script src="{{ asset('frontend/assets/vendor/php-email-form/validate.js') }}"></script>
-
-<!-- Template Main JS File -->
-<script src="{{ asset('frontend/assets/js/main.js') }}"></script>
-
-@stack('scripts')
-
-</body>
-
+  @stack('scripts')
+    
+  </body>
 </html>

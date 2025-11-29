@@ -8,6 +8,7 @@ use App\Models\Schedule;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
+use App\Helpers\AcademicYearHelper;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -137,8 +138,8 @@ class ScheduleController extends Controller
             'end_time' => 'required|date_format:H:i|after:start_time',
         ]);
 
-        // Set academic_year default jika tidak ada
-        $validated['academic_year'] = $request->input('academic_year', '2024/2025');
+        // Set academic_year default menggunakan AcademicYearHelper jika tidak ada
+        $validated['academic_year'] = $request->input('academic_year', AcademicYearHelper::getCurrentAcademicYear());
 
         // Cek apakah jadwal bentrok dengan jadwal lain (guru mengajar di kelas lain pada waktu yang sama)
         $conflictingTeacherSchedule = Schedule::where('teacher_id', $request->teacher_id)
@@ -219,7 +220,7 @@ class ScheduleController extends Controller
                     'day' => $schedule->day,
                     'start_time' => $schedule->start_time,
                     'end_time' => $schedule->end_time,
-                    'academic_year' => $schedule->academic_year ?? (date('n') >= 7 ? date('Y') . '/' . (date('Y') + 1) : (date('Y') - 1) . '/' . date('Y'))
+                    'academic_year' => $schedule->academic_year ?? AcademicYearHelper::getCurrentAcademicYear()
                 ]
             ]);
             
@@ -246,8 +247,8 @@ class ScheduleController extends Controller
             'end_time' => 'required|after:start_time',
         ]);
 
-        // Set academic_year default jika tidak ada
-        $validated['academic_year'] = $request->input('academic_year', '2024/2025');
+        // Set academic_year default menggunakan AcademicYearHelper jika tidak ada
+        $validated['academic_year'] = $request->input('academic_year', AcademicYearHelper::getCurrentAcademicYear());
 
         try {
             $schedules = Schedule::findOrFail($id);
