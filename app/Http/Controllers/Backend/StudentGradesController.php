@@ -2,1179 +2,492 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\Helpers\AcademicYearHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Classes;
 use App\Models\Student;
 use App\Models\StudentGrades;
 use App\Models\Subject;
-use App\Helpers\AcademicYearHelper;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class StudentGradesController extends Controller
 {
-    use AuthorizesRequests;
     /**
-     * Display a listing of the resource.
+     * Menampilkan halaman utama input nilai
      */
     public function index()
     {
-        $this->authorize('student-grades.index');
-        $user = Auth::user();
-        
-        // Jika user adalah teacher, ambil kelas dan mapel sesuai schedule
-        if ($user->hasRole('teacher')) {
-            // Ambil teacher_id dari user (asumsi ada relasi user->teacher)
-            $teacherId = $user->teacher->id ?? null;
-            
-            if (!$teacherId) {
-                return redirect()->back()->with('error', 'Data guru tidak ditemukan.');
-            }
-            
-            // Ambil kelas yang diajar oleh teacher ini
-            $classes = Classes::select('classes.*')
-                ->join('schedule', 'classes.id', '=', 'schedule.class_id')
-                ->where('schedule.teacher_id', $teacherId)
-                ->whereNull('schedule.deleted_at')
-                ->distinct()
-                ->orderBy('classes.name')
-                ->get();
-            
-            // Ambil mata pelajaran yang diajar oleh teacher ini
-            $subjects = Subject::select('subject.*')
-                ->join('schedule', 'subject.id', '=', 'schedule.subject_id')
-                ->where('schedule.teacher_id', $teacherId)
-                ->whereNull('schedule.deleted_at')
-                ->distinct()
-                ->orderBy('subject.name')
-                ->get();
-                
-        } else {
-            // Jika bukan teacher, tampilkan semua kelas dan mapel
-            $classes = Classes::orderBy('name')->get();
-            $subjects = Subject::orderBy('name')->get();
-        }
-        
-        return view('grades.index', compact('classes', 'subjects'));
+        $classes = Classes::orderBy('name')->get();
+        $subjects = Subject::orderBy('name')->get();
+
+        // Tentukan semester default berdasarkan data student_class
+        $academicYear = AcademicYearHelper::getCurrentAcademicYear();
+        $ganjilValues = ['1', 'ganjil', 1];
+        $genapValues = ['2', 'genap', 2];
+
+        $hasActiveGenap = DB::table('student_class')
+            ->where('academic_year', $academicYear)
+            ->whereIn('semester', $genapValues)
+            ->where('status', 'active')
+            ->whereNull('deleted_at')
+            ->exists();
+
+        $hasActiveGanjil = DB::table('student_class')
+            ->where('academic_year', $academicYear)
+            ->where(function ($q) use ($ganjilValues) {
+                $q->whereIn('semester', $ganjilValues)
+                  ->orWhereNull('semester')
+                  ->orWhere('semester', '');
+            })
+            ->where('status', 'active')
+            ->whereNull('deleted_at')
+            ->exists();
+
+        $defaultSemester = ($hasActiveGenap && !$hasActiveGanjil) ? 2 : 1;
+
+        return view('grades.index', compact('classes', 'subjects', 'defaultSemester'));
     }
 
     /**
-     * Display the specified resource.
+     * Mendapatkan mata pelajaran berdasarkan kelas dari jadwal
      */
-    public function show($id)
-    {
-        try {
-            $grade = StudentGrades::with(['student', 'class', 'subject'])
-                ->findOrFail($id);
-
-            return response()->json([
-                'success' => true,
-                'data' => $grade
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Grade not found',
-                'error' => $e->getMessage()
-            ], 404);
-        }
-    }
-
     public function getSubjectsByClass(Request $request)
     {
-        try {
-            $validator = Validator::make($request->all(), [
-                'class_id' => 'required|string|exists:classes,id',
-                'academic_year' => 'nullable|string',
-                'semester' => 'nullable|in:ganjil,genap'
-            ]);
+        $classId = $request->get('class_id');
+        $academicYear = $request->get('academic_year');
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $academicYear = $request->academic_year ?: AcademicYearHelper::getCurrentAcademicYear();
-
-            $user = Auth::user();
-
-            // Query mata pelajaran yang dijadwalkan untuk kelas tertentu
-            $query = DB::table('subject')
-                ->select([
-                    'subject.id',
-                    'subject.name',
-                    'subject.code'
-                ])
-                ->join('schedule', 'subject.id', '=', 'schedule.subject_id')
-                ->where('schedule.class_id', $request->class_id)
-                ->where('schedule.academic_year', $academicYear)
-                ->whereNull('subject.deleted_at')
-                ->whereNull('schedule.deleted_at');
-
-            // Jika user adalah teacher, filter berdasarkan teacher_id
-            if ($user->hasRole('teacher')) {
-                $teacherId = $user->teacher->id ?? null;
-                
-                if (!$teacherId) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Data guru tidak ditemukan'
-                    ], 403);
-                }
-                
-                $query->where('schedule.teacher_id', $teacherId);
-            }
-
-            // Jika semester ditentukan, batasi ke mapel yang punya entri nilai di semester tsb (opsional)
-            if ($request->filled('semester')) {
-                $semester = $request->semester;
-                $classId = $request->class_id;
-                $query->whereExists(function($q) use ($semester, $classId, $academicYear) {
-                    $q->from('student_grades as sg')
-                      ->whereRaw('sg.subject_id = subject.id')
-                      ->where('sg.class_id', $classId)
-                      ->where('sg.academic_year', $academicYear)
-                      ->where('sg.semester', $semester)
-                      ->whereNull('sg.deleted_at');
-                });
-            }
-
-            $subjects = $query->distinct()
-                ->orderBy('subject.name')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $subjects,
-                'count' => $subjects->count()
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Error in getSubjectsByClass: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'request' => $request->all()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch subjects',
-                'error' => $e->getMessage()
-            ], 500);
+        if (!$classId) {
+            return response()->json(['data' => []]);
         }
+
+        // Ambil mata pelajaran dari jadwal kelas
+        $subjects = Schedule::where('class_id', $classId)
+            ->when($academicYear, function($query) use ($academicYear) {
+                return $query->where('academic_year', $academicYear);
+            })
+            ->with('subject')
+            ->get()
+            ->pluck('subject')
+            ->unique('id')
+            ->filter()
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $subjects
+        ]);
     }
 
     /**
-     * Get active students in a class
+     * Mendapatkan daftar siswa berdasarkan kelas
      */
     public function getStudents(Request $request)
     {
-        try {
-            $validator = Validator::make($request->all(), [
-                'class_id' => 'required|string|exists:classes,id',
-                'academic_year' => 'required|string'
-            ]);
+        $classId = $request->get('class_id');
+        $academicYear = $request->get('academic_year');
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $user = Auth::user();
-            
-            // Jika user adalah teacher, validasi apakah teacher ini mengajar di kelas tersebut
-            if ($user->hasRole('teacher')) {
-                $teacherId = $user->teacher->id ?? null;
-                
-                if (!$teacherId) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Data guru tidak ditemukan'
-                    ], 403);
-                }
-                
-                // Cek apakah teacher ini mengajar di kelas yang diminta
-                $hasAccess = DB::table('schedule')
-                    ->where('class_id', $request->class_id)
-                    ->where('teacher_id', $teacherId)
-                    ->where('academic_year', $request->academic_year)
-                    ->whereNull('deleted_at')
-                    ->exists();
-                
-                if (!$hasAccess) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Anda tidak memiliki akses ke kelas ini'
-                    ], 403);
-                }
-            }
-
-            // Query dengan struktur database yang benar dan sorting yang tepat
-            $students = DB::table('student')
-                ->select([
-                    'student.id',
-                    'student.name',
-                    'student.nisn',
-                    'student.no_absen'
-                ])
-                ->join('student_class', 'student.id', '=', 'student_class.student_id')
-                ->where('student_class.class_id', $request->class_id)
-                ->where('student_class.academic_year', $request->academic_year)
-                ->where('student_class.status', 'active')
-                ->whereNull('student.deleted_at')
-                ->whereNull('student_class.deleted_at')
-                // Perbaikan sorting: Cast no_absen sebagai integer untuk urutan numerik yang benar
-                ->orderByRaw('CAST(student.no_absen AS UNSIGNED) ASC')
-                ->orderBy('student.name') // Fallback sorting jika no_absen sama atau NULL
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $students,
-                'count' => $students->count()
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Error in getStudents: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'request' => $request->all()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch students',
-                'error' => $e->getMessage()
-            ], 500);
+        if (!$classId) {
+            return response()->json(['data' => []]);
         }
-    }
 
-    private function calculateAttendancePercentage($studentId, $classId, $subjectId, $month, $academicYear)
-    {
-        try {
-            // Hitung total hari dalam bulan yang dipilih
-            $year = (int) substr($academicYear, 0, 4);
-            $totalDaysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-            
-            // Ambil semua attendance record untuk siswa di bulan tersebut
-            $attendanceRecords = DB::table('lesson_attendance')
-                ->where('student_id', $studentId)
-                ->where('class_id', $classId)
-                ->where('subject_id', $subjectId)
-                ->where('academic_year', $academicYear)
-                ->whereMonth('date', $month)
-                ->whereYear('date', $year)
-                ->whereNull('deleted_at')
-                ->get();
-            
-            if ($attendanceRecords->isEmpty()) {
-                return null; // Tidak ada data attendance
-            }
-            
-            $totalAttendance = $attendanceRecords->count();
-            $presentCount = $attendanceRecords->whereIn('check_in_status', ['hadir', 'terlambat'])->count();
-            
-            // Hitung persentase kehadiran
-            $attendancePercentage = $totalAttendance > 0 ? ($presentCount / $totalAttendance) * 100 : 0;
-            
-            return round($attendancePercentage, 2);
-            
-        } catch (\Exception $e) {
-            \Log::error('Error calculating attendance percentage: ' . $e->getMessage());
-            return null;
+        $class = Classes::find($classId);
+        
+        if (!$class) {
+            return response()->json(['data' => []]);
         }
-    }
 
-    // Di method getGrades() - line sekitar 174  
-    public function getGrades(Request $request)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'class_id' => 'required|string|exists:classes,id',
-                'subject_id' => 'required|string|exists:subject,id',
-                'academic_year' => 'nullable|string',
-                'assessment_type' => 'nullable|in:bulanan,uts,uas',
-                'month' => 'nullable|integer|min:1|max:12',
-                'semester' => 'nullable|in:ganjil,genap'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $academicYear = $request->academic_year ?: AcademicYearHelper::getCurrentAcademicYear();
-            $assessmentType = $request->input('assessment_type') ?: 'bulanan';
-            $requestMonth = $request->input('month');
-            $requestSemester = $request->input('semester');
-
-            if ($assessmentType === 'bulanan') {
-                if (!$requestMonth) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Month is required for bulanan assessment'
-                    ], 422);
-                }
-            } else {
-                if (!$requestSemester) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Semester is required for UTS/UAS assessment'
-                    ], 422);
-                }
-            }
-            $user = Auth::user();
-            
-            // Validasi akses teacher (kode existing...)
-            if ($user->hasRole('teacher')) {
-                $teacherId = $user->teacher->id ?? null;
-                
-                if (!$teacherId) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Data guru tidak ditemukan'
-                    ], 403);
-                }
-                
-                $hasAccess = DB::table('schedule')
-                    ->where('class_id', $request->class_id)
-                    ->where('subject_id', $request->subject_id)
-                    ->where('teacher_id', $teacherId)
-                    ->where('academic_year', $academicYear)
-                    ->whereNull('deleted_at')
-                    ->exists();
-                
-                if (!$hasAccess) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Anda tidak memiliki akses ke mata pelajaran ini di kelas tersebut'
-                    ], 403);
-                }
-            }
-
-            // Get students dengan sorting yang benar
-            $students = DB::table('student')
-                ->select([
-                    'student.id as student_id',
-                    'student.name as student_name',
-                    'student.nisn as student_nisn',
-                    'student.no_absen'
-                ])
-                ->join('student_class', 'student.id', '=', 'student_class.student_id')
-                ->where('student_class.class_id', $request->class_id)
-                ->where('student_class.academic_year', $academicYear)
-                ->where('student_class.status', 'active')
-                ->whereNull('student.deleted_at')
-                ->whereNull('student_class.deleted_at')
-                ->orderByRaw('CAST(student.no_absen AS UNSIGNED) ASC')
-                ->orderBy('student.name')
-                ->get();
-
-            // Get existing grades
-            $existingQuery = StudentGrades::where('class_id', $request->class_id)
-                ->where('subject_id', $request->subject_id)
-                ->where('academic_year', $academicYear)
-                ->where('assessment_type', $assessmentType)
-                ->whereNull('deleted_at');
-
-            if ($assessmentType === 'bulanan') {
-                $existingQuery->where('month', $requestMonth);
-            } else {
-                $existingQuery->where('semester', $requestSemester);
-            }
-
-            $existingGrades = $existingQuery->get()->keyBy('student_id');
-
-            // Combine student data with grades and attendance
-            $gradesData = $students->map(function ($student) use ($existingGrades, $request, $academicYear, $assessmentType) {
-                $grade = $existingGrades->get($student->student_id);
-                
-                if ($assessmentType === 'bulanan') {
-                    // Hitung attendance percentage untuk nilai aktif
-                    $attendancePercentage = $this->calculateAttendancePercentage(
-                        $student->student_id,
-                        $request->class_id,
-                        $request->subject_id,
-                        $request->month,
-                        $academicYear
-                    );
-
-                    return [
-                        'id' => $grade->id ?? null,
-                        'student_id' => $student->student_id,
-                        'student_name' => $student->student_name,
-                        'student_nisn' => $student->student_nisn,
-                        'no_absen' => $student->no_absen,
-                        // map ke format lama untuk kompatibilitas tampilan saat ini
-                        'h1' => null,
-                        'h2' => null,
-                        'h3' => null,
-                        'k1' => null,
-                        'k2' => null,
-                        'k3' => null,
-                        'ck' => null,
-                        'p' => null,
-                        'k' => null,
-                        'aktif' => $attendancePercentage,
-                        // nilai bulanan tidak dihitung di sini; biarkan null
-                        'nilai' => null,
-                        // kirimkan komponen baru juga untuk UI baru (opsional)
-                        'tugas1' => $grade->tugas1 ?? null,
-                        'tugas2' => $grade->tugas2 ?? null,
-                        'sikap' => $grade->sikap ?? null,
-                        'created_at' => $grade->created_at ?? null,
-                        'updated_at' => $grade->updated_at ?? null,
-                    ];
-                } else {
-                    // UTS/UAS: tampilkan 1 nilai di kolom Nilai
-                    $examScore = $assessmentType === 'uts' ? ($grade->uts ?? null) : ($grade->uas ?? null);
-
-                    return [
-                        'id' => $grade->id ?? null,
-                        'student_id' => $student->student_id,
-                        'student_name' => $student->student_name,
-                        'student_nisn' => $student->student_nisn,
-                        'no_absen' => $student->no_absen,
-                        'h1' => null,
-                        'h2' => null,
-                        'h3' => null,
-                        'k1' => null,
-                        'k2' => null,
-                        'k3' => null,
-                        'ck' => null,
-                        'p' => null,
-                        'k' => null,
-                        'aktif' => null,
-                        'nilai' => $examScore,
-                        'created_at' => $grade->created_at ?? null,
-                        'updated_at' => $grade->updated_at ?? null,
-                    ];
-                }
+        $students = $class->students()
+            ->orderBy('name')
+            ->get()
+            ->map(function($student, $index) {
+                return [
+                    'id' => $student->id,
+                    'name' => $student->name,
+                    'nisn' => $student->nisn,
+                    'no_absen' => $index + 1
+                ];
             });
 
-            return response()->json([
-                'success' => true,
-                'data' => $gradesData,
-                'count' => $gradesData->count()
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Error in getGrades: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch grades',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => $students
+        ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Mendapatkan nilai siswa berdasarkan filter
+     */
+    public function getGrades(Request $request)
+    {
+        $classId = $request->get('class_id');
+        $subjectId = $request->get('subject_id');
+        $academicYear = $request->get('academic_year');
+        $semester = $request->get('semester');
+
+        if (!$classId || !$subjectId) {
+            return response()->json(['data' => []]);
+        }
+
+        $class = Classes::find($classId);
+        
+        if (!$class) {
+            return response()->json(['data' => []]);
+        }
+
+        // Ambil semua siswa di kelas
+        $students = $class->students()->orderBy('name')->get();
+
+        // Konversi semester (1 = ganjil, 2 = genap)
+        $semesterValues = $this->getSemesterValues($semester);
+
+        // Ambil nilai yang sudah ada
+        $existingGrades = StudentGrades::where('class_id', $classId)
+            ->where('subject_id', $subjectId)
+            ->when($academicYear, function($query) use ($academicYear) {
+                return $query->where('academic_year', $academicYear);
+            })
+            ->when($semester, function($query) use ($semesterValues) {
+                return $query->whereIn('semester', $semesterValues);
+            })
+            ->get()
+            ->keyBy('student_id');
+
+        $data = $students->map(function($student, $index) use ($existingGrades, $classId, $subjectId, $academicYear, $semester) {
+            $grade = $existingGrades->get($student->id);
+            
+            return [
+                'id' => $grade ? $grade->id : null,
+                'student_id' => $student->id,
+                'student_name' => $student->name,
+                'student_nisn' => $student->nisn,
+                'no_absen' => $index + 1,
+                'class_id' => $classId,
+                'subject_id' => $subjectId,
+                'academic_year' => $academicYear,
+                'semester' => $semester,
+                // Komponen nilai - Tugas
+                'tugas1' => $grade ? $grade->tugas1 : null,
+                'tugas2' => $grade ? $grade->tugas2 : null,
+                'tugas3' => $grade ? $grade->tugas3 : null,
+                'tugas4' => $grade ? $grade->tugas4 : null,
+                'tugas5' => $grade ? $grade->tugas5 : null,
+                'tugas6' => $grade ? $grade->tugas6 : null,
+                // Komponen nilai - Lainnya
+                'sikap' => $grade ? $grade->sikap : null,
+                'uts' => $grade ? $grade->uts : null,
+                'uas' => $grade ? $grade->uas : null,
+                'nilai' => $grade ? $grade->nilai : null,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data
+        ]);
+    }
+
+    /**
+     * Menyimpan atau update nilai siswa
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'student_id' => 'required|exists:student,id',
+            'class_id' => 'required|exists:classes,id',
+            'subject_id' => 'required|exists:subject,id',
+            'academic_year' => 'required|string',
+            'semester' => 'required|in:1,2',
+        ]);
+
         try {
-            $validator = Validator::make($request->all(), [
-                'student_id' => 'required|string|exists:student,id',
-                'class_id' => 'required|string|exists:classes,id',
-                'subject_id' => 'required|string|exists:subject,id',
-                'academic_year' => 'required|string',
-                'semester' => 'nullable|in:ganjil,genap',
-                'assessment_type' => 'nullable|in:bulanan,uts,uas',
-                'month' => 'nullable|integer|min:1|max:12',
-                'h1' => 'nullable|numeric|min:0|max:100',
-                'h2' => 'nullable|numeric|min:0|max:100',
-                'h3' => 'nullable|numeric|min:0|max:100',
-                'k1' => 'nullable|numeric|min:0|max:100',
-                'k2' => 'nullable|numeric|min:0|max:100',
-                'k3' => 'nullable|numeric|min:0|max:100',
-                'ck' => 'nullable|numeric|min:0|max:100',
-                'p' => 'nullable|numeric|min:0|max:100',
-                'k' => 'nullable|numeric|min:0|max:100',
-                'aktif' => 'nullable|numeric|min:0|max:100',
-                'nilai' => 'nullable|numeric|min:0|max:100',
-                // New schema
-                'tugas1' => 'nullable|numeric|min:0|max:100',
-                'tugas2' => 'nullable|numeric|min:0|max:100',
-                'sikap' => 'nullable|numeric|min:0|max:100',
-                'uts' => 'nullable|numeric|min:0|max:100',
-                'uas' => 'nullable|numeric|min:0|max:100'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $user = Auth::user();
-            
-            // Jika user adalah teacher, validasi akses ke kelas dan mata pelajaran
-            if ($user->hasRole('teacher')) {
-                $teacherId = $user->teacher->id ?? null;
-                
-                if (!$teacherId) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Data guru tidak ditemukan'
-                    ], 403);
-                }
-                
-                // Cek apakah teacher ini mengajar mata pelajaran di kelas tersebut
-                $hasAccess = DB::table('schedule')
-                    ->where('class_id', $request->class_id)
-                    ->where('subject_id', $request->subject_id)
-                    ->where('teacher_id', $teacherId)
-                    ->where('academic_year', $request->academic_year)
-                    ->whereNull('deleted_at')
-                    ->exists();
-                
-                if (!$hasAccess) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Anda tidak memiliki akses untuk input nilai mata pelajaran ini di kelas tersebut'
-                    ], 403);
-                }
-            }
-
-            // Check if grade already exists based on assessment type
-            $gradeQuery = StudentGrades::where([
-                'student_id' => $request->student_id,
-                'subject_id' => $request->subject_id,
-                'class_id' => $request->class_id,
-                'academic_year' => $request->academic_year,
-                'assessment_type' => $requestAssessmentType,
-            ]);
-
-            if ($requestAssessmentType === 'bulanan') {
-                $gradeQuery->where('month', $requestMonth);
-            } else { // uts/uas
-                $gradeQuery->where('semester', $requestSemester);
-            }
-
-            $existingGrade = $gradeQuery->first();
-
-            if ($existingGrade) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Grade for this student, subject, and month already exists'
-                ], 409);
-            }
-
-            DB::beginTransaction();
-
-            $monthNames = [
-                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-            ];
-
-            // Prepare payload per assessment type
-            $basePayload = [
-                'id' => Str::uuid(),
-                'student_id' => $request->student_id,
-                'class_id' => $request->class_id,
-                'subject_id' => $request->subject_id,
-                'academic_year' => $request->academic_year,
-                'semester' => $requestAssessmentType === 'bulanan' ? ($requestSemester ?? AcademicYearHelper::getCurrentSemester()) : $requestSemester,
-                'assessment_type' => $requestAssessmentType,
-                'created_by' => Auth::id(),
-            ];
-
-            if ($requestAssessmentType === 'bulanan') {
-                $payload = array_merge($basePayload, [
-                    'month' => $requestMonth,
-                    'month_name' => $monthNames[$requestMonth] ?? null,
+            $grade = StudentGrades::updateOrCreate(
+                [
+                    'student_id' => $request->student_id,
+                    'class_id' => $request->class_id,
+                    'subject_id' => $request->subject_id,
+                    'academic_year' => $request->academic_year,
+                    'semester' => $request->semester,
+                ],
+                [
                     'tugas1' => $request->tugas1,
                     'tugas2' => $request->tugas2,
+                    'tugas3' => $request->tugas3,
+                    'tugas4' => $request->tugas4,
+                    'tugas5' => $request->tugas5,
+                    'tugas6' => $request->tugas6,
                     'sikap' => $request->sikap,
-                ]);
-            } elseif ($requestAssessmentType === 'uts') {
-                $payload = array_merge($basePayload, [
-                    'month' => null,
-                    'month_name' => null,
                     'uts' => $request->uts,
-                ]);
-            } else { // uas
-                $payload = array_merge($basePayload, [
-                    'month' => null,
-                    'month_name' => null,
                     'uas' => $request->uas,
-                ]);
-            }
-
-            $grade = StudentGrades::create($payload);
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Grade created successfully',
-                'data' => $grade
-            ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create grade',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'h1' => 'nullable|numeric|min:0|max:100',
-                'h2' => 'nullable|numeric|min:0|max:100',
-                'h3' => 'nullable|numeric|min:0|max:100',
-                'k1' => 'nullable|numeric|min:0|max:100',
-                'k2' => 'nullable|numeric|min:0|max:100',
-                'k3' => 'nullable|numeric|min:0|max:100',
-                'ck' => 'nullable|numeric|min:0|max:100',
-                'p' => 'nullable|numeric|min:0|max:100',
-                'k' => 'nullable|numeric|min:0|max:100',
-                'aktif' => 'nullable|numeric|min:0|max:100',
-                'nilai' => 'nullable|numeric|min:0|max:100',
-                // New schema
-                'tugas1' => 'nullable|numeric|min:0|max:100',
-                'tugas2' => 'nullable|numeric|min:0|max:100',
-                'sikap' => 'nullable|numeric|min:0|max:100',
-                'uts' => 'nullable|numeric|min:0|max:100',
-                'uas' => 'nullable|numeric|min:0|max:100'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $grade = StudentGrades::findOrFail($id);
-            $user = Auth::user();
-            
-            // Jika user adalah teacher, validasi akses ke grade tersebut
-            if ($user->hasRole('teacher')) {
-                $teacherId = $user->teacher->id ?? null;
-                
-                if (!$teacherId) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Data guru tidak ditemukan'
-                    ], 403);
-                }
-                
-                // Cek apakah teacher ini mengajar mata pelajaran di kelas tersebut
-                $hasAccess = DB::table('schedule')
-                    ->where('class_id', $grade->class_id)
-                    ->where('subject_id', $grade->subject_id)
-                    ->where('teacher_id', $teacherId)
-                    ->where('academic_year', $grade->academic_year)
-                    ->whereNull('deleted_at')
-                    ->exists();
-                
-                if (!$hasAccess) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Anda tidak memiliki akses untuk mengubah nilai ini'
-                    ], 403);
-                }
-            }
-
-            DB::beginTransaction();
-
-            $grade->update([
-                'h1' => $request->h1,
-                'h2' => $request->h2,
-                'h3' => $request->h3,
-                'k1' => $request->k1,
-                'k2' => $request->k2,
-                'k3' => $request->k3,
-                'ck' => $request->ck,
-                'p' => $request->p,
-                'k' => $request->k,
-                'aktif' => $request->aktif,
-                'nilai' => $request->nilai,
-                // New schema
-                'tugas1' => $request->tugas1,
-                'tugas2' => $request->tugas2,
-                'sikap' => $request->sikap,
-                'uts' => $request->uts,
-                'uas' => $request->uas,
-                'updated_by' => Auth::id()
-            ]);
-
-            DB::commit();
+                    'nilai' => $this->calculateFinalGrade($request),
+                    'created_by' => Auth::id(),
+                    'updated_by' => Auth::id(),
+                ]
+            );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Grade updated successfully',
+                'message' => 'Nilai berhasil disimpan',
                 'data' => $grade
             ]);
-
         } catch (\Exception $e) {
-            DB::rollback();
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update grade',
-                'error' => $e->getMessage()
+                'message' => 'Gagal menyimpan nilai: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
-    {
-        try {
-            $grade = StudentGrades::findOrFail($id);
-            $user = Auth::user();
-            
-            // Jika user adalah teacher, validasi akses ke grade tersebut
-            if ($user->hasRole('teacher')) {
-                $teacherId = $user->teacher->id ?? null;
-                
-                if (!$teacherId) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Data guru tidak ditemukan'
-                    ], 403);
-                }
-                
-                // Cek apakah teacher ini mengajar mata pelajaran di kelas tersebut
-                $hasAccess = DB::table('schedule')
-                    ->where('class_id', $grade->class_id)
-                    ->where('subject_id', $grade->subject_id)
-                    ->where('teacher_id', $teacherId)
-                    ->where('academic_year', $grade->academic_year)
-                    ->whereNull('deleted_at')
-                    ->exists();
-                
-                if (!$hasAccess) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Anda tidak memiliki akses untuk menghapus nilai ini'
-                    ], 403);
-                }
-            }
-
-            DB::beginTransaction();
-
-            $grade->update(['deleted_by' => Auth::id()]);
-            $grade->delete();
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Grade deleted successfully'
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete grade',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        $user = Auth::user();
-        
-        // Jika user adalah teacher, ambil kelas dan mapel sesuai schedule
-        if ($user->hasRole('teacher')) {
-            $teacherId = $user->teacher->id ?? null;
-            
-            if (!$teacherId) {
-                return redirect()->back()->with('error', 'Data guru tidak ditemukan.');
-            }
-            
-            $classes = Classes::select('classes.*')
-                ->join('schedule', 'classes.id', '=', 'schedule.class_id')
-                ->where('schedule.teacher_id', $teacherId)
-                ->whereNull('schedule.deleted_at')
-                ->distinct()
-                ->orderBy('classes.name')
-                ->get();
-            
-            $subjects = Subject::select('subject.*')
-                ->join('schedule', 'subject.id', '=', 'schedule.subject_id')
-                ->where('schedule.teacher_id', $teacherId)
-                ->whereNull('schedule.deleted_at')
-                ->distinct()
-                ->orderBy('subject.name')
-                ->get();
-                
-        } else {
-            $classes = Classes::orderBy('name')->get();
-            $subjects = Subject::orderBy('name')->get();
-        }
-        
-        return view('grades.create', compact('classes', 'subjects'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit($id)
-    {
-        $grade = StudentGrades::with(['student', 'class', 'subject'])->findOrFail($id);
-        $user = Auth::user();
-        
-        // Jika user adalah teacher, validasi akses ke grade tersebut
-        if ($user->hasRole('teacher')) {
-            $teacherId = $user->teacher->id ?? null;
-            
-            if (!$teacherId) {
-                return redirect()->back()->with('error', 'Data guru tidak ditemukan.');
-            }
-            
-            // Cek apakah teacher ini mengajar mata pelajaran di kelas tersebut
-            $hasAccess = DB::table('schedule')
-                ->where('class_id', $grade->class_id)
-                ->where('subject_id', $grade->subject_id)
-                ->where('teacher_id', $teacherId)
-                ->where('academic_year', $grade->academic_year)
-                ->whereNull('deleted_at')
-                ->exists();
-            
-            if (!$hasAccess) {
-                return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk mengedit nilai ini.');
-            }
-            
-            $classes = Classes::select('classes.*')
-                ->join('schedule', 'classes.id', '=', 'schedule.class_id')
-                ->where('schedule.teacher_id', $teacherId)
-                ->whereNull('schedule.deleted_at')
-                ->distinct()
-                ->orderBy('classes.name')
-                ->get();
-            
-            $subjects = Subject::select('subject.*')
-                ->join('schedule', 'subject.id', '=', 'schedule.subject_id')
-                ->where('schedule.teacher_id', $teacherId)
-                ->whereNull('schedule.deleted_at')
-                ->distinct()
-                ->orderBy('subject.name')
-                ->get();
-                
-        } else {
-            $classes = Classes::orderBy('name')->get();
-            $subjects = Subject::orderBy('name')->get();
-        }
-        
-        return view('grades.edit', compact('grade', 'classes', 'subjects'));
-    }
-
-    /**
-     * Bulk update grades
+     * Update nilai siswa secara bulk
      */
     public function bulkUpdate(Request $request)
     {
+        $request->validate([
+            'grades' => 'required|array',
+            'grades.*.student_id' => 'required|exists:student,id',
+            'class_id' => 'required|exists:classes,id',
+            'subject_id' => 'required|exists:subject,id',
+            'academic_year' => 'required|string',
+            'semester' => 'required|in:1,2',
+        ]);
+
+        DB::beginTransaction();
+        
         try {
-            $validator = Validator::make($request->all(), [
-                'grades' => 'required|array',
-                'grades.*.student_id' => 'required|string|exists:student,id',
-                'grades.*.class_id' => 'required|string|exists:classes,id',
-                'grades.*.subject_id' => 'required|string|exists:subject,id',
-                'grades.*.academic_year' => 'required|string',
-                'grades.*.semester' => 'nullable|in:ganjil,genap',
-                'grades.*.assessment_type' => 'nullable|in:bulanan,uts,uas',
-                'grades.*.month' => 'nullable|integer|min:1|max:12',
-                'grades.*.h1' => 'nullable|numeric|min:0|max:100',
-                'grades.*.h2' => 'nullable|numeric|min:0|max:100',
-                'grades.*.h3' => 'nullable|numeric|min:0|max:100',
-                'grades.*.k1' => 'nullable|numeric|min:0|max:100',
-                'grades.*.k2' => 'nullable|numeric|min:0|max:100',
-                'grades.*.k3' => 'nullable|numeric|min:0|max:100',
-                'grades.*.ck' => 'nullable|numeric|min:0|max:100',
-                'grades.*.aktif' => 'nullable|numeric|min:0|max:100',
-                // Remove p, k, nilai from validation as they are calculated
-                // New schema
-                'grades.*.tugas1' => 'nullable|numeric|min:0|max:100',
-                'grades.*.tugas2' => 'nullable|numeric|min:0|max:100',
-                'grades.*.sikap' => 'nullable|numeric|min:0|max:100',
-                'grades.*.uts' => 'nullable|numeric|min:0|max:100',
-                'grades.*.uas' => 'nullable|numeric|min:0|max:100',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $user = Auth::user();
+            $savedCount = 0;
+            $normalizedSemester = $this->normalizeSemester($request->semester);
+            $semesterValues = $this->getSemesterValues($request->semester);
             
-            // Teacher access validation
-            if ($user->hasRole('teacher')) {
-                $teacherId = $user->teacher->id ?? null;
-                
-                if (!$teacherId) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Data guru tidak ditemukan'
-                    ], 403);
-                }
-                
-                // Validate access for each class-subject combination
-                $uniqueCombinations = collect($request->grades)
-                    ->map(function($grade) {
-                        return [
-                            'class_id' => $grade['class_id'],
-                            'subject_id' => $grade['subject_id'],
-                            'academic_year' => $grade['academic_year']
-                        ];
-                    })
-                    ->unique()
-                    ->values();
-                
-                foreach ($uniqueCombinations as $combination) {
-                    $hasAccess = DB::table('schedule')
-                        ->where('class_id', $combination['class_id'])
-                        ->where('subject_id', $combination['subject_id'])
-                        ->where('teacher_id', $teacherId)
-                        ->where('academic_year', $combination['academic_year'])
-                        ->whereNull('deleted_at')
-                        ->exists();
-                    
-                    if (!$hasAccess) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Anda tidak memiliki akses untuk mengubah nilai pada salah satu mata pelajaran/kelas'
-                        ], 403);
-                    }
-                }
-            }
-
-            DB::beginTransaction();
-
-            $monthNames = [
-                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-            ];
-
-            $updated = 0;
-            $created = 0;
-
             foreach ($request->grades as $gradeData) {
-                $assessmentType = $gradeData['assessment_type'] ?? 'bulanan';
-
-                // Validate required fields conditionally
-                if ($assessmentType === 'bulanan') {
-                    if (empty($gradeData['month'])) {
-                        continue; // skip invalid row
-                    }
-                } else { // uts/uas
-                    if (empty($gradeData['semester'])) {
-                        continue; // skip invalid row
-                    }
-                }
-
-                // Find existing grade by combination
-                $existingQuery = StudentGrades::where([
-                    'student_id' => $gradeData['student_id'],
-                    'subject_id' => $gradeData['subject_id'],
-                    'class_id' => $gradeData['class_id'],
-                    'academic_year' => $gradeData['academic_year'],
-                    'assessment_type' => $assessmentType,
-                ]);
-
-                if ($assessmentType === 'bulanan') {
-                    $existingQuery->where('month', $gradeData['month']);
-                } else {
-                    $existingQuery->where('semester', $gradeData['semester']);
-                }
-
-                $existingGrade = $existingQuery->first();
-
-                // Prepare update data per type
-                if ($assessmentType === 'bulanan') {
-                    $updateData = [
+                $finalGrade = $this->calculateFinalGradeFromArray($gradeData);
+                
+                // Cari existing grade dengan berbagai format semester
+                $existingGrade = StudentGrades::where('student_id', $gradeData['student_id'])
+                    ->where('class_id', $request->class_id)
+                    ->where('subject_id', $request->subject_id)
+                    ->where('academic_year', $request->academic_year)
+                    ->whereIn('semester', $semesterValues)
+                    ->first();
+                
+                if ($existingGrade) {
+                    // Update existing
+                    $existingGrade->update([
                         'tugas1' => $gradeData['tugas1'] ?? null,
                         'tugas2' => $gradeData['tugas2'] ?? null,
+                        'tugas3' => $gradeData['tugas3'] ?? null,
+                        'tugas4' => $gradeData['tugas4'] ?? null,
+                        'tugas5' => $gradeData['tugas5'] ?? null,
+                        'tugas6' => $gradeData['tugas6'] ?? null,
                         'sikap' => $gradeData['sikap'] ?? null,
-                        'aktif' => $gradeData['aktif'] ?? null,
-                        // nilai final semester dihitung di laporan; nilai per baris bulanan dibiarkan null
-                    ];
-                } elseif ($assessmentType === 'uts') {
-                    $updateData = [
                         'uts' => $gradeData['uts'] ?? null,
-                    ];
-                } else { // uas
-                    $updateData = [
                         'uas' => $gradeData['uas'] ?? null,
-                    ];
-                }
-
-                if ($existingGrade) {
-                    $existingGrade->update(array_merge($updateData, [
-                        'updated_by' => Auth::id()
-                    ]));
-                    $updated++;
+                        'nilai' => $finalGrade,
+                        'updated_by' => Auth::id(),
+                    ]);
                 } else {
-                    // Determine if there is any value to persist
-                    $hasValues = array_filter($updateData, function($value) {
-                        return $value !== null && $value !== '' && $value >= 0;
-                    });
-
-                    if (count($hasValues) > 0) {
-                        $createPayload = array_merge($updateData, [
-                            'id' => Str::uuid(),
-                            'student_id' => $gradeData['student_id'],
-                            'class_id' => $gradeData['class_id'],
-                            'subject_id' => $gradeData['subject_id'],
-                            'academic_year' => $gradeData['academic_year'],
-                            'semester' => $assessmentType === 'bulanan' ? ($gradeData['semester'] ?? AcademicYearHelper::getCurrentSemester()) : $gradeData['semester'],
-                            'assessment_type' => $assessmentType,
-                            'month' => $assessmentType === 'bulanan' ? $gradeData['month'] : null,
-                            'month_name' => $assessmentType === 'bulanan' && !empty($gradeData['month']) ? $monthNames[$gradeData['month']] : null,
-                            'created_by' => Auth::id(),
-                        ]);
-
-                        StudentGrades::create($createPayload);
-                        $created++;
-                    }
+                    // Create new
+                    StudentGrades::create([
+                        'student_id' => $gradeData['student_id'],
+                        'class_id' => $request->class_id,
+                        'subject_id' => $request->subject_id,
+                        'academic_year' => $request->academic_year,
+                        'semester' => $normalizedSemester,
+                        'tugas1' => $gradeData['tugas1'] ?? null,
+                        'tugas2' => $gradeData['tugas2'] ?? null,
+                        'tugas3' => $gradeData['tugas3'] ?? null,
+                        'tugas4' => $gradeData['tugas4'] ?? null,
+                        'tugas5' => $gradeData['tugas5'] ?? null,
+                        'tugas6' => $gradeData['tugas6'] ?? null,
+                        'sikap' => $gradeData['sikap'] ?? null,
+                        'uts' => $gradeData['uts'] ?? null,
+                        'uas' => $gradeData['uas'] ?? null,
+                        'nilai' => $finalGrade,
+                        'created_by' => Auth::id(),
+                        'updated_by' => Auth::id(),
+                    ]);
                 }
+                
+                $savedCount++;
             }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => "Berhasil memperbarui {$updated} data dan membuat {$created} data nilai baru",
-                'stats' => [
-                    'updated' => $updated,
-                    'created' => $created,
-                    'total_processed' => count($request->grades)
-                ]
+                'message' => "Berhasil menyimpan {$savedCount} nilai siswa",
+                'saved_count' => $savedCount
             ]);
-
         } catch (\Exception $e) {
-            DB::rollback();
-            
-            // Log the error for debugging
-            \Log::error('Bulk update grades error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all()
-            ]);
+            DB::rollBack();
             
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal memperbarui nilai siswa',
-                'error' => $e->getMessage()
+                'message' => 'Gagal menyimpan nilai: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Get grade statistics
+     * Mendapatkan statistik nilai
      */
     public function getStatistics(Request $request)
     {
-        try {
-            $query = StudentGrades::query();
-            $user = Auth::user();
+        $classId = $request->get('class_id');
+        $subjectId = $request->get('subject_id');
+        $academicYear = $request->get('academic_year');
+        $semester = $request->get('semester');
 
-            // Jika user adalah teacher, filter berdasarkan mata pelajaran yang diajar
-            if ($user->hasRole('teacher')) {
-                $teacherId = $user->teacher->id ?? null;
-                
-                if (!$teacherId) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Data guru tidak ditemukan'
-                    ], 403);
-                }
-                
-                // Filter berdasarkan schedule teacher
-                $query->whereExists(function($subQuery) use ($teacherId) {
-                    $subQuery->select(DB::raw(1))
-                        ->from('schedule')
-                        ->whereColumn('schedule.class_id', 'student_grades.class_id')
-                        ->whereColumn('schedule.subject_id', 'student_grades.subject_id')
-                        ->whereColumn('schedule.academic_year', 'student_grades.academic_year')
-                        ->where('schedule.teacher_id', $teacherId)
-                        ->whereNull('schedule.deleted_at');
-                });
-            }
+        if (!$classId || !$subjectId) {
+            return response()->json(['data' => null]);
+        }
 
-            if ($request->class_id) {
-                $query->where('class_id', $request->class_id);
-            }
+        // Konversi semester
+        $semesterValues = $this->getSemesterValues($semester);
 
-            if ($request->subject_id) {
-                $query->where('subject_id', $request->subject_id);
-            }
+        $grades = StudentGrades::where('class_id', $classId)
+            ->where('subject_id', $subjectId)
+            ->when($academicYear, function($query) use ($academicYear) {
+                return $query->where('academic_year', $academicYear);
+            })
+            ->when($semester, function($query) use ($semesterValues) {
+                return $query->whereIn('semester', $semesterValues);
+            })
+            ->whereNotNull('nilai')
+            ->get();
 
-            if ($request->month) {
-                $query->where('month', $request->month);
-            }
-
-            if ($request->academic_year) {
-                $query->where('academic_year', $request->academic_year);
-            }
-
-            $grades = $query->whereNotNull('nilai')->get();
-
-            $statistics = [
-                'total_students' => $grades->count(),
-                'average_grade' => $grades->avg('nilai'),
-                'highest_grade' => $grades->max('nilai'),
-                'lowest_grade' => $grades->min('nilai'),
-                'passing_students' => $grades->where('nilai', '>=', 70)->count(),
-                'failing_students' => $grades->where('nilai', '<', 70)->count(),
-                'grade_distribution' => [
-                    'excellent' => $grades->where('nilai', '>=', 90)->count(),
-                    'good' => $grades->whereBetween('nilai', [80, 89.99])->count(),
-                    'fair' => $grades->whereBetween('nilai', [70, 79.99])->count(),
-                    'poor' => $grades->where('nilai', '<', 70)->count()
-                ]
-            ];
-
+        if ($grades->isEmpty()) {
             return response()->json([
                 'success' => true,
-                'data' => $statistics
+                'data' => null
             ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to get statistics',
-                'error' => $e->getMessage()
-            ], 500);
         }
+
+        $nilaiArray = $grades->pluck('nilai')->toArray();
+
+        $statistics = [
+            'total_siswa' => $grades->count(),
+            'rata_rata' => round(array_sum($nilaiArray) / count($nilaiArray), 2),
+            'nilai_tertinggi' => max($nilaiArray),
+            'nilai_terendah' => min($nilaiArray),
+            'tuntas' => $grades->where('nilai', '>=', 70)->count(),
+            'tidak_tuntas' => $grades->where('nilai', '<', 70)->count(),
+            'persentase_tuntas' => round(($grades->where('nilai', '>=', 70)->count() / $grades->count()) * 100, 2),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $statistics
+        ]);
+    }
+
+    /**
+     * Menghitung nilai akhir dari request
+     * Logika: Rata-rata tugas 1-6, komponen kosong dihitung 0
+     * Bobot: Tugas (30%) + Sikap (10%) + UTS (30%) + UAS (30%)
+     */
+    private function calculateFinalGrade(Request $request)
+    {
+        // Cek apakah ada minimal 1 komponen yang diisi
+        $hasAnyValue = !empty($request->tugas1) || !empty($request->tugas2) || !empty($request->tugas3) ||
+                       !empty($request->tugas4) || !empty($request->tugas5) || !empty($request->tugas6) ||
+                       !empty($request->sikap) || !empty($request->uts) || !empty($request->uas);
+
+        // Jika semua komponen kosong, anggap nilainya 0 (bukan null)
+        if (!$hasAnyValue) {
+            return 0;
+        }
+
+        // Hitung rata-rata tugas 1-6 (kosong = 0)
+        $tugasValues = [
+            floatval($request->tugas1 ?? 0),
+            floatval($request->tugas2 ?? 0),
+            floatval($request->tugas3 ?? 0),
+            floatval($request->tugas4 ?? 0),
+            floatval($request->tugas5 ?? 0),
+            floatval($request->tugas6 ?? 0),
+        ];
+        $rataRataTugas = array_sum($tugasValues) / 6;
+
+        // Komponen lain (kosong = 0)
+        $sikap = floatval($request->sikap ?? 0);
+        $uts = floatval($request->uts ?? 0);
+        $uas = floatval($request->uas ?? 0);
+
+        // Bobot: Tugas (30%) + Sikap (10%) + UTS (30%) + UAS (30%)
+        $nilaiAkhir = ($rataRataTugas * 0.30) + ($sikap * 0.10) + ($uts * 0.30) + ($uas * 0.30);
+
+        return round($nilaiAkhir, 2);
+    }
+
+    /**
+     * Menghitung nilai akhir dari array
+     * Logika: Rata-rata tugas 1-6, komponen kosong dihitung 0
+     * Bobot: Tugas (30%) + Sikap (10%) + UTS (30%) + UAS (30%)
+     */
+    private function calculateFinalGradeFromArray(array $data)
+    {
+        // Cek apakah ada minimal 1 komponen yang diisi
+        $hasAnyValue = !empty($data['tugas1']) || !empty($data['tugas2']) || !empty($data['tugas3']) ||
+                       !empty($data['tugas4']) || !empty($data['tugas5']) || !empty($data['tugas6']) ||
+                       !empty($data['sikap']) || !empty($data['uts']) || !empty($data['uas']);
+
+        // Jika semua komponen kosong, anggap nilainya 0 (bukan null)
+        if (!$hasAnyValue) {
+            return 0;
+        }
+
+        // Hitung rata-rata tugas 1-6 (kosong = 0)
+        $tugasValues = [
+            floatval($data['tugas1'] ?? 0),
+            floatval($data['tugas2'] ?? 0),
+            floatval($data['tugas3'] ?? 0),
+            floatval($data['tugas4'] ?? 0),
+            floatval($data['tugas5'] ?? 0),
+            floatval($data['tugas6'] ?? 0),
+        ];
+        $rataRataTugas = array_sum($tugasValues) / 6;
+
+        // Komponen lain (kosong = 0)
+        $sikap = floatval($data['sikap'] ?? 0);
+        $uts = floatval($data['uts'] ?? 0);
+        $uas = floatval($data['uas'] ?? 0);
+
+        // Bobot: Tugas (30%) + Sikap (10%) + UTS (30%) + UAS (30%)
+        $nilaiAkhir = ($rataRataTugas * 0.30) + ($sikap * 0.10) + ($uts * 0.30) + ($uas * 0.30);
+
+        return round($nilaiAkhir, 2);
+    }
+
+    /**
+     * Konversi semester ke array nilai yang valid
+     * Mendukung format: 1, 2, "1", "2", "ganjil", "genap"
+     */
+    private function getSemesterValues($semester)
+    {
+        if ($semester == '1' || $semester == 1 || strtolower($semester) == 'ganjil') {
+            return ['1', 'ganjil', 1];
+        }
+        if ($semester == '2' || $semester == 2 || strtolower($semester) == 'genap') {
+            return ['2', 'genap', 2];
+        }
+        return [$semester];
+    }
+
+    /**
+     * Normalisasi nilai semester untuk disimpan
+     */
+    private function normalizeSemester($semester)
+    {
+        if ($semester == '1' || $semester == 1 || strtolower($semester) == 'ganjil') {
+            return '1';
+        }
+        if ($semester == '2' || $semester == 2 || strtolower($semester) == 'genap') {
+            return '2';
+        }
+        return $semester;
     }
 }

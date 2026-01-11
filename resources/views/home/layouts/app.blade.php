@@ -85,6 +85,7 @@
           </li>
           <li class="nav-item {{ request()->routeIs('berita.*') ? 'active' : '' }}"><a href="{{ route('berita.index') }}" class="nav-link">Berita</a></li>
           <li class="nav-item {{ request()->routeIs('contact.*') ? 'active' : '' }}"><a href="{{ route('contact.index') }}" class="nav-link">Kontak</a></li>
+          <li class="nav-item {{ request()->routeIs('login') ? 'active' : '' }}"><a href="{{ route('login') }}" class="nav-link">Login</a></li>
           <li class="nav-item cta"><a href="{{ route('pendaftaran.index') }}" class="nav-link"><span>Daftar Sekarang!</span></a></li>
         </ul>
       </div>
@@ -166,7 +167,7 @@
 	              <ul>
 	                <li><span class="icon icon-map-marker"></span><span class="text">Jl. DR. Wahidin No.17, Krajan, Kalirejo, Kec. Lawang, Kabupaten Malang</span></li>
 	                <li><a href="#"><span class="icon icon-phone"></span><span class="text">(0341) 4395005</span></a></li>
-	                <li><a href="#"><span class="icon icon-envelope"></span><span class="text">info@smkpgrilawang.sch.id</span></a></li>
+	                <li><a href="#"><span class="icon icon-envelope"></span><span class="text">www.cssmkpgrilwg@gmail.com</span></a></li>
 	              </ul>
 	            </div>
             </div>
@@ -198,6 +199,7 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&sensor=false"></script>
   <script src="{{ asset('frontend/js/google-map.js') }}"></script>
   <script src="{{ asset('frontend/js/main.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   @stack('scripts')
     

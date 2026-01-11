@@ -1,163 +1,52 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container-fluid">
+
+<section class="section">
+    <div class="section-header">
+        <h1>Jadwal Pelajaran</h1>
+        <div class="section-header-breadcrumb">
+            <div class="breadcrumb-item active"><a href="{{ route('dashboard') }}">Dashboard</a></div>
+            <div class="breadcrumb-item">Jadwal Pelajaran</div>
+        </div>
+    </div>
+
+    <div class="section-body">
         <div class="row">
             <div class="col-12">
-                <!-- Main Content Tabs -->
-                <div class="card card-modern">
-                    <div class="card-header bg-white">
-                        <ul class="nav nav-pills card-header-pills" id="classTabs" role="tablist">
-                            @if($classes->count() > 0)
-                                @foreach($classes as $index => $class)
-                                <li class="nav-item">
-                                    <a class="nav-link {{ $index === 0 || $class->id == $selectedClass?->id ? 'active' : '' }}" 
-                                    id="class-{{ $class->id }}-tab" 
-                                    data-toggle="pill" 
-                                    href="#class-{{ $class->id }}" 
-                                    role="tab"
-                                    data-class-id="{{ $class->id }}">
-                                        <i class="fas fa-school mr-2"></i>{{ $class->name }}
-                                    </a>
-                                </li>
-                                @endforeach
-                            @else
-                                <li class="nav-item">
-                                    <a class="nav-link active" id="no-class-tab" data-toggle="pill" href="#no-class" role="tab">
-                                        <i class="fas fa-info-circle mr-2"></i>Tidak Ada Kelas
-                                    </a>
-                                </li>
-                            @endif
-                        </ul>
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4>Filter Kelas</h4>
+                        <div class="d-flex">
+                            <div class="mr-2">
+                                <label class="mb-1 small">Semester</label>
+                                <select id="semesterFilter" class="form-control form-control-sm">
+                                    <option value="Ganjil" {{ (isset($selectedSemester) && $selectedSemester === 'Ganjil') ? 'selected' : '' }}>Ganjil</option>
+                                    <option value="Genap" {{ (isset($selectedSemester) && $selectedSemester === 'Genap') ? 'selected' : '' }}>Genap</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="mb-1 small">Tahun Akademik</label>
+                                <select id="academicYearFilterSchedules" class="form-control form-control-sm">
+                                    @foreach(App\Helpers\AcademicYearHelper::generateAcademicYears(2, 2) as $year)
+                                        <option value="{{ $year }}" {{ (isset($selectedAcademicYear) && $selectedAcademicYear == $year) ? 'selected' : '' }}>{{ $year }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <div class="tab-content" id="classTabsContent">
+                        <div class="btn-group" role="group">
                             @if($classes->count() > 0)
                                 @foreach($classes as $index => $class)
-                                <div class="tab-pane fade {{ $index === 0 || $class->id == $selectedClass?->id ? 'show active' : '' }}" 
-                                    id="class-{{ $class->id }}" 
-                                    role="tabpanel">
-
-                                    <div class="card-header">
-                                        <h4>Daftar Pelajaran</h4>
-                                        <!-- Form search untuk setiap kelas -->
-                                        <div class="card-header-action">
-                                            <div class="input-group">
-                                                <button type="button" class="btn btn-primary btn-add-schedule" data-class-id="{{ $class->id }}" data-toggle="tooltip"
-                                                    style="margin-right: 10px;" title="Tambah Jadwal">
-                                                    <i class="fas fa-plus"></i>
-                                                </button>
-                                                <input type="text" class="form-control search-schedule" 
-                                                    placeholder="Cari Jadwal (Mata Pelajaran, Guru)" 
-                                                    id="searchSchedule-{{ $class->id }}" 
-                                                    data-class-id="{{ $class->id }}"
-                                                    autocomplete="off">
-                                                <div class="input-group-btn">
-                                                    <button type="button" class="btn btn-primary" id="search-button" style="margin-top: 1px;">
-                                                        <i class="fas fa-search"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Schedule Table -->
-                                    <div class="table-responsive">
-                                        <table class="table table-hover table-modern" id="schedulesTable-{{ $class->id }}">
-                                            <thead class="thead-light">
-                                                <tr>
-                                                    <th width="50">No</th>
-                                                    <th>Hari</th>
-                                                    <th>Mata Pelajaran</th>
-                                                    <th>Guru</th>
-                                                    <th>Jam Mulai</th>
-                                                    <th>Jam Selesai</th>
-                                                    <th width="120">Aksi</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="scheduleTableBody-{{ $class->id }}">
-                                                @if($index === 0 && $selectedClass && $schedules->count() > 0)
-                                                    @foreach($schedules as $scheduleIndex => $schedule)
-                                                    <tr>
-                                                        <td class="text-center">{{ $scheduleIndex + 1 }}</td>
-                                                        <td>
-                                                            <span class="badge badge-outline-primary">{{ $schedule->day }}</span>
-                                                        </td>
-                                                        <td>
-                                                            <div class="font-weight-bold">{{ $schedule->subject->name ?? '-' }}</div>
-                                                        </td>
-                                                        <td>
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="avatar-small mr-2">
-                                                                    {{ strtoupper(substr($schedule->teacher->name ?? 'T', 0, 1)) }}
-                                                                </div>
-                                                                <div>
-                                                                    <div class="font-weight-medium">{{ $schedule->teacher->name ?? '-' }}</div>
-                                                                    <small class="text-muted">{{ $schedule->teacher->nip ?? '-' }}</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <span class="badge badge-outline-success">{{ $schedule->start_time }}</span>
-                                                        </td>
-                                                        <td>
-                                                            <span class="badge badge-outline-danger">{{ $schedule->end_time }}</span>
-                                                        </td>
-                                                        <td>
-                                                            <button type="button" class="btn btn-primary btn-sm btn-edit-schedule" 
-                                                                data-id="{{ $schedule->id }}" title="Edit">
-                                                                <i class="fas fa-pencil-alt"></i>
-                                                            </button>
-                                                            <form id="delete-form-{{ $schedule->id }}" action="{{ route('schedules.destroy', $schedule->id) }}" method="POST" style="display:inline;">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete('{{ $schedule->id }}')" title="Hapus">
-                                                                    <i class="fas fa-trash"></i>
-                                                                </button>
-                                                            </form>
-                                                        </td>
-                                                    </tr>
-                                                    @endforeach
-                                                @else
-                                                    <tr id="empty-row-{{ $class->id }}">
-                                                        <td colspan="7" class="text-center py-4">
-                                                            <div class="empty-state">
-                                                                <div class="empty-state-icon mb-3">
-                                                                    <i class="fas fa-calendar-times"></i>
-                                                                </div>
-                                                                <h6 class="empty-state-title">Belum ada jadwal</h6>
-                                                                <p class="empty-state-text text-muted">Jadwal untuk kelas ini belum dibuat</p>
-                                                                <a href="{{ route('schedules.create') }}?class_id={{ $class->id }}" class="btn btn-primary btn-modern">
-                                                                    <i class="fas fa-plus mr-2"></i>Buat Jadwal Pertama
-                                                                </a>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                @endif
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    <!-- Pagination -->
-                                    <div class="d-flex justify-content-between align-items-center mt-3" id="pagination-{{ $class->id }}">
-                                        @if($index === 0 && $selectedClass && $schedules->hasPages())
-                                            {{ $schedules->links() }}
-                                        @endif
-                                    </div>
-                                </div>
+                                    <button type="button" class="btn {{ $index === 0 || $class->id == $selectedClass?->id ? 'btn-primary' : 'btn-outline-primary' }} class-filter-btn" 
+                                        data-class-id="{{ $class->id }}">
+                                        <i class="fas fa-users mr-1"></i>{{ $class->name }}
+                                    </button>
                                 @endforeach
                             @else
-                                <div class="tab-pane fade show active" id="no-class" role="tabpanel">
-                                    <div class="empty-state text-center py-5">
-                                        <div class="empty-state-icon mb-4">
-                                            <i class="fas fa-school"></i>
-                                        </div>
-                                        <h5 class="empty-state-title">Belum ada kelas</h5>
-                                        <p class="empty-state-text text-muted">Silahkan buat kelas terlebih dahulu sebelum membuat jadwal</p>
-                                        <a href="{{ route('classes.create') }}" class="btn btn-primary btn-modern">
-                                            <i class="fas fa-plus mr-2"></i>Buat Kelas Baru
-                                        </a>
-                                    </div>
+                                <div class="alert alert-warning mb-0">
+                                    <i class="fas fa-info-circle mr-2"></i>Tidak ada kelas tersedia
                                 </div>
                             @endif
                         </div>
@@ -165,7 +54,149 @@
                 </div>
             </div>
         </div>
+
+        @if($classes->count() > 0)
+            @foreach($classes as $index => $class)
+            <div class="row class-schedule-section {{ $index === 0 || $class->id == $selectedClass?->id ? '' : 'd-none' }}" 
+                id="schedule-section-{{ $class->id }}">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Daftar Pelajaran - {{ $class->name }}</h4>
+                            <div class="card-header-action">
+                                <div class="input-group">
+                                    <button type="button" class="btn btn-primary btn-add-schedule" 
+                                        data-class-id="{{ $class->id }}" data-toggle="tooltip"
+                                        style="margin-right: 10px;" title="Tambah Jadwal">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    <input type="text" class="form-control search-schedule" 
+                                        placeholder="Cari Jadwal (Mata Pelajaran, Guru)" 
+                                        id="searchSchedule-{{ $class->id }}" 
+                                        data-class-id="{{ $class->id }}"
+                                        autocomplete="off">
+                                    <div class="input-group-btn">
+                                        <button type="button" class="btn btn-primary" id="search-button" style="margin-top: 1px;">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped" id="schedulesTable-{{ $class->id }}">
+                                    <thead>
+                                        <tr class="text-center">
+                                            <th>No</th>
+                                            <th>Hari</th>
+                                            <th>Mata Pelajaran</th>
+                                            <th>Guru</th>
+                                            <th>Jam Mulai</th>
+                                            <th>Jam Selesai</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="scheduleTableBody-{{ $class->id }}">
+                                        @if($index === 0 && $selectedClass && $schedules->count() > 0)
+                                            @foreach($schedules as $scheduleIndex => $schedule)
+                                            <tr>
+                                                <td class="text-center">{{ $scheduleIndex + 1 }}</td>
+                                                <td><span class="badge badge-primary">{{ ucfirst($schedule->day) }}</span></td>
+                                                <td><a href="#" class="text-secondery font-weight-bold">{{ $schedule->subject->name ?? '-' }}</a></td>
+                                                <td>
+                                                    {{ $schedule->teacher->name ?? '-' }}<br>
+                                                    <small class="text-muted">{{ $schedule->teacher->nip ?? '-' }}</small>
+                                                </td>
+                                                <td class="text-center"><span class="badge badge-success">{{ $schedule->start_time }}</span></td>
+                                                <td class="text-center"><span class="badge badge-danger">{{ $schedule->end_time }}</span></td>
+                                                <td>
+                                                    <button type="button" class="btn btn-primary btn-action mr-1 btn-edit-schedule" 
+                                                        data-id="{{ $schedule->id }}" data-toggle="tooltip" title="Edit">
+                                                        <i class="fas fa-pencil-alt"></i>
+                                                    </button>
+                                                    <form id="delete-form-{{ $schedule->id }}" action="{{ route('schedules.destroy', $schedule->id) }}" method="POST" style="display:inline;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="button" class="btn btn-danger btn-action" data-toggle="tooltip"
+                                                            title="Delete" onclick="confirmDelete('{{ $schedule->id }}')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        @else
+                                            <tr id="empty-row-{{ $class->id }}">
+                                                <td colspan="7" class="text-center">Tidak ada data jadwal</td>
+                                            </tr>
+                                        @endif
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        @if($index === 0 && $selectedClass && $schedules->hasPages())
+                        <div class="card-footer text-right" id="pagination-{{ $class->id }}">
+                            <nav class="d-inline-block">
+                                <ul class="pagination mb-0">
+                                    {{-- Previous Page Link --}}
+                                    @if ($schedules->onFirstPage())
+                                        <li class="page-item disabled" aria-disabled="true">
+                                            <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                                        </li>
+                                    @else
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ $schedules->previousPageUrl() }}" rel="prev"><i class="fas fa-chevron-left"></i></a>
+                                        </li>
+                                    @endif
+
+                                    {{-- Pagination Elements --}}
+                                    @foreach ($schedules->getUrlRange(1, $schedules->lastPage()) as $page => $url)
+                                        @if ($page == $schedules->currentPage())
+                                            <li class="page-item active" aria-current="page"><span class="page-link">{{ $page }}</span></li>
+                                        @else
+                                            <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
+                                        @endif
+                                    @endforeach
+
+                                    {{-- Next Page Link --}}
+                                    @if ($schedules->hasMorePages())
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ $schedules->nextPageUrl() }}" rel="next"><i class="fas fa-chevron-right"></i></a>
+                                        </li>
+                                    @else
+                                        <li class="page-item disabled" aria-disabled="true">
+                                            <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </nav>
+                        </div>
+                        @else
+                        <div class="card-footer text-right" id="pagination-{{ $class->id }}"></div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        @else
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-school fa-5x text-muted mb-3"></i>
+                            <h5>Belum ada kelas</h5>
+                            <p class="text-muted">Silahkan buat kelas terlebih dahulu sebelum membuat jadwal</p>
+                            <a href="{{ route('classes.create') }}" class="btn btn-primary">
+                                <i class="fas fa-plus mr-2"></i>Buat Kelas Baru
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
+</section>
 
     <div class="modal fade" id="scheduleModal" tabindex="-1" role="dialog" aria-labelledby="scheduleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
@@ -498,29 +529,35 @@
                 }
             }
 
-            // Tab click handler - PERBAIKAN: Simpan currentClassId saat tab berubah
-            $('.nav-link[data-class-id]').on('click', function(e) {
+            // Reload when semester/year filter changes
+            $('#semesterFilter, #academicYearFilterSchedules').on('change', function() {
+                if (currentClassId) {
+                    loadClassSchedules(currentClassId);
+                }
+            });
+
+            // Class filter button click handler
+            $('.class-filter-btn').on('click', function(e) {
                 e.preventDefault();
                 
                 const classId = $(this).data('class-id');
-                currentClassId = classId; // Set global variable
+                currentClassId = classId;
                 currentPage = 1;
                 
-                // Clear search when switching tabs
+                // Clear search when switching class
                 const searchInput = $(`#searchSchedule-${classId}`);
                 searchInput.val('');
-                $(`#clear-search-${classId}`).hide();
                 
                 // Load schedules for the selected class
                 loadClassSchedules(classId);
                 
-                // Activate tab
-                $('.nav-link').removeClass('active');
-                $(this).addClass('active');
+                // Update button states
+                $('.class-filter-btn').removeClass('btn-primary').addClass('btn-outline-primary');
+                $(this).removeClass('btn-outline-primary').addClass('btn-primary');
                 
-                // Show corresponding tab content
-                $('.tab-pane').removeClass('show active');
-                $('#class-' + classId).addClass('show active');
+                // Show corresponding schedule section
+                $('.class-schedule-section').addClass('d-none');
+                $('#schedule-section-' + classId).removeClass('d-none');
             });
 
             // PERBAIKAN: Modifikasi tombol tambah jadwal untuk auto-fill class_id
@@ -611,6 +648,11 @@
                 if (searchTerm) {
                     params.q = searchTerm;
                 }
+
+                const semester = $('#semesterFilter').val();
+                const academicYear = $('#academicYearFilterSchedules').val();
+                if (semester) params.semester = semester;
+                if (academicYear) params.academic_year = academicYear;
                 
                 // Make AJAX request
                 $.ajax({
@@ -671,14 +713,12 @@
             function renderScheduleTable(schedules, tableBody, classId) {
                 if (schedules.length === 0) {
                     const emptyHtml = '<tr id="empty-row-' + classId + '">' +
-                        '<td colspan="7" class="text-center py-4">' +
-                            '<div class="empty-state">' +
-                                '<div class="empty-state-icon mb-3">' +
-                                    '<i class="fas fa-calendar-times"></i>' +
-                                '</div>' +
-                                '<h6 class="empty-state-title">Tidak ada jadwal ditemukan</h6>' +
-                                '<p class="empty-state-text text-muted">Coba ubah kata kunci pencarian atau buat jadwal baru</p>' +
-                                '<a href="/schedules/create?class_id=' + classId + '" class="btn btn-primary btn-modern">' +
+                        '<td colspan="7" class="text-center py-5">' +
+                            '<div class="p-5">' +
+                                '<i class="fas fa-calendar-times fa-5x text-muted mb-3"></i>' +
+                                '<h5 class="font-weight-bold">Tidak ada jadwal ditemukan</h5>' +
+                                '<p class="text-muted">Coba ubah kata kunci pencarian atau buat jadwal baru</p>' +
+                                '<a href="/schedules/create?class_id=' + classId + '" class="btn btn-primary">' +
                                     '<i class="fas fa-plus mr-2"></i>Buat Jadwal Baru' +
                                 '</a>' +
                             '</div>' +
@@ -706,36 +746,28 @@
                     html += '<tr>' +
                         '<td class="text-center">' + rowNumber + '</td>' +
                         '<td>' +
-                            '<span class="badge badge-outline-primary">' + dayName + '</span>' +
+                            '<span class="badge badge-primary">' + dayName.charAt(0).toUpperCase() + dayName.slice(1) + '</span>' +
+                        '</td>' +
+                        '<td><a href="#" class="text-secondery font-weight-bold">' + subjectName + '</a></td>' +
+                        '<td>' +
+                            teacherName + '<br>' +
+                            '<small class="text-muted">' + teacherNip + '</small>' +
+                        '</td>' +
+                        '<td class="text-center">' +
+                            '<span class="badge badge-success">' + startTime + '</span>' +
+                        '</td>' +
+                        '<td class="text-center">' +
+                            '<span class="badge badge-danger">' + endTime + '</span>' +
                         '</td>' +
                         '<td>' +
-                            '<div class="font-weight-bold">' + subjectName + '</div>' +
-                        '</td>' +
-                        '<td>' +
-                            '<div class="d-flex align-items-center">' +
-                                '<div class="avatar-small mr-2">' + teacherInitial + '</div>' +
-                                '<div>' +
-                                    '<div class="font-weight-medium"><a href="#"><b>' + teacherName + '</b></a></div>' +
-                                    '<small class="text-muted">' + teacherNip + '</small>' +
-                                '</div>' +
-                            '</div>' +
-                        '</td>' +
-                        '<td>' +
-                            '<span class="badge badge-outline-success">' + startTime + '</span>' +
-                        '</td>' +
-                        '<td>' +
-                            '<span class="badge badge-outline-danger">' + endTime + '</span>' +
-                        '</td>' +
-                        '<td>' +
-                            // PERBAIKAN: Gunakan button dengan class dan data-id yang konsisten
-                            '<button type="button" class="btn btn-primary btn-sm btn-edit-schedule" ' +
-                                'data-id="' + schedule.id + '" title="Edit">' +
+                            '<button type="button" class="btn btn-primary btn-action mr-1 btn-edit-schedule" ' +
+                                'data-id="' + schedule.id + '" data-toggle="tooltip" title="Edit">' +
                                 '<i class="fas fa-pencil-alt"></i>' +
                             '</button> ' +
                             '<form id="delete-form-' + schedule.id + '" action="/schedules/' + schedule.id + '" method="POST" style="display:inline;">' +
                                 '<input type="hidden" name="_token" value="' + getCsrfToken() + '">' +
                                 '<input type="hidden" name="_method" value="DELETE">' +
-                                '<button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete(\'' + schedule.id + '\')" title="Hapus">' +
+                                '<button type="button" class="btn btn-danger btn-action" data-toggle="tooltip" title="Delete" onclick="confirmDelete(\'' + schedule.id + '\')">' +
                                     '<i class="fas fa-trash"></i>' +
                                 '</button>' +
                             '</form>' +
@@ -755,7 +787,7 @@
                     return;
                 }
 
-                let html = '<nav aria-label="Schedule pagination"><ul class="pagination justify-content-center">';
+                let html = '<nav class="d-inline-block"><ul class="pagination mb-0">';
                 
                 // Previous page
                 if (pagination.current_page > 1) {
@@ -763,6 +795,10 @@
                         '<a class="page-link" href="#" data-page="' + (pagination.current_page - 1) + '" data-class-id="' + classId + '" data-search="' + escapeHtml(searchTerm) + '">' +
                             '<i class="fas fa-chevron-left"></i>' +
                         '</a>' +
+                    '</li>';
+                } else {
+                    html += '<li class="page-item disabled">' +
+                        '<span class="page-link"><i class="fas fa-chevron-left"></i></span>' +
                     '</li>';
                 }
                 
@@ -772,9 +808,15 @@
                 
                 for (let i = startPage; i <= endPage; i++) {
                     const activeClass = i === pagination.current_page ? 'active' : '';
-                    html += '<li class="page-item ' + activeClass + '">' +
-                        '<a class="page-link" href="#" data-page="' + i + '" data-class-id="' + classId + '" data-search="' + escapeHtml(searchTerm) + '">' + i + '</a>' +
-                    '</li>';
+                    if (i === pagination.current_page) {
+                        html += '<li class="page-item active">' +
+                            '<span class="page-link">' + i + '</span>' +
+                        '</li>';
+                    } else {
+                        html += '<li class="page-item">' +
+                            '<a class="page-link" href="#" data-page="' + i + '" data-class-id="' + classId + '" data-search="' + escapeHtml(searchTerm) + '">' + i + '</a>' +
+                        '</li>';
+                    }
                 }
                 
                 // Next page
@@ -784,16 +826,13 @@
                             '<i class="fas fa-chevron-right"></i>' +
                         '</a>' +
                     '</li>';
+                } else {
+                    html += '<li class="page-item disabled">' +
+                        '<span class="page-link"><i class="fas fa-chevron-right"></i></span>' +
+                    '</li>';
                 }
                 
                 html += '</ul></nav>';
-                
-                // Add info text
-                const startItem = ((pagination.current_page - 1) * pagination.per_page) + 1;
-                const endItem = Math.min(pagination.current_page * pagination.per_page, pagination.total);
-                html += '<div class="pagination-info text-center mt-2">' +
-                    '<small class="text-muted">Menampilkan ' + startItem + ' - ' + endItem + ' dari ' + pagination.total + ' data</small>' +
-                '</div>';
                 
                 container.html(html);
             }
@@ -930,243 +969,4 @@
             });
         }
     </script>
-@endpush
-
-@push('styles')
-    <style>
-
-        .nav-pills .nav-link {
-            border-radius: 25px;
-            font-weight: 500;
-            /* padding: 0.75rem 1.5rem; */
-            margin-right: 0.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .nav-pills .nav-link.active {
-            background-color: #007bff;
-            border: none;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-modern {
-            border-radius: 25px;
-            font-weight: 500;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-modern:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .avatar-modern {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-
-        .avatar-small {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .table-modern {
-            border: none;
-        }
-
-        .table-modern thead th {
-            border: none;
-            background-color: #f8f9fa;
-            font-weight: 600;
-            color: #495057;
-            padding: 1rem;
-        }
-
-        .table-modern tbody tr {
-            transition: all 0.3s ease;
-        }
-
-        .table-modern tbody tr:hover {
-            background-color: #f8f9fa;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .table-modern td {
-            padding: 1rem;
-            border: none;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .badge-outline-info {
-            color: #17a2b8;
-            border: 1px solid #17a2b8;
-            background: transparent;
-        }
-
-        .badge-outline-primary {
-            color: #007bff;
-            border: 1px solid #007bff;
-            background: transparent;
-        }
-
-        .badge-outline-pink {
-            color: #e83e8c;
-            border: 1px solid #e83e8c;
-            background: transparent;
-        }
-
-        .badge-outline-danger {
-            color: #dc3545;
-            border: 1px solid #dc3545;
-            background: transparent;
-        }
-
-        .badge-lg {
-            font-size: 0.9rem;
-            padding: 0.5rem 1rem;
-        }
-
-        .search-box {
-            width: 300px;
-        }
-
-        .search-box .form-control {
-            border-radius: 25px;
-            padding-left: 0;
-        }
-
-        .search-box .input-group-text {
-            border-radius: 25px 0 0 25px;
-        }
-
-        .empty-state {
-            padding: 3rem 2rem;
-        }
-
-        .empty-state-icon {
-            font-size: 4rem;
-            color: #dee2e6;
-        }
-
-        .empty-state-title {
-            color: #6c757d;
-            font-weight: 600;
-        }
-
-        .empty-state-text {
-            margin-bottom: 2rem;
-        }
-
-        .students-list {
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 0.5rem;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-        }
-
-        /* Attendance Styles */
-        .attendance-status {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 24px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: white;
-        }
-
-        .attendance-h {
-            background-color: #28a745;
-        }
-
-        .attendance-s {
-            background-color: #ffc107;
-            color: #212529;
-        }
-
-        .attendance-i {
-            background-color: #17a2b8;
-        }
-
-        .attendance-a {
-            background-color: #dc3545;
-        }
-
-        #attendanceTable {
-            font-size: 0.9rem;
-        }
-
-        #attendanceTable th {
-            text-align: center;
-            padding: 0.5rem;
-            white-space: nowrap;
-        }
-
-        #attendanceTable td {
-            padding: 0.5rem;
-            text-align: center;
-        }
-
-        .font-weight-medium {
-            font-weight: 500;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header-section {
-                padding: 1.5rem;
-            }
-
-            .search-box {
-                width: 100%;
-                margin-top: 1rem;
-            }
-
-            .card-stats .numbers {
-                text-align: left;
-                margin-top: 1rem;
-            }
-
-            .btn-modern {
-                padding: 0.5rem 1rem;
-                font-size: 0.9rem;
-            }
-
-            #attendanceTable {
-                font-size: 0.8rem;
-            }
-
-            .attendance-status {
-                width: 20px;
-                height: 20px;
-                line-height: 20px;
-                font-size: 0.7rem;
-            }
-        }
-
-    </style>
 @endpush

@@ -5,7 +5,20 @@
 <section class="section">
     <div class="section-header">
         <h1>Daftar Kelas</h1>
-        <div class="section-header-button">
+        <div class="section-header-button d-flex">
+            <form id="open-next-semester-bulk-form" action="{{ route('classes.open-next-semester-bulk') }}" method="POST" class="mr-2" style="display:none;">
+                @csrf
+            </form>
+            <form id="promote-bulk-form" action="{{ route('classes.promote-bulk') }}" method="POST" class="mr-2" style="display:none;">
+                @csrf
+                <input type="hidden" name="students_json" id="students_json">
+            </form>
+            <button type="button" class="btn btn-warning mr-2" id="btn-open-next-semester-bulk">
+                <i class="fas fa-random"></i> Tutup Ganjil & Buka Genap (Semua Kelas)
+            </button>
+            <button type="button" class="btn btn-success mr-2" id="btn-promote-bulk">
+                <i class="fas fa-level-up-alt"></i> Naikkan Kelas (Masal)
+            </button>
             <button class="btn btn-primary" id="btn-create" data-toggle="modal" data-target="#classModal">
                 <i class="fas fa-plus"></i> Tambah Kelas
             </button>
@@ -126,6 +139,33 @@
         </div>
     </div>
 </section>
+
+<!-- Modal Naik Kelas Masal -->
+<div class="modal fade" id="promoteModal" tabindex="-1" role="dialog" aria-labelledby="promoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="promoteModalLabel">Naikkan Kelas (Masal)</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row" id="promoteModalContent">
+                    <div class="col-md-6" id="promoteColumnLeft">
+                        <p>Memuat data siswa...</p>
+                    </div>
+                    <div class="col-md-6" id="promoteColumnRight"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="btn-save-promote">Simpan</button>
+            </div>
+        </div>
+    </div>
+    
+</div>
 
 <!-- Modal for Create/Edit Class -->
 <div class="modal fade" id="classModal" tabindex="-1" role="dialog" aria-labelledby="classModalLabel" aria-hidden="true">
@@ -585,8 +625,8 @@
                 $('#classModal').modal('show');
             });
 
-            // Add click handlers for class cards
-            $('.class-card, [data-class-id]').off('click.card').on('click.card', function(e) {
+            // Add click handlers ONLY for main class cards on the classes page
+            $('.class-card').off('click.card').on('click.card', function(e) {
                 // Don't navigate if dropdown or dropdown items were clicked
                 if ($(e.target).closest('.dropdown').length > 0) {
                     return;
@@ -608,7 +648,130 @@
             $(document).ajaxComplete(function() {
                 initDropdowns();
             });
-            
+
+            // Handle bulk open next semester
+            $('#btn-open-next-semester-bulk').on('click', function(e) {
+                e.preventDefault();
+
+                swal({
+                    title: 'Tutup Semester Ganjil & Buka Genap?',
+                    text: 'Tindakan ini akan menutup semua record semester ganjil yang masih aktif dan membuka semester genap untuk semua siswa di semua kelas pada tahun akademik aktif. Jadwal untuk semester genap akan kosong sampai Anda membuat jadwal baru.',
+                    icon: 'warning',
+                    buttons: {
+                        cancel: 'Batal',
+                        confirm: {
+                            text: 'Ya, Lanjutkan',
+                            value: true,
+                        }
+                    },
+                    dangerMode: true,
+                }).then((willProceed) => {
+                    if (willProceed) {
+                        document.getElementById('open-next-semester-bulk-form').submit();
+                    }
+                });
+            });
+
+            // Handle promote students bulk (naik kelas masal)
+            $('#btn-promote-bulk').on('click', function(e) {
+                e.preventDefault();
+                $('#promoteColumnLeft').html('<p>Memuat data siswa...</p>');
+                $('#promoteColumnRight').html('');
+                $('#promoteModal').modal('show');
+
+                $.ajax({
+                    url: '{{ route("classes.promote-data") }}',
+                    method: 'GET',
+                    success: function(response) {
+                        if (response.success && response.data.length > 0) {
+                            let leftHtml = '';
+                            let rightHtml = '';
+                            response.data.forEach(function(cls, index) {
+                                let block = '';
+                                block += '<h6 class="mt-3">Kelas ' + cls.class_name + ' (Grade ' + cls.grade + ' - ' + cls.major + ')</h6>';
+                                block += '<div class="table-responsive"><table class="table table-sm table-bordered">';
+                                block += '<thead><tr><th style="width:40px;" class="text-center"><input type="checkbox" class="check-all-class" data-class-id="' + cls.class_id + '" checked></th><th>Nama</th><th>NISN</th></tr></thead><tbody>';
+                                cls.students.forEach(function(st) {
+                                    block += '<tr>';
+                                    block += '<td class="text-center"><input type="checkbox" class="check-student" data-class-id="' + cls.class_id + '" data-student-id="' + st.student_id + '" checked></td>';
+                                    block += '<td>' + st.name + '</td>';
+                                    block += '<td>' + (st.nisn || '-') + '</td>';
+                                    block += '</tr>';
+                                });
+                                block += '</tbody></table></div>';
+
+                                if (index % 2 === 0) {
+                                    leftHtml += block;
+                                } else {
+                                    rightHtml += block;
+                                }
+                            });
+                            $('#promoteColumnLeft').html(leftHtml);
+                            $('#promoteColumnRight').html(rightHtml);
+
+                            // Handle check all per kelas
+                            $('.check-all-class').on('change', function() {
+                                const classId = $(this).data('class-id');
+                                const checked = $(this).is(':checked');
+                                $('.check-student[data-class-id="' + classId + '"]').prop('checked', checked);
+                            });
+                        } else {
+                            $('#promoteColumnLeft').html('<p>Tidak ada data siswa semester genap yang dapat dipromosikan.</p>');
+                            $('#promoteColumnRight').html('');
+                        }
+                    },
+                    error: function(xhr) {
+                        $('#promoteColumnLeft').html('<p class="text-danger">Gagal memuat data: ' + (xhr.responseJSON?.message || 'Terjadi kesalahan') + '</p>');
+                        $('#promoteColumnRight').html('');
+                    }
+                });
+            });
+
+            // Simpan hasil pilihan naik kelas
+            $('#btn-save-promote').on('click', function() {
+                const data = [];
+                $('.check-student').each(function() {
+                    const classId = $(this).data('class-id');
+                    const studentId = $(this).data('student-id');
+                    const promote = $(this).is(':checked');
+                    data.push({
+                        class_id: String(classId),
+                        student_id: String(studentId),
+                        promote: promote
+                    });
+                });
+
+                if (data.length === 0) {
+                    swal({
+                        icon: 'warning',
+                        title: 'Tidak Ada Data',
+                        text: 'Tidak ada siswa yang dapat diproses.',
+                    });
+                    return;
+                }
+
+                $('#students_json').val(JSON.stringify(data));
+
+                swal({
+                    title: 'Konfirmasi Naik Kelas',
+                    text: 'Apakah Anda yakin ingin menyimpan pengaturan naik kelas ini? Data student_class tahun ajaran baru akan dibuat sesuai pilihan Anda.',
+                    icon: 'warning',
+                    buttons: {
+                        cancel: 'Batal',
+                        confirm: {
+                            text: 'Ya, Simpan',
+                            value: true,
+                        }
+                    },
+                    dangerMode: true,
+                }).then((willProceed) => {
+                    if (willProceed) {
+                        $('#promoteModal').modal('hide');
+                        document.getElementById('promote-bulk-form').submit();
+                    }
+                });
+            });
+
             // Reset form when modal is closed
             $('#classModal').on('hidden.bs.modal', function () {
                 $('#classForm')[0].reset();

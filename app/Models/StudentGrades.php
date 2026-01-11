@@ -26,24 +26,16 @@ class StudentGrades extends Model
     }
 
     protected $casts = [
-        'h1' => 'decimal:2',
-        'h2' => 'decimal:2',
-        'h3' => 'decimal:2',
-        'k1' => 'decimal:2',
-        'k2' => 'decimal:2',
-        'k3' => 'decimal:2',
-        'ck' => 'decimal:2',
-        'p' => 'decimal:2',
-        'k' => 'decimal:2',
-        'aktif' => 'decimal:2',
-        'nilai' => 'decimal:2',
-        'month' => 'integer',
-        // New grading schema
         'tugas1' => 'decimal:2',
         'tugas2' => 'decimal:2',
+        'tugas3' => 'decimal:2',
+        'tugas4' => 'decimal:2',
+        'tugas5' => 'decimal:2',
+        'tugas6' => 'decimal:2',
         'sikap' => 'decimal:2',
         'uts' => 'decimal:2',
-        'uas' => 'decimal:2'
+        'uas' => 'decimal:2',
+        'nilai' => 'decimal:2',
     ];
 
     protected $dates = [
@@ -117,14 +109,6 @@ class StudentGrades extends Model
     }
 
     /**
-     * Scope for filtering by month
-     */
-    public function scopeMonth($query, $month)
-    {
-        return $query->where('month', $month);
-    }
-
-    /**
      * Scope for filtering by class
      */
     public function scopeByClass($query, $classId)
@@ -150,25 +134,34 @@ class StudentGrades extends Model
 
     /**
      * Calculate final grade from all components
+     * Bobot: Tugas1 (15%) + Tugas2 (15%) + Sikap (10%) + UTS (30%) + UAS (30%)
      */
     public function calculateFinalGrade()
     {
-        $gradeComponents = [
-            $this->h1, $this->h2, $this->h3,
-            $this->k1, $this->k2, $this->k3,
-            $this->ck, $this->p, $this->k, $this->aktif
+        $components = [
+            $this->tugas1,
+            $this->tugas2,
+            $this->sikap,
+            $this->uts,
+            $this->uas,
         ];
 
         // Filter out null values
-        $validGrades = array_filter($gradeComponents, function($grade) {
-            return $grade !== null;
+        $validComponents = array_filter($components, function($value) {
+            return $value !== null && $value !== '';
         });
 
-        if (empty($validGrades)) {
+        if (empty($validComponents)) {
             return null;
         }
 
-        return round(array_sum($validGrades) / count($validGrades), 2);
+        $tugas1 = floatval($this->tugas1 ?? 0) * 0.15;
+        $tugas2 = floatval($this->tugas2 ?? 0) * 0.15;
+        $sikap = floatval($this->sikap ?? 0) * 0.10;
+        $uts = floatval($this->uts ?? 0) * 0.30;
+        $uas = floatval($this->uas ?? 0) * 0.30;
+
+        return round($tugas1 + $tugas2 + $sikap + $uts + $uas, 2);
     }
 
     /**
@@ -204,28 +197,12 @@ class StudentGrades extends Model
     }
 
     /**
-     * Get month name in Indonesian
-     */
-    public function getMonthNameIndonesianAttribute()
-    {
-        $monthNames = [
-            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-        ];
-
-        return $monthNames[$this->month] ?? '';
-    }
-
-    /**
      * Check if grade is complete (has at least one component)
      */
     public function isComplete()
     {
         return !empty(array_filter([
-            $this->h1, $this->h2, $this->h3,
-            $this->k1, $this->k2, $this->k3,
-            $this->ck, $this->p, $this->k, $this->aktif
+            $this->tugas1, $this->tugas2, $this->sikap, $this->uts, $this->uas
         ]));
     }
 
@@ -235,23 +212,12 @@ class StudentGrades extends Model
     public function getFormattedGradesAttribute()
     {
         return [
-            'harian' => [
-                'h1' => $this->h1 ? number_format($this->h1, 2) : '-',
-                'h2' => $this->h2 ? number_format($this->h2, 2) : '-',
-                'h3' => $this->h3 ? number_format($this->h3, 2) : '-',
-            ],
-            'kuis' => [
-                'k1' => $this->k1 ? number_format($this->k1, 2) : '-',
-                'k2' => $this->k2 ? number_format($this->k2, 2) : '-',
-                'k3' => $this->k3 ? number_format($this->k3, 2) : '-',
-            ],
-            'others' => [
-                'ck' => $this->ck ? number_format($this->ck, 2) : '-',
-                'p' => $this->p ? number_format($this->p, 2) : '-',
-                'k' => $this->k ? number_format($this->k, 2) : '-',
-                'aktif' => $this->aktif ? number_format($this->aktif, 2) : '-',
-            ],
-            'final' => $this->nilai ? number_format($this->nilai, 2) : '-'
+            'tugas1' => $this->tugas1 ? number_format($this->tugas1, 2) : '-',
+            'tugas2' => $this->tugas2 ? number_format($this->tugas2, 2) : '-',
+            'sikap' => $this->sikap ? number_format($this->sikap, 2) : '-',
+            'uts' => $this->uts ? number_format($this->uts, 2) : '-',
+            'uas' => $this->uas ? number_format($this->uas, 2) : '-',
+            'nilai' => $this->nilai ? number_format($this->nilai, 2) : '-'
         ];
     }
 }

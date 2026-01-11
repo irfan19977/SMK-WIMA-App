@@ -17,22 +17,20 @@ return new class extends Migration
             $table->uuid('class_id');
             $table->uuid('subject_id');
             $table->string('academic_year'); // 2023/2024
-            $table->enum('semester', ['ganjil', 'genap']);
-            $table->tinyInteger('month'); // 1-12 (Januari-Desember)
-            $table->string('month_name')->nullable(); // Januari, Februari, dst
+            $table->string('semester'); // 1, 2, ganjil, genap
             
-            // Komponen Nilai
-            $table->decimal('h1', 5, 2)->nullable(); // Harian 1
-            $table->decimal('h2', 5, 2)->nullable(); // Harian 2  
-            $table->decimal('h3', 5, 2)->nullable(); // Harian 3
-            $table->decimal('k1', 5, 2)->nullable(); // Kuis 1
-            $table->decimal('k2', 5, 2)->nullable(); // Kuis 2
-            $table->decimal('k3', 5, 2)->nullable(); // Kuis 3
-            $table->decimal('ck', 5, 2)->nullable(); // Cek Kemampuan
-            $table->decimal('p', 5, 2)->nullable();  // Praktik
-            $table->decimal('k', 5, 2)->nullable();  // Keaktifan
-            $table->decimal('aktif', 5, 2)->nullable(); // Aktivitas
-            $table->decimal('nilai', 5, 2)->nullable(); // Nilai Akhir/Total
+            // Komponen Nilai - Tugas
+            $table->decimal('tugas1', 5, 2)->nullable();
+            $table->decimal('tugas2', 5, 2)->nullable();
+            $table->decimal('tugas3', 5, 2)->nullable();
+            $table->decimal('tugas4', 5, 2)->nullable();
+            $table->decimal('tugas5', 5, 2)->nullable();
+            $table->decimal('tugas6', 5, 2)->nullable();
+            // Komponen Nilai - Lainnya
+            $table->decimal('sikap', 5, 2)->nullable();
+            $table->decimal('uts', 5, 2)->nullable();
+            $table->decimal('uas', 5, 2)->nullable();
+            $table->decimal('nilai', 5, 2)->nullable(); // Nilai akhir
             
             // Audit fields
             $table->uuid('created_by')->nullable();
@@ -50,11 +48,11 @@ return new class extends Migration
             $table->foreign('deleted_by')->references('id')->on('users')->onDelete('set null');
             
             // Indexes untuk performa query
-            $table->index(['student_id', 'academic_year', 'month']);
-            $table->index(['class_id', 'subject_id', 'academic_year', 'month']);
+            $table->index(['student_id', 'academic_year', 'semester']);
+            $table->index(['class_id', 'subject_id', 'academic_year', 'semester']);
             
-            // Unique constraint untuk mencegah duplikasi nilai per siswa per mata pelajaran per bulan
-            $table->unique(['student_id', 'subject_id', 'class_id', 'academic_year', 'month'], 'unique_student_subject_monthly_grade');
+            // Unique constraint untuk mencegah duplikasi nilai per siswa per mata pelajaran per semester
+            $table->unique(['student_id', 'subject_id', 'class_id', 'academic_year', 'semester'], 'unique_student_subject_semester_grade');
         });
     }
 

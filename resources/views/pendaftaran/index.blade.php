@@ -215,35 +215,78 @@
       document.querySelectorAll('.btn-accept').forEach(function(btn) {
         btn.addEventListener('click', async function () {
           const id = this.getAttribute('data-id');
+          const name = this.getAttribute('data-name') || '';
+          const jurusanUtama = this.getAttribute('data-jurusan-utama') || '';
+          const jurusanCadangan = this.getAttribute('data-jurusan-cadangan') || '';
           if (!id) return;
 
-        // SweetAlert v1 confirmation (align with layout)
         if (window.swal) {
+          const content = document.createElement('div');
+          let optionsHtml = '';
+          if (jurusanUtama) {
+            optionsHtml += `<option value="${jurusanUtama}">${jurusanUtama} (Utama)</option>`;
+          }
+          if (jurusanCadangan && jurusanCadangan !== jurusanUtama) {
+            optionsHtml += `<option value="${jurusanCadangan}">${jurusanCadangan} (Cadangan)</option>`;
+          }
+          content.innerHTML = `
+            <div style="text-align:left;">
+              <div class="form-group">
+                <label>Nama Siswa</label>
+                <input type="text" class="swal-content__input" value="${name}" readonly>
+              </div>
+              <div class="form-group">
+                <label>Jurusan diterima</label>
+                <select id="swal-jurusan" class="swal-content__input">
+                  ${optionsHtml || '<option value="">Pilih jurusan</option>'}
+                </select>
+              </div>
+              <div class="form-group">
+                <label>No Absen</label>
+                <input type="text" id="swal-no-absen" class="swal-content__input" placeholder="mis. 1, 2, 10">
+              </div>
+            </div>
+          `;
+
           const confirmed = await new Promise(resolve => {
             swal({
               title: 'Terima calon siswa ini?',
-              text: '',
+              content: content,
               icon: 'warning',
               buttons: {
                 cancel: 'Batal',
-                confirm: 'Ya, Terima'
+                confirm: 'Ya, Simpan'
               },
               dangerMode: false,
             }).then(value => resolve(!!value));
           });
           if (!confirmed) return;
-        } else {
-          if (!confirm('Terima calon siswa ini?')) return;
-        }
 
-        try {
-          const res = await fetch(`{{ url('pendaftaran-siswa') }}/${id}/accept`, {
-            method: 'POST',
-            headers: {
-              'X-CSRF-TOKEN': `{{ csrf_token() }}`,
-              'Accept': 'application/json'
+          const jurusanDiterimaInput = document.getElementById('swal-jurusan');
+          const noAbsenInput = document.getElementById('swal-no-absen');
+          const jurusanDiterima = jurusanDiterimaInput ? jurusanDiterimaInput.value.trim() : '';
+          const noAbsen = noAbsenInput ? noAbsenInput.value.trim() : '';
+
+          if (!jurusanDiterima) {
+            if (window.toastr) {
+              toastr.error('Pilih jurusan diterima terlebih dahulu');
             }
-          });
+            return;
+          }
+
+          try {
+            const res = await fetch(`{{ url('pendaftaran-siswa') }}/${id}/accept`, {
+              method: 'POST',
+              headers: {
+                'X-CSRF-TOKEN': `{{ csrf_token() }}`,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                jurusan_diterima: jurusanDiterima,
+                no_absen: noAbsen
+              })
+            });
 
           if (!res.ok) {
             // Try to read message
@@ -255,43 +298,163 @@
             throw new Error(msg);
           }
 
-          let message = 'Calon siswa telah diterima.';
-          try {
-            const data = await res.json();
-            if (data && data.message) message = data.message;
-          } catch (e) {}
+            let message = 'Calon siswa telah diterima.';
+            try {
+              const data = await res.json();
+              if (data && data.message) message = data.message;
+            } catch (e) {}
 
-          // Reload tabel agar nomor baris ($loop->iteration) terhitung ulang
-          await reloadTable();
+            await reloadTable();
 
-          if (window.swal) {
-            await new Promise(resolve => {
+            if (window.swal) {
+              await new Promise(resolve => {
+                swal({
+                  title: 'Berhasil!',
+                  text: message,
+                  icon: 'success',
+                  timer: 2000,
+                }).then(() => resolve());
+              });
+            } else if (window.toastr) {
+              toastr.success(message);
+            } else {
+              alert(message);
+            }
+          } catch (err) {
+            if (window.swal) {
               swal({
-                title: 'Berhasil!',
-                text: message,
-                icon: 'success',
-                timer: 2000,
-              }).then(() => resolve());
-            });
-          } else if (window.toastr) {
-            toastr.success(message);
-          } else {
-            alert(message);
+                title: 'Gagal!',
+                text: err.message || 'Terjadi kesalahan.',
+                icon: 'error'
+              });
+            } else if (window.toastr) {
+              toastr.error(err.message || 'Terjadi kesalahan.');
+            } else {
+              alert(err.message || 'Terjadi kesalahan.');
+            }
           }
-        } catch (err) {
-          if (window.swal) {
-            swal({
-              title: 'Gagal!',
-              text: err.message || 'Terjadi kesalahan.',
-              icon: 'error'
+        } else {
+          if (!confirm('Terima calon siswa ini?')) return;
+
+          try {
+            const res = await fetch(`{{ url('pendaftaran-siswa') }}/${id}/accept`, {
+              method: 'POST',
+              headers: {
+                'X-CSRF-TOKEN': `{{ csrf_token() }}`,
+                'Accept': 'application/json'
+              }
             });
-          } else if (window.toastr) {
-            toastr.error(err.message || 'Terjadi kesalahan.');
-          } else {
-            alert(err.message || 'Terjadi kesalahan.');
+
+            if (!res.ok) {
+              let msg = 'Gagal memproses permintaan.';
+              try {
+                const data = await res.json();
+                if (data && data.message) msg = data.message;
+              } catch (e) {}
+              throw new Error(msg);
+            }
+
+            let message = 'Calon siswa telah diterima.';
+            try {
+              const data = await res.json();
+              if (data && data.message) message = data.message;
+            } catch (e) {}
+
+            await reloadTable();
+
+            if (window.toastr) {
+              toastr.success(message);
+            } else {
+              alert(message);
+            }
+          } catch (err) {
+            if (window.toastr) {
+              toastr.error(err.message || 'Terjadi kesalahan.');
+            } else {
+              alert(err.message || 'Terjadi kesalahan.');
+            }
           }
         }
       });
+      });
+
+      document.querySelectorAll('.btn-reject').forEach(function(btn) {
+        btn.addEventListener('click', async function () {
+          const id = this.getAttribute('data-id');
+          if (!id) return;
+
+          if (window.swal) {
+            const confirmed = await new Promise(resolve => {
+              swal({
+                title: 'Tolak calon siswa ini?',
+                text: 'Data tetap disimpan dengan status ditolak.',
+                icon: 'warning',
+                buttons: {
+                  cancel: 'Batal',
+                  confirm: 'Ya, Tolak'
+                },
+                dangerMode: true,
+              }).then(value => resolve(!!value));
+            });
+            if (!confirmed) return;
+          } else {
+            if (!confirm('Tolak calon siswa ini?')) return;
+          }
+
+          try {
+            const res = await fetch(`{{ url('pendaftaran-siswa') }}/${id}/reject`, {
+              method: 'POST',
+              headers: {
+                'X-CSRF-TOKEN': `{{ csrf_token() }}`,
+                'Accept': 'application/json'
+              }
+            });
+
+            if (!res.ok) {
+              let msg = 'Gagal memproses permintaan.';
+              try {
+                const data = await res.json();
+                if (data && data.message) msg = data.message;
+              } catch (e) {}
+              throw new Error(msg);
+            }
+
+            let message = 'Calon siswa telah ditolak.';
+            try {
+              const data = await res.json();
+              if (data && data.message) message = data.message;
+            } catch (e) {}
+
+            await reloadTable();
+
+            if (window.swal) {
+              await new Promise(resolve => {
+                swal({
+                  title: 'Berhasil!',
+                  text: message,
+                  icon: 'success',
+                  timer: 2000,
+                }).then(() => resolve());
+              });
+            } else if (window.toastr) {
+              toastr.success(message);
+            } else {
+              alert(message);
+            }
+          } catch (err) {
+            if (window.swal) {
+              swal({
+                title: 'Gagal!',
+                text: err.message || 'Terjadi kesalahan.',
+                icon: 'error'
+              });
+            } else if (window.toastr) {
+              toastr.error(err.message || 'Terjadi kesalahan.');
+            } else {
+              alert(err.message || 'Terjadi kesalahan.');
+            }
+          }
+        });
       });
     }
 

@@ -8,7 +8,10 @@
           <div class="col-md-8 ftco-animate text-center">
             <h1 class="mb-4">SMK PGRI LAWANG</h1>
             <p>SMK PGRI LAWANG adalah Sekolah Menengah Kejuruan yang berlokasi di Jl. DR. Wahidin No.17, Krajan, Kalirejo, Kec. Lawang, Kabupaten Malang.</p>
-            <p><a href="#" class="btn btn-primary px-4 py-3">Daftar Sekarang</a> <a href="#" class="btn btn-secondary px-4 py-3">Tentang Kami</a></p>
+            <p>
+              <a href="{{ route('pendaftaran.index') }}" class="btn btn-primary px-4 py-3">Daftar Sekarang</a>
+              <a href="#brosurModal" data-toggle="modal" class="btn btn-secondary px-4 py-3">Download Brousur</a>
+            </p>
           </div>
         </div>
       </div>
@@ -83,7 +86,7 @@
     			<div class="col-md-9 about-video text-center">
     				<h2 class="ftco-animate">SMK PGRI Lawang - Mencetak Lulusan Berkualitas dan Siap Kerja</h2>
     				<div class="video d-flex justify-content-center">
-    					<a href="https://vimeo.com/45830194" class="button popup-vimeo d-flex justify-content-center align-items-center"><span class="ion-ios-play"></span></a>
+    					<a href="https://www.youtube-nocookie.com/embed/rh721JJV_ZA" class="button popup-youtube d-flex justify-content-center align-items-center" data-src="https://www.youtube-nocookie.com/embed/rh721JJV_ZA?autoplay=1" aria-label="Putar video (popup)"><span class="ion-ios-play"></span></a>
     				</div>
     			</div>
     		</div>
@@ -204,6 +207,28 @@
       </div>
     </section>
 
+    {{-- Modal Brosur --}}
+    <div class="modal fade" id="brosurModal" tabindex="-1" role="dialog" aria-labelledby="brosurModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="brosurModalLabel">Brosur SMK PGRI LAWANG</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body text-center">
+            <img src="{{ asset('frontend/images/1.png') }}" alt="Brosur SMK PGRI LAWANG" class="img-fluid mb-3">
+            <p>
+              <a href="{{ asset('frontend/images/1.png') }}" download class="btn btn-primary">
+                Download Brosur
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <section class="ftco-section bg-light">
       <div class="container">
       	<div class="row justify-content-center mb-5 pb-3">
@@ -284,7 +309,7 @@
     						<p>Raih masa depan cemerlang! Daftarkan diri Anda dan bergabung dengan SMK PGRI Lawang untuk pendidikan berkualitas dan peluang karir yang luas.</p>
     					</div>
     					<div class="btn-join ftco-animate mt-3 mt-md-0">
-    						<p><a href="#" class="btn btn-primary py-3 px-4">Daftar Sekarang!</a></p>
+    						<p><a href="{{ route('pendaftaran.index') }}" class="btn btn-primary py-3 px-4">Daftar Sekarang!</a></p>
     					</div>
     				</div>
     			</div>

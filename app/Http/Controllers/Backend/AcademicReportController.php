@@ -123,59 +123,51 @@ class AcademicReportController extends Controller
                 ->orderBy('student.name')
                 ->get();
 
-            // UTS
-            $uts = StudentGrades::where('class_id', $classId)
+            // All grades stored per student for this class/subject/year/semester
+            $semesterValues = $this->getSemesterValues($semester);
+
+            $grades = StudentGrades::where('class_id', $classId)
                 ->where('subject_id', $subjectId)
                 ->where('academic_year', $academicYear)
-                ->where('semester', $semester)
-                ->where('assessment_type', 'uts')
+                ->whereIn('semester', $semesterValues)
                 ->whereNull('deleted_at')
                 ->get()
                 ->keyBy('student_id');
 
-            // UAS
-            $uas = StudentGrades::where('class_id', $classId)
-                ->where('subject_id', $subjectId)
-                ->where('academic_year', $academicYear)
-                ->where('semester', $semester)
-                ->where('assessment_type', 'uas')
-                ->whereNull('deleted_at')
-                ->get()
-                ->keyBy('student_id');
+            $rows = $students->map(function ($s) use ($grades) {
+                $g = $grades->get($s->student_id);
 
-            // Bulanan (tugas & sikap)
-            $monthly = StudentGrades::where('class_id', $classId)
-                ->where('subject_id', $subjectId)
-                ->where('academic_year', $academicYear)
-                ->where('semester', $semester)
-                ->where('assessment_type', 'bulanan')
-                ->whereNull('deleted_at')
-                ->get()
-                ->groupBy('student_id');
+                $utsScore = $g->uts ?? null;
+                $uasScore = $g->uas ?? null;
 
-            $rows = $students->map(function ($s) use ($uts, $uas, $monthly) {
-                $utsScore = optional($uts->get($s->student_id))->uts;
-                $uasScore = optional($uas->get($s->student_id))->uas;
+                // Rata-rata tugas 1-6 (kosong = 0, jika semua null -> null)
+                $tugasVals = [];
+                for ($i = 1; $i <= 6; $i++) {
+                    $field = 'tugas' . $i;
+                    if ($g && $g->$field !== null) {
+                        $tugasVals[] = (float) $g->$field;
+                    }
+                }
+                $tugasScore = count($tugasVals) > 0 ? round(array_sum($tugasVals) / 6, 2) : null;
 
-                // tugas semester = rata-rata dari rata-rata(tugas1,tugas2) per bulan
-                $monthlyRows = $monthly->get($s->student_id) ?? collect();
-                $monthlyMeans = $monthlyRows->map(function ($g) {
-                    $parts = [];
-                    if ($g->tugas1 !== null) $parts[] = (float) $g->tugas1;
-                    if ($g->tugas2 !== null) $parts[] = (float) $g->tugas2;
-                    if (count($parts) === 0) return null;
-                    return array_sum($parts) / count($parts);
-                })->filter(function ($v) { return $v !== null; });
-                $tugasScore = $monthlyMeans->count() > 0 ? round($monthlyMeans->avg(), 2) : null;
+                $sikapAvg = $g && $g->sikap !== null ? (float) $g->sikap : null;
 
-                // sikap info (avg sikap bulanan)
-                $sikapVals = $monthlyRows->pluck('sikap')->filter(function ($v) { return $v !== null; })->map(fn($v) => (float) $v);
-                $sikapAvg = $sikapVals->count() > 0 ? round($sikapVals->avg(), 2) : null;
-
-                // final: jika uts/uas tidak ada, final null (incomplete)
-                $final = null;
-                if ($utsScore !== null && $uasScore !== null) {
-                    $final = round((0.4 * (float) $utsScore) + (0.4 * (float) $uasScore) + (0.2 * ((float) ($tugasScore ?? 0))), 2);
+                // Final pakai kolom nilai jika ada, kalau tidak hitung ulang dengan bobot sama seperti input nilai
+                if ($g && $g->nilai !== null) {
+                    $final = (float) $g->nilai;
+                } elseif ($g) {
+                    $tugasForCalc = 0;
+                    for ($i = 1; $i <= 6; $i++) {
+                        $field = 'tugas' . $i;
+                        $tugasForCalc += (float) ($g->$field ?? 0);
+                    }
+                    $rataTugasCalc = $tugasForCalc / 6;
+                    $sikapCalc = (float) ($g->sikap ?? 0);
+                    $utsCalc = (float) ($g->uts ?? 0);
+                    $uasCalc = (float) ($g->uas ?? 0);
+                    $final = round(($rataTugasCalc * 0.30) + ($sikapCalc * 0.10) + ($utsCalc * 0.30) + ($uasCalc * 0.30), 2);
+                } else {
+                    $final = null;
                 }
 
                 return [
@@ -188,7 +180,7 @@ class AcademicReportController extends Controller
                     'tugas' => $tugasScore,
                     'sikap' => $sikapAvg,
                     'final' => $final,
-                    'status' => $final === null ? 'incomplete' : 'ok'
+                    'status' => $this->getStatusFromScore($final)
                 ];
             })->values();
 
@@ -372,56 +364,51 @@ class AcademicReportController extends Controller
             ->orderBy('student.name')
             ->get();
 
-        // UTS
-        $uts = StudentGrades::where('class_id', $classId)
+        // All grades stored per student for this class/subject/year/semester
+        $semesterValues = $this->getSemesterValues($semester);
+
+        $grades = StudentGrades::where('class_id', $classId)
             ->where('subject_id', $subjectId)
             ->where('academic_year', $academicYear)
-            ->where('semester', $semester)
-            ->where('assessment_type', 'uts')
+            ->whereIn('semester', $semesterValues)
             ->whereNull('deleted_at')
             ->get()
             ->keyBy('student_id');
 
-        // UAS
-        $uas = StudentGrades::where('class_id', $classId)
-            ->where('subject_id', $subjectId)
-            ->where('academic_year', $academicYear)
-            ->where('semester', $semester)
-            ->where('assessment_type', 'uas')
-            ->whereNull('deleted_at')
-            ->get()
-            ->keyBy('student_id');
+        $rows = $students->map(function ($s) use ($grades) {
+            $g = $grades->get($s->student_id);
 
-        // Bulanan (tugas & sikap)
-        $monthly = StudentGrades::where('class_id', $classId)
-            ->where('subject_id', $subjectId)
-            ->where('academic_year', $academicYear)
-            ->where('semester', $semester)
-            ->where('assessment_type', 'bulanan')
-            ->whereNull('deleted_at')
-            ->get()
-            ->groupBy('student_id');
+            $utsScore = $g->uts ?? null;
+            $uasScore = $g->uas ?? null;
 
-        $rows = $students->map(function ($s) use ($uts, $uas, $monthly) {
-            $utsScore = optional($uts->get($s->student_id))->uts;
-            $uasScore = optional($uas->get($s->student_id))->uas;
+            // Rata-rata tugas 1-6 (kosong = 0, jika semua null -> null)
+            $tugasVals = [];
+            for ($i = 1; $i <= 6; $i++) {
+                $field = 'tugas' . $i;
+                if ($g && $g->$field !== null) {
+                    $tugasVals[] = (float) $g->$field;
+                }
+            }
+            $tugasScore = count($tugasVals) > 0 ? round(array_sum($tugasVals) / 6, 2) : null;
 
-            $monthlyRows = $monthly->get($s->student_id) ?? collect();
-            $monthlyMeans = $monthlyRows->map(function ($g) {
-                $parts = [];
-                if ($g->tugas1 !== null) $parts[] = (float) $g->tugas1;
-                if ($g->tugas2 !== null) $parts[] = (float) $g->tugas2;
-                if (count($parts) === 0) return null;
-                return array_sum($parts) / count($parts);
-            })->filter(function ($v) { return $v !== null; });
-            $tugasScore = $monthlyMeans->count() > 0 ? round($monthlyMeans->avg(), 2) : null;
+            $sikapAvg = $g && $g->sikap !== null ? (float) $g->sikap : null;
 
-            $sikapVals = $monthlyRows->pluck('sikap')->filter(function ($v) { return $v !== null; })->map(fn($v) => (float) $v);
-            $sikapAvg = $sikapVals->count() > 0 ? round($sikapVals->avg(), 2) : null;
-
-            $final = null;
-            if ($utsScore !== null && $uasScore !== null) {
-                $final = round((0.4 * (float) $utsScore) + (0.4 * (float) $uasScore) + (0.2 * ((float) ($tugasScore ?? 0))), 2);
+            // Final pakai kolom nilai jika ada, kalau tidak hitung ulang dengan bobot sama seperti input nilai
+            if ($g && $g->nilai !== null) {
+                $final = (float) $g->nilai;
+            } elseif ($g) {
+                $tugasForCalc = 0;
+                for ($i = 1; $i <= 6; $i++) {
+                    $field = 'tugas' . $i;
+                    $tugasForCalc += (float) ($g->$field ?? 0);
+                }
+                $rataTugasCalc = $tugasForCalc / 6;
+                $sikapCalc = (float) ($g->sikap ?? 0);
+                $utsCalc = (float) ($g->uts ?? 0);
+                $uasCalc = (float) ($g->uas ?? 0);
+                $final = round(($rataTugasCalc * 0.30) + ($sikapCalc * 0.10) + ($utsCalc * 0.30) + ($uasCalc * 0.30), 2);
+            } else {
+                $final = null;
             }
 
             return [
@@ -434,7 +421,7 @@ class AcademicReportController extends Controller
                 'tugas' => $tugasScore,
                 'sikap' => $sikapAvg,
                 'final' => $final,
-                'status' => $final === null ? 'incomplete' : 'ok'
+                'status' => $this->getStatusFromScore($final)
             ];
         })->values();
 
@@ -482,11 +469,12 @@ class AcademicReportController extends Controller
                 ->get();
         }
 
-        // Preload grades by (student, subject)
+        // Preload grades by (student, subject) for this class/year/semester
+        $semesterValues = $this->getSemesterValues($semester);
+
         $grades = StudentGrades::where('class_id', $classId)
             ->where('academic_year', $academicYear)
-            ->where('semester', $semester)
-            ->whereIn('assessment_type', ['bulanan','uts','uas'])
+            ->whereIn('semester', $semesterValues)
             ->whereNull('deleted_at')
             ->get()
             ->groupBy(function ($g) { return $g->student_id . ':' . $g->subject_id; });
@@ -497,21 +485,42 @@ class AcademicReportController extends Controller
             foreach ($subjects as $subj) {
                 $key = $s->student_id . ':' . $subj->id;
                 $group = $grades->get($key) ?? collect();
-                $utsScore = optional($group->firstWhere('assessment_type','uts'))->uts;
-                $uasScore = optional($group->firstWhere('assessment_type','uas'))->uas;
-                $monthly = $group->where('assessment_type','bulanan');
-                $monthlyMeans = $monthly->map(function ($g) {
-                    $parts = [];
-                    if ($g->tugas1 !== null) $parts[] = (float) $g->tugas1;
-                    if ($g->tugas2 !== null) $parts[] = (float) $g->tugas2;
-                    if (count($parts) === 0) return null;
-                    return array_sum($parts) / count($parts);
-                })->filter(fn($v) => $v !== null);
-                $tugas = $monthlyMeans->count() ? round($monthlyMeans->avg(), 2) : null;
+                $g = $group->first();
 
-                $final = null;
-                if ($utsScore !== null && $uasScore !== null) {
-                    $final = round((0.4 * (float) $utsScore) + (0.4 * (float) $uasScore) + (0.2 * ((float) ($tugas ?? 0))), 2);
+                if ($g) {
+                    $utsScore = $g->uts ?? null;
+                    $uasScore = $g->uas ?? null;
+
+                    // Rata-rata tugas 1-6 (kosong = 0, jika semua null -> null)
+                    $tugasVals = [];
+                    for ($i = 1; $i <= 6; $i++) {
+                        $field = 'tugas' . $i;
+                        if ($g->$field !== null) {
+                            $tugasVals[] = (float) $g->$field;
+                        }
+                    }
+                    $tugas = count($tugasVals) > 0 ? round(array_sum($tugasVals) / 6, 2) : null;
+
+                    // Final: gunakan kolom nilai jika ada, kalau tidak hitung ulang dengan bobot sama seperti input nilai
+                    if ($g->nilai !== null) {
+                        $final = (float) $g->nilai;
+                    } else {
+                        $tugasForCalc = 0;
+                        for ($i = 1; $i <= 6; $i++) {
+                            $field = 'tugas' . $i;
+                            $tugasForCalc += (float) ($g->$field ?? 0);
+                        }
+                        $rataTugasCalc = $tugasForCalc / 6;
+                        $sikapCalc = (float) ($g->sikap ?? 0);
+                        $utsCalc = (float) ($g->uts ?? 0);
+                        $uasCalc = (float) ($g->uas ?? 0);
+                        $final = round(($rataTugasCalc * 0.30) + ($sikapCalc * 0.10) + ($utsCalc * 0.30) + ($uasCalc * 0.30), 2);
+                    }
+                } else {
+                    $utsScore = null;
+                    $uasScore = null;
+                    $tugas = null;
+                    $final = null;
                 }
 
                 $subjectRows[] = [
@@ -520,7 +529,7 @@ class AcademicReportController extends Controller
                     'uas' => $uasScore,
                     'tugas' => $tugas,
                     'final' => $final,
-                    'status' => $final === null ? 'incomplete' : 'ok',
+                    'status' => $this->getStatusFromScore($final),
                 ];
             }
 
@@ -540,6 +549,21 @@ class AcademicReportController extends Controller
         ];
     }
 
+    /**
+     * Konversi semester ke array nilai yang valid
+     * Mendukung format: 1, 2, "1", "2", "ganjil", "genap"
+     */
+    private function getSemesterValues($semester)
+    {
+        if ($semester == '1' || $semester == 1 || strtolower($semester) == 'ganjil') {
+            return ['1', 'ganjil', 1];
+        }
+        if ($semester == '2' || $semester == 2 || strtolower($semester) == 'genap') {
+            return ['2', 'genap', 2];
+        }
+        return [$semester];
+    }
+
     public function allSubjectsData(Request $request)
     {
         $request->validate([
@@ -554,5 +578,29 @@ class AcademicReportController extends Controller
             'data' => $payload['pages'],
             'count' => count($payload['pages'])
         ]);
+    }
+
+    /**
+     * Konversi nilai akhir ke status kualitatif
+     */
+    private function getStatusFromScore($score)
+    {
+        if ($score === null) {
+            return 'incomplete';
+        }
+
+        if ($score >= 81) {
+            return 'Sangat Baik';
+        }
+        if ($score >= 61) {
+            return 'Baik';
+        }
+        if ($score >= 41) {
+            return 'Sedang';
+        }
+        if ($score >= 21) {
+            return 'Buruk';
+        }
+        return 'Sangat Buruk';
     }
 }

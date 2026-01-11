@@ -27,6 +27,7 @@ use App\Http\Controllers\Backend\NewsController;
 use App\Http\Controllers\Backend\GalleryController;
 use App\Http\Controllers\Backend\AcademicReportController;
 use App\Http\Controllers\Frontend\BeritaController;
+use App\Http\Controllers\Frontend\QrCodeController;
 use App\Models\Ekstrakurikuler;
 use App\Models\Student;
 use App\Models\Gallery;
@@ -60,6 +61,7 @@ Route::get('/', function () {
 // Berita Routes - Keep these and remove duplicates below
 Route::get('/berita', [BeritaController::class, 'index'])->name('berita.index');
 Route::get('/berita/kategori/{category}', [BeritaController::class, 'byCategory'])->name('berita.category');
+Route::get('/berita/tag/{tag}', [BeritaController::class, 'byTag'])->name('berita.tag');
 Route::get('/berita/{slug}', [BeritaController::class, 'show'])->name('berita.detail'); // Changed from .detail to .show
 
 // Contact Routes
@@ -110,6 +112,10 @@ Route::get('/teknik-bisnis-sepeda-motor', function () {
     return view('home.tbsm', compact('galleries'));
 })->name('tbsm.index');
 
+// QR Code Generator
+Route::get('/qrcode', [QrCodeController::class, 'index'])->name('qrcode.index');
+Route::match(['get', 'post'], '/qrcode/generate', [QrCodeController::class, 'generate'])->name('qrcode.generate');
+
 Route::get('/galeri/teknik-bisnis-sepeda-motor', function () {
     $jurusan = 'Teknik Bisnis Sepeda Motor';
     $galleries = Gallery::where('jurusan', $jurusan)->latest()->paginate(12);
@@ -143,6 +149,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('pendaftaran-siswa/export-excel', [PendaftaranSiswaController::class, 'exportExcel'])->name('pendaftaran-siswa.export-excel');
     Route::get('pendaftaran-siswa/print', [PendaftaranSiswaController::class, 'print'])->name('pendaftaran-siswa.print');
     Route::post('pendaftaran-siswa/{pendaftaran_siswa}/accept', [PendaftaranSiswaController::class, 'accept'])->name('pendaftaran-siswa.accept');
+    Route::post('pendaftaran-siswa/{pendaftaran_siswa}/reject', [PendaftaranSiswaController::class, 'reject'])->name('pendaftaran-siswa.reject');
     Route::resource('pendaftaran-siswa', PendaftaranSiswaController::class);
 
     // Student Management Routes
@@ -167,12 +174,18 @@ Route::group(['middleware' => 'auth'], function () {
     // Class Management Routes
     Route::prefix('classes')->name('classes.')->group(function () {
         Route::get('/search', [ClassesController::class, 'search'])->name('search');
+        // Route khusus harus didefinisikan sebelum resource untuk menghindari bentrok dengan {class}
+        Route::get('/promote-data', [ClassesController::class, 'getPromoteData'])->name('promote-data');
+        Route::post('/open-next-semester-bulk', [ClassesController::class, 'openNextSemesterBulk'])->name('open-next-semester-bulk');
+        Route::post('/promote-bulk', [ClassesController::class, 'promoteStudentsBulk'])->name('promote-bulk');
+
         Route::resource('/', ClassesController::class)->parameters(['' => 'class']);
         Route::post('{class}/assign-student', [ClassesController::class, 'assignStudent'])->name('assign-student');
         Route::post('{class}/bulk-assign', [ClassesController::class, 'bulkAssign'])->name('bulk-assign');
         Route::delete('{class}/remove-student', [ClassesController::class, 'removeStudent'])->name('remove-student');
         Route::get('{class}/attendance-data', [ClassesController::class, 'getAttendanceData'])->name('attendance-data');
         Route::post('{class}/toggle-archive', [ClassesController::class, 'toggleArchive'])->name('toggle-archive');
+        Route::post('{class}/open-next-semester', [ClassesController::class, 'openNextSemester'])->name('open-next-semester');
     });
 
     // Student Grades Routes

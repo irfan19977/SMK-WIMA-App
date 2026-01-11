@@ -14,6 +14,13 @@
                 <!-- Filters -->
                 <div class="row mb-3 align-items-end">
                     <div class="col-md-3">
+                        <label class="form-label">Jenis Laporan</label>
+                        <select id="reportType" class="form-control">
+                            <option value="mapel" selected>Nilai per Mata Pelajaran</option>
+                            <option value="raport">Raport (Semua Mapel per Siswa)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label">Kelas</label>
                         <select id="classFilter" class="form-control">
                             <option value="">Pilih Kelas</option>
@@ -88,6 +95,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const els = {
+            reportType: document.getElementById('reportType'),
             class: document.getElementById('classFilter'),
             subject: document.getElementById('subjectFilter'),
             year: document.getElementById('yearFilter'),
@@ -133,15 +141,25 @@
         }
 
         function buildParams() {
+            const type = els.reportType.value || 'mapel';
+            let subjectId = els.subject.value;
+
+            // Untuk tipe raport, kita pakai subject_id = 'all' secara otomatis
+            if (type === 'raport') {
+                subjectId = 'all';
+            }
+
             return {
+                report_type: type,
                 class_id: els.class.value,
-                subject_id: els.subject.value,
+                subject_id: subjectId,
                 academic_year: els.year.value,
                 semester: els.semester.value,
             };
         }
 
         async function loadSubjects() {
+            const type = els.reportType.value || 'mapel';
             const classId = els.class.value;
             const year = els.year.value;
             els.subject.innerHTML = '';
@@ -153,6 +171,15 @@
             allOpt.value = 'all';
             allOpt.textContent = 'Semua Mapel (1 siswa 1 halaman)';
             els.subject.appendChild(allOpt);
+
+            // Jika tipe raport, subject selalu 'all' dan select dikunci
+            if (type === 'raport') {
+                els.subject.value = 'all';
+                els.subject.disabled = true;
+                updateExportButtonsState();
+                return;
+            }
+
             if (!classId) {
                 els.subject.disabled = true;
                 updateExportButtonsState();
@@ -182,11 +209,28 @@
 
         function updateExportButtonsState() {
             const p = buildParams();
-            // Excel tidak mendukung mode semua mapel
-            els.exportExcelBtn.disabled = !(p.class_id && p.subject_id && p.subject_id !== 'all' && p.semester);
-            // PDF diizinkan untuk subject='all' atau subject spesifik (butuh class+semester)
-            els.exportPdfBtn.disabled = !(p.class_id && p.semester && (p.subject_id === 'all' || p.subject_id));
+            const type = p.report_type || 'mapel';
+
+            if (type === 'raport') {
+                // Raport: hanya butuh kelas + semester (subject_id otomatis 'all'), hanya PDF yang aktif
+                els.exportPdfBtn.disabled = !(p.class_id && p.semester);
+                els.exportExcelBtn.disabled = true;
+            } else {
+                // Nilai per mapel: butuh kelas + mapel + semester
+                els.exportExcelBtn.disabled = !(p.class_id && p.subject_id && p.subject_id !== 'all' && p.semester);
+                els.exportPdfBtn.disabled = !(p.class_id && p.subject_id && p.semester);
+            }
         }
+
+        els.reportType.addEventListener('change', function() {
+            // Reset tampilan saat ganti jenis laporan
+            clearStatus();
+            clearTable();
+            document.getElementById('singleSubjectWrap').classList.remove('d-none');
+            document.getElementById('allSubjectsPreview').classList.add('d-none');
+            loadSubjects();
+            updateExportButtonsState();
+        });
 
         els.subject.addEventListener('change', updateExportButtonsState);
         els.class.addEventListener('change', function(){ loadSubjects(); updateExportButtonsState(); });
@@ -256,15 +300,16 @@
             clearTable();
 
             const params = buildParams();
-            if (!params.class_id || !params.subject_id || !params.semester) {
-                setStatus('Lengkapi filter Kelas, Mapel, dan Semester');
+
+            if (!params.class_id || !params.semester) {
+                setStatus('Lengkapi filter Kelas dan Semester');
                 return;
             }
 
-            // Jika semua mapel dipilih, tidak perlu memuat tabel; langsung enable PDF
-            if (params.subject_id === 'all') {
+            if (params.report_type === 'raport') {
+                // Mode raport: selalu subject_id = 'all'
                 clearStatus();
-                els.exportPdfBtn.disabled = false;
+                els.exportPdfBtn.disabled = !(params.class_id && params.semester);
                 els.exportExcelBtn.disabled = true;
                 document.getElementById('singleSubjectWrap').classList.add('d-none');
                 const preview = document.getElementById('allSubjectsPreview');
@@ -288,10 +333,21 @@
                 return;
             }
 
+            // Mode nilai per mapel
+            if (!params.subject_id) {
+                setStatus('Lengkapi filter Kelas, Mapel, dan Semester');
+                return;
+            }
+
             document.getElementById('singleSubjectWrap').classList.remove('d-none');
             document.getElementById('allSubjectsPreview').classList.add('d-none');
             setStatus('Memuat data laporan...');
-            fetch(`{{ route('reports.academic.semester-data') }}?` + new URLSearchParams(params), {
+            fetch(`{{ route('reports.academic.semester-data') }}?` + new URLSearchParams({
+                class_id: params.class_id,
+                subject_id: params.subject_id,
+                academic_year: params.academic_year,
+                semester: params.semester,
+            }), {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
             .then(r => r.json())

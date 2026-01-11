@@ -46,6 +46,8 @@ class PermissionsSeeder extends Seeder
 
         // Definisi permissions untuk setiap role
         $rolePermissions = [
+            'superadmin' => $permissions, // Superadmin memiliki SEMUA permissions
+            
             'administrator' => [
                 // Administrator memiliki semua akses
                 'announcements.index', 'announcements.create', 'announcements.edit',
@@ -72,33 +74,47 @@ class PermissionsSeeder extends Seeder
             ],
             
             'teacher' => [
-                // Teacher dapat melihat dan mengelola data siswa, absensi, dan pengumuman
-                'announcements.index', 'announcements.create', 'announcements.edit',
-                'students.index', 'students.edit', // tidak bisa create siswa baru
+                // Teacher dapat melihat dan mengelola data siswa, absensi, nilai, dan jadwal
+                'announcements.index',
+                'students.index', 'students.edit',
+                'classes.index',
+                'subjects.index',
                 'schedules.index',
+                'leasson.index', 'leasson.create', 'leasson.edit',
                 'attendances.index', 'attendances.create', 'attendances.edit',
-                'parents.index', // hanya bisa melihat data orang tua
+                'lesson_attendances.index', 'lesson_attendances.create', 'lesson_attendances.edit',
+                'parents.index',
                 'face_recognition.index',
                 'student-grades.index', 'student-grades.create', 'student-grades.edit',
                 'ekstrakurikuler.index', 'ekstrakurikuler.create', 'ekstrakurikuler.edit',
-                'pendaftaran-siswa.index', 'pendaftaran-siswa.export',
-                'news.index', 'news.create', 'news.edit',
+                'reports.index',
+                'news.index',
             ],
             
             'student' => [
-                // Student hanya bisa melihat data tertentu
+                // Student hanya bisa melihat data sendiri
                 'announcements.index',
-                'classes.index', 
+                'classes.index',
+                'subjects.index',
+                'schedules.index',
                 'attendances.index',
-                'lesson_attendances.index', // hanya melihat absensi harian
-                'face_recognition.index', // hanya melihat data biometrik
+                'lesson_attendances.index',
+                'student-grades.index',
+                'ekstrakurikuler.index',
+                'news.index',
             ],
             
             'parent' => [
-                // Parent dapat melihat data anak dan pengumuman
+                // Parent dapat melihat data anak
                 'announcements.index',
+                'students.index',
                 'classes.index',
-                'attendances.index', // hanya melihat absensi anak sendiri
+                'schedules.index',
+                'attendances.index',
+                'lesson_attendances.index',
+                'student-grades.index',
+                'reports.index',
+                'news.index',
             ]
         ];
 

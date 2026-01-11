@@ -45,15 +45,14 @@ class PendaftaranController extends Controller
                 'nik' => 'required|numeric|digits:16|unique:student,nik',
                 'nisn' => 'required|numeric|digits:10|unique:student,nisn',
                 'address' => 'required|string|max:500',
-                // 'asalSekolah' => 'required|string|max:255',
                 'jurusan_utama' => 'required|in:Teknik Kendaraan Ringan,Teknik Bisnis Sepeda Motor,Teknik Kimia Industri,Teknik Komputer dan Jaringan',
                 'jurusan_cadangan' => 'required|in:Teknik Kendaraan Ringan,Teknik Bisnis Sepeda Motor,Teknik Kimia Industri,Teknik Komputer dan Jaringan|different:jurusan_utama',
-                'photo_path' => 'required|image|mimes:jpeg,png,jpg|max:500',
-                'ijazah' => 'required|file|mimes:pdf,jpg,jpeg,png|max:500',
-                'kartu_keluarga' => 'required|file|mimes:pdf,jpg,jpeg,png|max:500',
-                'akte_lahir' => 'required|file|mimes:pdf,jpg,jpeg,png|max:500',
-                'ktp' => 'required|file|mimes:pdf,jpg,jpeg,png|max:500',
-                'sertifikat' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:500',
+                'photo_path' => 'required|image|mimes:jpeg,png,jpg|max:200',
+                'ijazah' => 'required|file|mimes:pdf,jpg,jpeg,png|max:200',
+                'kartu_keluarga' => 'required|file|mimes:pdf,jpg,jpeg,png|max:200',
+                'akte_lahir' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
+                'ktp' => 'required|file|mimes:pdf,jpg,jpeg,png|max:200',
+                'sertifikat' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
             ], [
                 'required' => 'Kolom :attribute wajib diisi.',
                 'email' => 'Format email tidak valid.',
@@ -82,7 +81,6 @@ class PendaftaranController extends Controller
                 'nik' => 'NIK',
                 'nisn' => 'NISN',
                 'address' => 'alamat',
-                // 'asalSekolah' => 'asal sekolah',
                 'jurusan_utama' => 'jurusan utama',
                 'jurusan_cadangan' => 'jurusan cadangan',
                 'photo_path' => 'foto',
@@ -134,7 +132,6 @@ class PendaftaranController extends Controller
                 'birth_place' => $request->birth_place,
                 'religion' => $request->religion,
                 'address' => $request->address,
-                // 'asal_sekolah' => $request->asalSekolah,
                 'ijazah' => $ijazahPath,
                 'kartu_keluarga' => $kartuKeluargaPath,
                 'akte_lahir' => $akteLahirPath,
@@ -148,7 +145,7 @@ class PendaftaranController extends Controller
 
             DB::commit();
 
-            return redirect()->route('login')
+            return redirect()->back()
                 ->with('success', 'Pendaftaran berhasil! Silakan login dengan email dan password yang telah Anda buat.');
 
         } catch (\Exception $e) {

@@ -22,8 +22,11 @@
         <i class="fas fa-eye"></i>
       </a>
       @if(($student->status ?? 'calon siswa') === 'calon siswa')
-      <button type="button" class="btn btn-success btn-action mr-1 btn-accept" data-id="{{ $student->id }}" title="Terima">
+      <button type="button" class="btn btn-success btn-action mr-1 btn-accept" data-id="{{ $student->id }}" data-name="{{ $student->name }}" data-jurusan-utama="{{ $student->jurusan_utama ?? '' }}" data-jurusan-cadangan="{{ $student->jurusan_cadangan ?? '' }}" title="Terima">
         <i class="fas fa-check"></i>
+      </button>
+      <button type="button" class="btn btn-danger btn-action btn-reject" data-id="{{ $student->id }}" title="Tolak">
+        <i class="fas fa-times"></i>
       </button>
       @endif
       @endisset

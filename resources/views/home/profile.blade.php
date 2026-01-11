@@ -35,7 +35,7 @@
     			<div class="col-md-9 about-video text-center">
     				<h2 class="ftco-animate">SMK PGRI Lawang - Mencetak Lulusan Berkualitas dan Siap Kerja</h2>
     				<div class="video d-flex justify-content-center">
-    					<a href="https://vimeo.com/45830194" class="button popup-vimeo d-flex justify-content-center align-items-center"><span class="ion-ios-play"></span></a>
+    					<a href="https://www.youtube-nocookie.com/embed/rh721JJV_ZA" class="button popup-youtube d-flex justify-content-center align-items-center" data-src="https://www.youtube-nocookie.com/embed/rh721JJV_ZA?autoplay=1" aria-label="Putar video (popup)"><span class="ion-ios-play"></span></a>
     				</div>
     			</div>
     		</div>

@@ -13,6 +13,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(\App\Http\Middleware\TrackVisitors::class);
     })
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->validateCsrfTokens(except: [
+            '/rfid-detect',
+            '/clear-rfid-cache',
+            '/get-latest-rfid',
+        ]);
+    })
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();

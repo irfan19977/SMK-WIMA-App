@@ -19,8 +19,9 @@ class PendaftaranSiswaController extends Controller
     public function index(Request $request)
     {
         $this->authorize('pendaftaran-siswa.index');
+        // Ambil semua siswa (calon maupun sudah diterima) untuk tahun akademik terpilih, kecuali yang ditolak
         $studentsQuery = Student::with('user')
-            ->where('status', 'calon siswa');
+            ->where('status', '!=', 'ditolak');
 
         // Filter Tahun Akademik berdasarkan kolom academic_year
         $selectedYear = $request->input('tahun_akademik');
@@ -71,6 +72,19 @@ class PendaftaranSiswaController extends Controller
 
     public function accept(Request $request, Student $pendaftaran_siswa)
     {
+        $data = $request->validate([
+            'jurusan_diterima' => 'nullable|string|max:191',
+            'no_absen' => 'nullable|string|max:20',
+        ]);
+
+        if (!empty($data['jurusan_diterima'])) {
+            $pendaftaran_siswa->jurusan_utama = $data['jurusan_diterima'];
+        }
+
+        if (!empty($data['no_absen'])) {
+            $pendaftaran_siswa->no_absen = $data['no_absen'];
+        }
+
         $pendaftaran_siswa->status = 'siswa';
         $pendaftaran_siswa->save();
 
@@ -88,10 +102,37 @@ class PendaftaranSiswaController extends Controller
         return back()->with('success', 'Calon siswa telah diterima.');
     }
 
+    public function reject(Request $request, Student $pendaftaran_siswa)
+    {
+        // Hapus data siswa dan user terkait ketika pendaftaran ditolak
+        $user = $pendaftaran_siswa->user;
+
+        // Soft delete student (karena model menggunakan SoftDeletes)
+        $pendaftaran_siswa->delete();
+
+        // Hapus user terkait (soft delete jika model User memakai SoftDeletes)
+        if ($user) {
+            $user->delete();
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Calon siswa telah ditolak dan datanya dihapus.',
+                'student' => [
+                    'id' => $pendaftaran_siswa->id,
+                ],
+            ]);
+        }
+
+        return back()->with('success', 'Calon siswa telah ditolak dan datanya dihapus.');
+    }
+
     public function export(Request $request)
     {
+        // Export semua siswa (calon maupun sudah diterima) untuk tahun akademik terpilih, kecuali yang ditolak
         $studentsQuery = Student::with('user')
-            ->where('status', 'calon siswa');
+            ->where('status', '!=', 'ditolak');
 
         $selectedYear = $request->input('tahun_akademik');
         if (!$selectedYear) {
@@ -153,8 +194,9 @@ class PendaftaranSiswaController extends Controller
 
     public function print(Request $request)
     {
+        // Cetak semua siswa (calon maupun sudah diterima) untuk tahun akademik terpilih, kecuali yang ditolak
         $studentsQuery = Student::with('user')
-            ->where('status', 'calon siswa');
+            ->where('status', '!=', 'ditolak');
 
         $selectedYear = $request->input('tahun_akademik');
         if (!$selectedYear) {
@@ -188,8 +230,9 @@ class PendaftaranSiswaController extends Controller
 
     public function exportExcel(Request $request)
     {
+        // Export ke Excel semua siswa (calon maupun sudah diterima) untuk tahun akademik terpilih, kecuali yang ditolak
         $studentsQuery = Student::with('user')
-            ->where('status', 'calon siswa');
+            ->where('status', '!=', 'ditolak');
 
         $selectedYear = $request->input('tahun_akademik');
         if (!$selectedYear) {

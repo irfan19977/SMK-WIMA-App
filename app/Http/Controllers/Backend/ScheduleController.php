@@ -26,12 +26,65 @@ class ScheduleController extends Controller
         // Get selected class (default to first class if exists)
         $selectedClassId = $request->get('class_id', $classes->first()?->id);
         $selectedClass = $classes->find($selectedClassId);
+
+        // Tahun akademik filter (default tahun aktif)
+        $selectedAcademicYear = $request->get('academic_year', AcademicYearHelper::getCurrentAcademicYear());
+
+        // Tentukan semester terpilih
+        $selectedSemester = $request->get('semester');
+        if (!$selectedSemester) {
+            // Otomatis: kalau semua sudah di semester genap untuk tahun aktif, jadikan default Genap
+            $ganjilValues = ['1', 'ganjil', 1];
+            $genapValues = ['2', 'genap', 2];
+
+            $hasActiveGenap = DB::table('student_class')
+                ->where('academic_year', $selectedAcademicYear)
+                ->whereIn('semester', $genapValues)
+                ->where('status', 'active')
+                ->whereNull('deleted_at')
+                ->exists();
+
+            $hasActiveGanjil = DB::table('student_class')
+                ->where('academic_year', $selectedAcademicYear)
+                ->where(function ($q) use ($ganjilValues) {
+                    $q->whereIn('semester', $ganjilValues)
+                      ->orWhereNull('semester')
+                      ->orWhere('semester', '');
+                })
+                ->where('status', 'active')
+                ->whereNull('deleted_at')
+                ->exists();
+
+            if ($hasActiveGenap && !$hasActiveGanjil) {
+                $selectedSemester = 'Genap';
+            } else {
+                $selectedSemester = 'Ganjil';
+            }
+        }
         
         $schedules = collect();
         
         if ($selectedClass) {
             $query = Schedule::with(['classRoom', 'subject', 'teacher'])
                            ->where('class_id', $selectedClassId);
+            
+            // Filter academic_year jika ada
+            if ($selectedAcademicYear) {
+                $query->where('academic_year', $selectedAcademicYear);
+            }
+
+            // Filter semester jika ada
+            if ($selectedSemester) {
+                if (strtolower($selectedSemester) === 'ganjil') {
+                    $query->where(function($q) {
+                        $q->whereIn('semester', ['Ganjil', 'ganjil', '1', 1])
+                          ->orWhereNull('semester')
+                          ->orWhere('semester', '');
+                    });
+                } elseif (strtolower($selectedSemester) === 'genap') {
+                    $query->whereIn('semester', ['Genap', 'genap', '2', 2]);
+                }
+            }
             
             // Filter pencarian berdasarkan nama guru, mata pelajaran, dan hari
             if ($request->has('q') && !empty($request->q)) {
@@ -74,13 +127,32 @@ class ScheduleController extends Controller
         $teachers = Teacher::whereHas('user', function($query) {
             $query->where('status', 1);
         })->get();
-        return view('schedules.index', compact('schedules', 'classes', 'selectedClass', 'subjects', 'teachers'));
+        return view('schedules.index', compact('schedules', 'classes', 'selectedClass', 'subjects', 'teachers', 'selectedSemester', 'selectedAcademicYear'));
     }
     
     public function getSchedulesByClass(Request $request, $classId)
     {
         $query = Schedule::with(['classRoom', 'subject', 'teacher'])
                         ->where('class_id', $classId);
+        
+        $selectedSemester = $request->get('semester');
+        $selectedAcademicYear = $request->get('academic_year');
+
+        if ($selectedAcademicYear) {
+            $query->where('academic_year', $selectedAcademicYear);
+        }
+
+        if ($selectedSemester) {
+            if (strtolower($selectedSemester) === 'ganjil') {
+                $query->where(function($q) {
+                    $q->whereIn('semester', ['Ganjil', 'ganjil', '1', 1])
+                      ->orWhereNull('semester')
+                      ->orWhere('semester', '');
+                });
+            } elseif (strtolower($selectedSemester) === 'genap') {
+                $query->whereIn('semester', ['Genap', 'genap', '2', 2]);
+            }
+        }
         
         // Filter pencarian
         if ($request->has('q') && !empty($request->q)) {

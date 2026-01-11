@@ -14,90 +14,43 @@ class BeritaController extends Controller
         $featuredNews = News::with('user')
             ->where('is_published', true)
             ->latest('published_at')
-            ->take(1)
-            ->get();
-
-        // Get latest 3 news for sidebar (excluding featured)
-        $sideNews = News::with('user')
-            ->where('is_published', true)
-            ->whereNotIn('id', $featuredNews->pluck('id'))
-            ->latest('published_at')
-            ->take(3)
-            ->get();
-
-        // Get paginated latest news (excluding featured and side news)
-        $category = request('category');
-        $latestNews = News::with('user')
-            ->where('is_published', true)
-            ->whereNotIn('id', $featuredNews->pluck('id')->merge($sideNews->pluck('id')))
-            ->when($category, function($query) use ($category) {
-                return $query->where('category', 'like', '%' . $category . '%');
-            })
-            ->latest('published_at')
-            ->paginate(6);
-
-        // Get trending news (most viewed, excluding featured and side news)
-        $trendingNews = News::where('is_published', true)
-            ->whereNotIn('id', $featuredNews->pluck('id'))
-            ->orderBy('view_count', 'desc')
-            ->take(4)
-            ->get(['id', 'title', 'slug', 'view_count']);
-            
-        // Get available categories from database
-        $categories = News::where('is_published', true)
-            ->select('category')
-            ->distinct()
-            ->pluck('category')
-            ->filter()
-            ->toArray();
-
-        // If it's an AJAX request, return JSON response
-        if (request()->ajax()) {
-            return response()->json([
-                'html' => view('home.partials.news-grid', compact('latestNews'))->render(),
-                'nextPageUrl' => $latestNews->nextPageUrl(),
-                'currentPage' => $latestNews->currentPage(),
-                'lastPage' => $latestNews->lastPage()
-            ]);
-        }
+            ->paginate(12);
 
         return view('home.berita', compact(
-            'featuredNews', 
-            'latestNews', 
-            'sideNews', 
-            'trendingNews',
-            'categories'
+            'featuredNews',
         ));
     }
     
     public function byCategory($category)
     {
-        $news = News::with('user')
+        // Ambil berita terpublish berdasarkan kategori dengan pagination
+        $featuredNews = News::with('user')
             ->where('is_published', true)
             ->where('category', $category)
             ->latest('published_at')
-            ->paginate(6);
-            
-        if (request()->ajax()) {
-            return response()->json([
-                'html' => view('home.partials.news-grid', ['latestNews' => $news])->render(),
-                'nextPageUrl' => $news->nextPageUrl(),
-                'currentPage' => $news->currentPage(),
-                'lastPage' => $news->lastPage()
-            ]);
-        }
-        
-        return view('home.berita', [
-            'latestNews' => $news,
-            'categories' => News::where('is_published', true)
-                ->select('category')
-                ->distinct()
-                ->pluck('category')
-                ->filter()
-                ->toArray(),
-            'featuredNews' => collect([]),
-            'sideNews' => collect([]),
-            'trendingNews' => collect([])
+            ->paginate(12);
+
+        // Gunakan view yang sama dengan index, dengan variabel paginator yang konsisten
+        return view('home.berita', compact('featuredNews'));
+    }
+
+    public function byTag($tag)
+    {
+        // Normalisasi tag (hilangkan spasi berlebih)
+        $tag = trim($tag);
+
+        // Ambil berita yang kolom `tags`-nya mengandung tag tersebut (dipisah koma)
+        $news = News::with('user')
+            ->where('is_published', true)
+            ->where(function ($query) use ($tag) {
+                $query->where('tags', 'LIKE', "%$tag%");
+            })
+            ->latest('published_at')
+            ->paginate(9);
+
+        return view('home.berita-tag', [
+            'tag' => $tag,
+            'newsList' => $news,
         ]);
     }
 
@@ -137,7 +90,41 @@ class BeritaController extends Controller
                 ->take(3)
                 ->get();
 
-            return view('home.detail', compact('news', 'relatedNews', 'popularNews', 'randomNews'));
+            // Sidebar: categories with counts
+            $categories = News::published()
+                ->selectRaw('category, COUNT(*) as total')
+                ->whereNotNull('category')
+                ->groupBy('category')
+                ->orderBy('category')
+                ->get();
+
+            // Sidebar: recent news (latest 3, excluding current)
+            $recentNews = News::published()
+                ->where('id', '!=', $news->id)
+                ->latest('published_at')
+                ->take(3)
+                ->get();
+
+            // Sidebar: tag cloud from `tags` column
+            $tagCloud = News::published()
+                ->whereNotNull('tags')
+                ->pluck('tags')
+                ->flatMap(function ($value) {
+                    return array_filter(array_map('trim', explode(',', $value)));
+                })
+                ->unique()
+                ->take(20)
+                ->values();
+
+            return view('home.detail', compact(
+                'news',
+                'relatedNews',
+                'popularNews',
+                'randomNews',
+                'categories',
+                'recentNews',
+                'tagCloud'
+            ));
 
         } catch (\Exception $e) {
             return redirect()->route('home')

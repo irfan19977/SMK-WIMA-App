@@ -209,6 +209,7 @@
                           <button type="button" class="btn btn-primary" id="btn-reupload-foto">Upload</button>
                         </div>
                       </div>
+                      <span>Maksimal ukuran 200KB</span>
                     </div>
                     <div class="col-md-7">
                       <div class="row">
@@ -224,6 +225,7 @@
                               </div>
                             </div>
                           </div>
+                          <span>Maksimal ukuran 200KB</span>
                         </div>
                         <div class="col-md-6 mb-3">
                           <div class="form-group mb-2">
@@ -237,11 +239,12 @@
                               </div>
                             </div>
                           </div>
+                          <span>Maksimal ukuran 200KB</span>
                         </div>
                         <div class="col-md-6 mb-3">
                           <div class="form-group mb-2">
-                            <label for="akte_lahir">Akte Lahir</label>
-                            <input type="file" class="form-control-file file-input-hidden" id="akte_lahir" name="akte_lahir" accept=".jpg,.jpeg,.png,.pdf" required>
+                            <label for="akte_lahir">Akte Lahir (opsional)</label>
+                            <input type="file" class="form-control-file file-input-hidden" id="akte_lahir" name="akte_lahir" accept=".jpg,.jpeg,.png,.pdf">
                             <div class="upload-preview" id="preview-akte-lahir" data-label="Akte Lahir">
                               <span class="upload-placeholder">Belum ada file akte lahir yang dipilih</span>
                               <div class="upload-overlay">
@@ -250,6 +253,7 @@
                               </div>
                             </div>
                           </div>
+                          <span>Maksimal ukuran 200KB</span>
                         </div>
                         <div class="col-md-6 mb-3">
                           <div class="form-group mb-2">
@@ -263,6 +267,7 @@
                               </div>
                             </div>
                           </div>
+                          <span>Maksimal ukuran 200KB</span>
                         </div>
                         <div class="col-12">
                           <div class="form-group mb-0">
@@ -276,6 +281,7 @@
                               </div>
                             </div>
                           </div>
+                          <span>Maksimal ukuran 200KB</span>
                         </div>
                       </div>
                     </div>
@@ -434,6 +440,8 @@
 
       #preview-ijasah,
       #preview-kk,
+      #preview-akte-lahir,
+      #preview-ktp,
       #preview-sertifikat {
         min-height: 110px;
         font-size: 0.8rem;
@@ -522,6 +530,117 @@
         var stepIndicatorText = document.getElementById('step-indicator-text');
         var stepProgressBar = document.getElementById('step-progress-bar');
 
+        // Validasi rules
+        var validationRules = {
+          name: { required: true, pattern: /.+/, message: 'Nama lengkap wajib diisi' },
+          phone: { required: true, pattern: /^\d{10,15}$/, message: 'Nomor telepon harus 10-15 digit' },
+          nik: { required: true, pattern: /^\d{16}$/, message: 'NIK harus 16 digit' },
+          nisn: { required: true, pattern: /^\d{10}$/, message: 'NISN harus 10 digit' },
+          birth_date: { required: true, message: 'Tanggal lahir wajib diisi' },
+          birth_place: { required: true, pattern: /.+/, message: 'Tempat lahir wajib diisi' },
+          gender: { required: true, message: 'Jenis kelamin wajib dipilih' },
+          religion: { required: true, message: 'Agama wajib dipilih' },
+          address: { required: true, pattern: /.+/, message: 'Alamat wajib diisi' },
+          jurusan_utama: { required: true, message: 'Jurusan utama wajib dipilih' },
+          jurusan_cadangan: { required: true, message: 'Jurusan cadangan wajib dipilih' },
+          photo_path: { required: true, fileSize: 200, message: 'Foto wajib diisi dan max 200 KB' },
+          ijazah: { required: true, fileSize: 200, message: 'Ijazah/SKL wajib diisi dan max 200 KB' },
+          kartu_keluarga: { required: true, fileSize: 200, message: 'Kartu Keluarga wajib diisi dan max 200 KB' },
+          akte_lahir: { fileSize: 200, message: 'Akte Lahir max 200 KB' },
+          ktp: { required: true, fileSize: 200, message: 'KTP wajib diisi dan max 200 KB' },
+          sertifikat: { fileSize: 200, message: 'Sertifikat max 200 KB' },
+          email: { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Email tidak valid' },
+          password: { required: true, pattern: /.{8,}/, message: 'Password minimal 8 karakter' },
+          password_confirmation: { required: true, message: 'Konfirmasi password wajib diisi' }
+        };
+
+        function validateField(field) {
+          var rules = validationRules[field.name];
+          if (!rules) return { valid: true };
+
+          var errorMsg = '';
+
+          if (rules.required && !field.value) {
+            if (field.type === 'file') {
+              errorMsg = rules.message;
+            } else {
+              errorMsg = rules.message || 'Field ini wajib diisi';
+            }
+            return { valid: false, message: errorMsg };
+          }
+
+          if (field.type === 'file') {
+            if (field.files && field.files.length > 0) {
+              var file = field.files[0];
+              if (rules.fileSize) {
+                var fileSizeKB = file.size / 1024;
+                if (fileSizeKB > rules.fileSize) {
+                  return { valid: false, message: 'File terlalu besar. Maksimal ' + rules.fileSize + ' KB (ukuran: ' + fileSizeKB.toFixed(2) + ' KB)' };
+                }
+              }
+            }
+            return { valid: true };
+          }
+
+          if (field.value && rules.pattern && !rules.pattern.test(field.value)) {
+            return { valid: false, message: rules.message };
+          }
+
+          if (field.name === 'password_confirmation' && field.value) {
+            var passwordField = document.getElementById('password');
+            if (passwordField && passwordField.value !== field.value) {
+              return { valid: false, message: 'Konfirmasi password tidak cocok' };
+            }
+          }
+
+          if (field.name === 'jurusan_cadangan') {
+            var jurusanUtama = document.getElementById('jurusan_utama');
+            if (jurusanUtama && jurusanUtama.value === field.value) {
+              return { valid: false, message: 'Jurusan cadangan harus berbeda dengan jurusan utama' };
+            }
+          }
+
+          return { valid: true };
+        }
+
+        function showFieldError(field) {
+          var validation = validateField(field);
+          var errorDiv = document.querySelector('#' + field.id + ' ~ .text-danger');
+
+          if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'text-danger small mt-1';
+            field.parentElement.appendChild(errorDiv);
+          }
+
+          if (!validation.valid) {
+            field.classList.add('is-invalid');
+            errorDiv.textContent = validation.message;
+            errorDiv.style.display = 'block';
+            return false;
+          } else {
+            field.classList.remove('is-invalid');
+            errorDiv.style.display = 'none';
+            return true;
+          }
+        }
+
+        function validateStep(step) {
+          var stepEl = document.getElementById('step-' + step);
+          if (!stepEl) return true;
+
+          var inputs = stepEl.querySelectorAll('input[required], select[required], textarea[required]');
+          var allValid = true;
+
+          inputs.forEach(function(input) {
+            if (!showFieldError(input)) {
+              allValid = false;
+            }
+          });
+
+          return allValid;
+        }
+
         function showStep(step) {
           for (var i = 1; i <= totalSteps; i++) {
             var el = document.getElementById('step-' + i);
@@ -557,12 +676,11 @@
             stepProgressBar.setAttribute('aria-valuenow', String(percent));
           }
 
-          // Scroll ke atas kartu form setiap kali ganti step (dengan offset agar judul tidak tertutup navbar)
           var formContainer = document.getElementById('registration-card');
           if (formContainer) {
             var rect = formContainer.getBoundingClientRect();
             var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            var targetTop = rect.top + scrollTop - 80; // offset 80px dari atas
+            var targetTop = rect.top + scrollTop - 80;
             window.scrollTo({ top: targetTop, behavior: 'smooth' });
           } else {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -571,57 +689,11 @@
 
         if (btnNext) {
           btnNext.addEventListener('click', function() {
-            var form = document.getElementById('form-pendaftaran');
-            var currentStepEl = document.getElementById('step-' + currentStep);
-            
-            // Cari semua input required di step saat ini
-            var requiredInputs = currentStepEl.querySelectorAll('[required]');
-            var isValid = true;
-            
-            // Validasi setiap input required
-            requiredInputs.forEach(function(input) {
-              var feedback = document.getElementById('feedback-' + input.id);
-              
-              if (input.type === 'file') {
-                // Validasi file input
-                if (!input.files || input.files.length === 0) {
-                  input.classList.add('is-invalid');
-                  if (feedback) {
-                    feedback.classList.add('d-block');
-                  }
-                  isValid = false;
-                } else {
-                  input.classList.remove('is-invalid');
-                  if (feedback) {
-                    feedback.classList.remove('d-block');
-                  }
-                }
-              } else {
-                // Validasi text input
-                if (!input.value || input.value.trim() === '') {
-                  input.classList.add('is-invalid');
-                  isValid = false;
-                } else {
-                  input.classList.remove('is-invalid');
-                }
+            if (validateStep(currentStep)) {
+              if (currentStep < totalSteps) {
+                currentStep += 1;
+                showStep(currentStep);
               }
-            });
-            
-            // Jika ada yang kosong, tampilkan pesan error dengan SweetAlert
-            if (!isValid) {
-              Swal.fire({
-                icon: 'error',
-                title: 'Oops!',
-                text: 'Mohon lengkapi semua field yang wajib diisi terlebih dahulu.',
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#3085d6'
-              });
-              return;
-            }
-            
-            if (currentStep < totalSteps) {
-              currentStep += 1;
-              showStep(currentStep);
             }
           });
         }
@@ -635,10 +707,25 @@
           });
         }
 
+        // Real-time validation
+        var form = document.getElementById('form-pendaftaran');
+        if (form) {
+          var inputs = form.querySelectorAll('input, select, textarea');
+          inputs.forEach(function(input) {
+            input.addEventListener('blur', function() {
+              showFieldError(this);
+            });
+            input.addEventListener('change', function() {
+              showFieldError(this);
+            });
+          });
+        }
+
+        // ...existing code untuk password toggle dan file preview...
         var togglePassword = document.getElementById('togglePassword');
         var togglePasswordConfirm = document.getElementById('togglePasswordConfirm');
         var passwordInput = document.getElementById('password');
-        var passwordConfirmInput = document.getElementById('konfirmasiPassword');
+        var passwordConfirmInput = document.getElementById('password_confirmation');
         var fotoInput = document.getElementById('photo_path');
         var ijasahInput = document.getElementById('ijazah');
         var kkInput = document.getElementById('kartu_keluarga');
@@ -696,6 +783,7 @@
 
         if (fotoInput && previewFoto && previewFotoImg && uploadPlaceholder) {
           fotoInput.addEventListener('change', function() {
+            showFieldError(this);
             if (fotoInput.files && fotoInput.files.length > 0) {
               var file = fotoInput.files[0];
               if (file.type && file.type.indexOf('image') === 0) {
@@ -724,6 +812,7 @@
 
         if (ijasahInput && previewIjasah && previewIjasahPlaceholder) {
           ijasahInput.addEventListener('change', function() {
+            showFieldError(this);
             if (ijasahInput.files && ijasahInput.files.length > 0) {
               ijasahFile = ijasahInput.files[0];
               previewIjasahPlaceholder.textContent = ijasahFile.name;
@@ -736,6 +825,7 @@
 
         if (kkInput && previewKk && previewKkPlaceholder) {
           kkInput.addEventListener('change', function() {
+            showFieldError(this);
             if (kkInput.files && kkInput.files.length > 0) {
               kkFile = kkInput.files[0];
               previewKkPlaceholder.textContent = kkFile.name;
@@ -748,6 +838,7 @@
 
         if (akteLahirInput && previewAkteLahir && previewAkteLahirPlaceholder) {
           akteLahirInput.addEventListener('change', function() {
+            showFieldError(this);
             if (akteLahirInput.files && akteLahirInput.files.length > 0) {
               akteLahirFile = akteLahirInput.files[0];
               previewAkteLahirPlaceholder.textContent = akteLahirFile.name;
@@ -760,6 +851,7 @@
 
         if (ktpInput && previewKtp && previewKtpPlaceholder) {
           ktpInput.addEventListener('change', function() {
+            showFieldError(this);
             if (ktpInput.files && ktpInput.files.length > 0) {
               ktpFile = ktpInput.files[0];
               previewKtpPlaceholder.textContent = ktpFile.name;
@@ -772,6 +864,7 @@
 
         if (sertifikatInput && previewSertifikat && previewSertifikatPlaceholder) {
           sertifikatInput.addEventListener('change', function() {
+            showFieldError(this);
             if (sertifikatInput.files && sertifikatInput.files.length > 0) {
               sertifikatFiles = [];
               var names = [];
@@ -971,6 +1064,112 @@
         }
 
         showStep(currentStep);
+
+        // Fungsi untuk update opsi jurusan cadangan
+        function updateJurusanCadanganOptions() {
+          var jurusanUtamaSelect = document.getElementById('jurusan_utama');
+          var jurusanCadanganSelect = document.getElementById('jurusan_cadangan');
+          
+          if (!jurusanUtamaSelect || !jurusanCadanganSelect) return;
+
+          var selectedUtama = jurusanUtamaSelect.value;
+          var allOptions = jurusanCadanganSelect.querySelectorAll('option');
+
+          allOptions.forEach(function(option) {
+            if (option.value === selectedUtama) {
+              option.disabled = true;
+              option.style.display = 'none';
+            } else {
+              option.disabled = false;
+              option.style.display = 'block';
+            }
+          });
+
+          // Reset nilai cadangan jika sama dengan utama
+          if (jurusanCadanganSelect.value === selectedUtama) {
+            jurusanCadanganSelect.value = '';
+          }
+        }
+
+        // Event listener untuk jurusan utama
+        var jurusanUtamaSelect = document.getElementById('jurusan_utama');
+        if (jurusanUtamaSelect) {
+          jurusanUtamaSelect.addEventListener('change', function() {
+            updateJurusanCadanganOptions();
+            showFieldError(this);
+          });
+        }
+
+        // Event listener untuk jurusan cadangan
+        var jurusanCadanganSelect = document.getElementById('jurusan_cadangan');
+        if (jurusanCadanganSelect) {
+          jurusanCadanganSelect.addEventListener('change', function() {
+            showFieldError(this);
+          });
+        }
+
+        // Initialize opsi jurusan cadangan saat load
+        updateJurusanCadanganOptions();
+
+        // SweetAlert2 untuk pesan sukses / error setelah submit
+        @if(session('success'))
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil melakukan pendaftaran',
+          html: `
+            <div style="font-size:0.95rem; line-height:1.5; text-align:left;">
+              <p style="margin-bottom:6px;">Terima kasih telah bergabung di <strong>SMK PGRI LAWANG</strong>.</p>
+              <p style="margin-bottom:6px;">Informasi selanjutnya akan disampaikan oleh admin melalui WhatsApp atau website resmi.</p>
+              <p style="margin-bottom:6px;">Setelah popup ini tertutup, Anda akan dialihkan ke grup WhatsApp PPDB. Silakan tekan tombol <strong>Gabung</strong> di WhatsApp untuk masuk ke grup.</p>
+              <p style="margin-bottom:0;">
+                <small>Popup akan tertutup otomatis dalam <strong><span id="swal-countdown">20</span> detik</span></strong>.</small>
+              </p>
+            </div>
+
+          `,
+          width: '38rem',
+          backdrop: 'rgba(0, 0, 0, 0.55)',
+          timer: 15000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          allowEnterKey: false,
+          customClass: {
+            popup: 'swal2-rounded swal2-shadow',
+            title: 'swal2-title-smkwima',
+            htmlContainer: 'swal2-text-smkwima'
+          },
+          didOpen: () => {
+            const content = Swal.getHtmlContainer();
+            const countdownEl = content ? content.querySelector('#swal-countdown') : null;
+            let remaining = 20;
+            if (!countdownEl) return;
+
+            const interval = setInterval(() => {
+              remaining -= 1;
+              if (remaining <= 0) {
+                countdownEl.textContent = '0';
+                clearInterval(interval);
+              } else {
+                countdownEl.textContent = String(remaining);
+              }
+            }, 1000);
+          },
+          willClose: () => {
+            window.location.href = "https://chat.whatsapp.com/KbULTVRBpYc9fxZTCk5Qfs?mode=hqrt2";
+          }
+        });
+        @endif
+
+        @if(session('error'))
+        Swal.fire({
+          icon: 'error',
+          title: 'Pendaftaran Gagal',
+          text: @json(session('error')),
+          confirmButtonText: 'OK'
+        });
+        @endif
       })();
     </script>
 @endpush

@@ -174,6 +174,16 @@
                                                         {{ $classes->academic_year }}</div>
                                                 </div>
                                                 <div class="col-sm-6 mb-3">
+                                                    <label class="text-muted small">Semester Aktif</label>
+                                                    <div>
+                                                        @php
+                                                            $semLabel = $currentSemesterLabel ?? 'Belum ditentukan';
+                                                            $semBadge = $semLabel === 'Genap' ? 'badge-success' : ($semLabel === 'Ganjil' ? 'badge-warning' : 'badge-secondary');
+                                                        @endphp
+                                                        <span class="badge {{ $semBadge }} badge-lg">{{ $semLabel }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 mb-3">
                                                     <label class="text-muted small">Total Siswa</label>
                                                     <div><span
                                                             class="badge badge-light badge-lg">{{ $students->count() }}
@@ -195,9 +205,19 @@
                                         <div class="card-body">
                                             @can('classes.edit')
                                                 @if($availableStudents->count() > 0)
-                                                <button type="button" class="btn btn-primary btn-block btn-modern mb-3"
-                                                    data-toggle="modal" data-target="#bulkAssignModal">
-                                                    <i class="fas fa-users mr-2"></i>Tambah Siswa
+                                                    <button type="button" class="btn btn-primary btn-block btn-modern mb-3"
+                                                        data-toggle="modal" data-target="#bulkAssignModal">
+                                                        <i class="fas fa-users mr-2"></i>Tambah Siswa
+                                                    </button>
+                                                @else
+                                                    <div class="alert alert-info">
+                                                        <i class="fas fa-info-circle mr-2"></i>
+                                                        Tidak ada siswa yang tersedia untuk ditambahkan.
+                                                    </div>
+                                                @endif
+
+                                                <button type="button" class="btn btn-warning btn-block btn-modern mb-3" onclick="confirmOpenNextSemester()">
+                                                    <i class="fas fa-random mr-2"></i>Tutup Semester Ganjil &amp; Buka Semester Genap
                                                 </button>
                                                 <button type="button" class="btn btn-info btn-block btn-modern mb-3"
                                                     onclick="window.print()">
@@ -207,13 +227,7 @@
                                                     onclick="window.print()">
                                                     <i class="fas fa-print mr-2"></i>Cetak Daftar Absen
                                                 </button>
-                                                @else
                                             @endcan
-                                            <div class="alert alert-info">
-                                                <i class="fas fa-info-circle mr-2"></i>
-                                                Tidak ada siswa yang tersedia untuk ditambahkan.
-                                            </div>
-                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -246,6 +260,7 @@
                                             <th>Nama Siswa</th>
                                             <th>Email</th>
                                             <th>NISN</th>
+                                            <th>Jurusan</th>
                                             <th>Gender</th>
                                             @can('classes.edit')
                                                 <th width="100">Aksi</th>
@@ -275,6 +290,9 @@
                                             </td>
                                             <td>
                                                 <span class="badge badge-outline-info">{{ $student->nisn }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="text-muted">{{ $student->jurusan_utama ?? '-' }}</span>
                                             </td>
                                             <td>
                                                 @if($student->gender)
@@ -583,7 +601,8 @@
                                     </div>
                                     <div>
                                         <div class="font-weight-medium">{{ $student->name }}</div>
-                                        <small class="text-muted">{{ $student->nisn }}</small>
+                                        <small class="text-muted d-block">NISN: {{ $student->nisn }}</small>
+                                        <small class="text-muted">Jurusan: {{ $student->jurusan_utama ?? '-' }}</small>
                                     </div>
                                 </label>
                             </div>
@@ -605,6 +624,10 @@
 
 @endif
 
+    <form id="openNextSemesterForm" action="{{ route('classes.open-next-semester', $classes->id) }}" method="POST" style="display: none;">
+        @csrf
+    </form>
+
     <form id="removeStudentForm" style="display: none;">
         @csrf
         <input type="hidden" name="student_id" id="removeStudentId">
@@ -614,6 +637,20 @@
 
 @push('scripts')
     <script>
+        function confirmOpenNextSemester() {
+            swal({
+                title: 'Tutup Semester Ganjil?',
+                text: 'Semester ganjil akan ditutup dan semester genap akan dibuka untuk semua siswa di kelas ini.',
+                icon: 'warning',
+                buttons: ['Batal', 'Ya, Lanjutkan'],
+                dangerMode: false,
+            }).then(function(isConfirm) {
+                if (isConfirm) {
+                    document.getElementById('openNextSemesterForm').submit();
+                }
+            });
+        }
+
         $(document).ready(function () {
             $('#searchAvailableStudent').on('keyup', function () {
                 var value = $(this).val().toLowerCase();
