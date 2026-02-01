@@ -4,7 +4,7 @@ use App\Http\Controllers\API\RFIDController;
 use App\Http\Controllers\Backend\AsramaController;
 use App\Http\Controllers\Backend\AttendanceController;
 use App\Http\Controllers\Backend\ClassesController;
-use App\Http\Controllers\Backend\DashboardController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Backend\EkstrakurikulerController;
 use App\Http\Controllers\Backend\FaceRecognitionController;
 use App\Http\Controllers\Backend\LessonAttendanceController;
@@ -15,6 +15,7 @@ use App\Http\Controllers\Backend\PermissionController;
 use App\Http\Controllers\Backend\ProfileController;
 use App\Http\Controllers\Backend\RegistrationController;
 use App\Http\Controllers\Backend\ScheduleController;
+use App\Http\Controllers\Backend\SemesterController;
 use App\Http\Controllers\Backend\SettingScheduleController;
 use App\Http\Controllers\Backend\StudentController;
 use App\Http\Controllers\Backend\SubjectController;
@@ -28,11 +29,12 @@ use App\Http\Controllers\Backend\GalleryController;
 use App\Http\Controllers\Backend\AcademicReportController;
 use App\Http\Controllers\Frontend\BeritaController;
 use App\Http\Controllers\Frontend\QrCodeController;
+use App\Http\Controllers\ScreenShareController;
+use App\Http\Controllers\WebRTCController;
 use App\Models\Ekstrakurikuler;
 use App\Models\Student;
 use App\Models\Gallery;
 use App\Models\News;
-use Illuminate\Support\Facades\Route;
 
 // Frontend Routes
 Route::get('/', function () {
@@ -54,7 +56,13 @@ Route::get('/', function () {
         ->take(3)
         ->get();
 
-    return view('home.index', compact('featuredNews', 'latestNews', 'categoriesNews'));
+    // Ambil 4 berita untuk news area di homepage
+    $homepageNews = News::published()
+        ->latest('published_at')
+        ->take(4)
+        ->get();
+
+    return view('home.index', compact('featuredNews', 'latestNews', 'categoriesNews', 'homepageNews'));
 })->name('/');
 
 
@@ -68,9 +76,9 @@ Route::get('/berita/{slug}', [BeritaController::class, 'show'])->name('berita.de
 Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
-Route::get('/profile-sekolah', function () {
+Route::get('/about', function () {
     return view('home.profile');
-})->name('profile-sekolah.index');
+})->name('about');
 
 // Route untuk halaman jurusan
 Route::get('/teknik-komputer-jaringan', function () {
@@ -132,6 +140,34 @@ Route::resource('/pendaftaran', PendaftaranController::class);
     Route::get('/get-latest-rfid', [RFIDController::class, 'getLatestRFID'])->name('get.latest.rfid');
     Route::post('/clear-rfid-cache', [RFIDController::class, 'clearRFIDCache'])->name('clear.rfid');
 
+// Public test route for debugging screen sharing (outside auth)
+Route::get('/public-test-screen/{screenShareId}', function($screenShareId) {
+    $frame = Cache::get("screen_frame_{$screenShareId}");
+    if ($frame) {
+        return response()->json([
+            'success' => true,
+            'frame_found' => true,
+            'image_length' => strlen($frame['image_data']),
+            'timestamp' => $frame['timestamp'],
+            'teacher_name' => $frame['teacher_name']
+        ]);
+    } else {
+        return response()->json([
+            'success' => false,
+            'frame_found' => false,
+            'message' => 'No frame in cache'
+        ]);
+    }
+});
+
+// WebRTC Signaling Routes (outside auth for WebRTC to work)
+Route::prefix('screen-sharing')->group(function() {
+    Route::post('/signal', [WebRTCController::class, 'signal'])->name('webrtc.signal');
+    Route::get('/signal/{screenShareId}', [WebRTCController::class, 'poll'])->name('webrtc.poll');
+    Route::get('/signal-responses/{screenShareId}', [WebRTCController::class, 'getResponses'])->name('webrtc.responses');
+    Route::get('/events/{screenShareId}', [WebRTCController::class, 'events'])->name('webrtc.events');
+});
+
 Route::group(['middleware' => 'auth'], function () {
     // Admin News Management
     Route::resource('news', NewsController::class);
@@ -143,6 +179,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::prefix('dashboard')->name('dashboard')->group(function() {
         Route::get('/', [DashboardController::class, 'index']);
         Route::get('/attendance-data', [DashboardController::class, 'getAttendanceData'])->name('.attendance-data');
+        Route::get('/chart-data', [DashboardController::class, 'getChartData'])->name('.chart-data');
     });
 
     Route::get('pendaftaran-siswa/export', [PendaftaranSiswaController::class, 'export'])->name('pendaftaran-siswa.export');
@@ -178,6 +215,8 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('/promote-data', [ClassesController::class, 'getPromoteData'])->name('promote-data');
         Route::post('/open-next-semester-bulk', [ClassesController::class, 'openNextSemesterBulk'])->name('open-next-semester-bulk');
         Route::post('/promote-bulk', [ClassesController::class, 'promoteStudentsBulk'])->name('promote-bulk');
+        Route::get('/check-promotion-period', [ClassesController::class, 'checkPromotionPeriod'])->name('check-promotion-period');
+        Route::get('/preview-promotion', [ClassesController::class, 'previewPromotion'])->name('preview-promotion');
 
         Route::resource('/', ClassesController::class)->parameters(['' => 'class']);
         Route::post('{class}/assign-student', [ClassesController::class, 'assignStudent'])->name('assign-student');
@@ -261,12 +300,73 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('setting-schedule', SettingScheduleController::class);
     Route::resource('permissions', PermissionController::class);
     Route::resource('roles', RoleController::class);
+    Route::resource('semester', SemesterController::class);
+    Route::post('semester/generate', [SemesterController::class, 'generateSemester'])->name('semester.generate');
+    Route::post('semester/{semester}/set-active', [SemesterController::class, 'setActive'])->name('semester.set-active');
+
+    // Screen Sharing Routes
+    Route::prefix('screen-shares')->name('screen-shares.')->group(function() {
+        Route::get('/', [ScreenShareController::class, 'index'])->name('index');
+        Route::get('/create', [ScreenShareController::class, 'create'])->name('create');
+        Route::post('/', [ScreenShareController::class, 'store'])->name('store');
+        Route::get('/{screenShare}', [ScreenShareController::class, 'show'])->name('show');
+        Route::post('/{screenShare}/end', [ScreenShareController::class, 'end'])->name('end');
+        Route::post('/{screenShare}/broadcast', [ScreenShareController::class, 'broadcast'])->name('broadcast');
+        Route::get('/{screenShareId}/update', [ScreenShareController::class, 'update'])->name('update');
+    });
+
+    // Student Screen Sharing Routes
+    Route::prefix('join-screen')->name('screen-shares.')->group(function() {
+        Route::get('/', [ScreenShareController::class, 'joinRoom'])->name('join');
+        Route::post('/join', [ScreenShareController::class, 'join'])->name('join.submit');
+        Route::get('/{roomCode}', [ScreenShareController::class, 'view'])->name('view');
+    });
+
+    // Debug test route (public for testing)
+    Route::get('/public-test-screen/{screenShareId}', function($screenShareId) {
+        $frame = Cache::get("screen_frame_{$screenShareId}");
+        if ($frame) {
+            return response()->json([
+                'success' => true,
+                'frame_found' => true,
+                'image_length' => strlen($frame['image_data']),
+                'timestamp' => $frame['timestamp'],
+                'teacher_name' => $frame['teacher_name']
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'frame_found' => false,
+                'message' => 'No frame in cache'
+            ]);
+        }
+    });
+
+    // Debug test route
+    Route::get('/test-screen/{screenShareId}', function($screenShareId) {
+        $frame = Cache::get("screen_frame_{$screenShareId}");
+        if ($frame) {
+            return response()->json([
+                'success' => true,
+                'frame_found' => true,
+                'image_length' => strlen($frame['image_data']),
+                'timestamp' => $frame['timestamp']
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'frame_found' => false,
+                'message' => 'No frame in cache'
+            ]);
+        }
+    });
 
 });
 
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });

@@ -66,8 +66,31 @@ class User extends Authenticatable
     }
 
     public function teacher()
-{
-    return $this->hasOne(Teacher::class, 'user_id'); // atau sesuai dengan struktur relasi Anda
-}
+    {
+        return $this->hasOne(Teacher::class, 'user_id');
+    }
+
+    public function student()
+    {
+        return $this->hasOne(Student::class, 'user_id');
+    }
+
+    public function administrator()
+    {
+        return $this->hasOne(Administrator::class, 'user_id');
+    }
+
+    public function getProfileData()
+    {
+        if ($this->hasRole('admin') || $this->hasRole('Super Admin')) {
+            return $this->administrator;
+        } elseif ($this->hasRole('teacher')) {
+            return $this->teacher;
+        } elseif ($this->hasRole('student') || $this->hasRole('Student')) {
+            return $this->student;
+        }
+        
+        return null;
+    }
 
 }

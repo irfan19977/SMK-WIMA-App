@@ -63,15 +63,23 @@ class NewsController extends Controller
         return view('news.index', compact('news'));
     }
 
+    public function create()
+    {
+        return view('news.addEdit');
+    }
+
     public function store(Request $request)
     {
+        // Debug: Log request data
+        \Log::info('News Store Request:', $request->all());
+        
         $request->validate([
             'title' => 'required|string|max:255',
             'category' => 'required|string|max:100',
             'content' => 'required|string',
             'excerpt' => 'nullable|string|max:255',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
-            'is_published' => 'boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+            'is_published' => 'required|in:0,1',
         ]);
 
         try {
@@ -79,7 +87,7 @@ class NewsController extends Controller
             $data = $request->only(['title','category','content','excerpt','tags','is_published']);
             $data['slug'] = Str::slug($request->title);
             $data['user_id'] = Auth::id();
-            $data['is_published'] = $request->has('is_published');
+            $data['is_published'] = $request->input('is_published', 0);
             $data['published_at'] = $data['is_published'] ? now() : null;
             
             if ($request->hasFile('image')) {
@@ -87,7 +95,13 @@ class NewsController extends Controller
                 $data['image'] = $imagePath;
             }
             
+            // Debug: Log data yang akan disimpan
+            \Log::info('Data to be saved:', $data);
+            
             $news = News::create($data);
+            
+            // Debug: Log hasil
+            \Log::info('News created:', $news->toArray());
 
             if ($request->ajax()) {
                 return response()->json([
@@ -99,7 +113,28 @@ class NewsController extends Controller
 
             return redirect()->route('news.index')->with('success', 'Berita berhasil disimpan');
             
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Debug: Log validation errors
+            \Log::error('Validation errors:', $e->errors());
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput()
+                ->with('error', 'Validation failed: ' . implode(', ', $e->errors()));
+                
         } catch (\Exception $e) {
+            // Debug: Log general error
+            \Log::error('Store error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
@@ -114,7 +149,7 @@ class NewsController extends Controller
     public function edit($id)
     {
         $news = News::findOrFail($id);
-        return response()->json($news);
+        return view('news.addEdit', compact('news'));
     }
 
     public function update(Request $request, $id)
@@ -125,7 +160,7 @@ class NewsController extends Controller
             'content' => 'required|string',
             'excerpt' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
-            'is_published' => 'boolean',
+            'is_published' => 'required|in:0,1',
         ]);
 
         try {
@@ -134,10 +169,10 @@ class NewsController extends Controller
             $data = $request->only(['title','category','content','excerpt','tags','is_published']);
             
             if ($request->title != $news->title) {
-                $data['slug'] = $this->createSlug($request->title, $news->id);
+                $data['slug'] = Str::slug($request->title);
             }
             
-            $data['is_published'] = $request->has('is_published');
+            $data['is_published'] = $request->input('is_published', 0);
             $data['published_at'] = $data['is_published'] ? now() : null;
             
             if ($request->hasFile('image')) {

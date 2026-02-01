@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Helpers\AcademicYearHelper;
 use App\Models\ParentModel;
 use App\Models\Student;
 use App\Models\User;
@@ -29,9 +30,6 @@ class PendaftaranController extends Controller
     public function store(Request $request)
     {
         try {
-            // Debug: Log form data (except sensitive information)
-            Log::info('Form submission started', $request->except(['password', 'password_confirmation']));
-            
             // Validate the request
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
@@ -45,13 +43,14 @@ class PendaftaranController extends Controller
                 'nik' => 'required|numeric|digits:16|unique:student,nik',
                 'nisn' => 'required|numeric|digits:10|unique:student,nisn',
                 'address' => 'required|string|max:500',
-                'jurusan_utama' => 'required|in:Teknik Kendaraan Ringan,Teknik Bisnis Sepeda Motor,Teknik Kimia Industri,Teknik Komputer dan Jaringan',
-                'jurusan_cadangan' => 'required|in:Teknik Kendaraan Ringan,Teknik Bisnis Sepeda Motor,Teknik Kimia Industri,Teknik Komputer dan Jaringan|different:jurusan_utama',
-                'photo_path' => 'required|image|mimes:jpeg,png,jpg|max:200',
-                'ijazah' => 'required|file|mimes:pdf,jpg,jpeg,png|max:200',
-                'kartu_keluarga' => 'required|file|mimes:pdf,jpg,jpeg,png|max:200',
+                'jurusan_utama' => 'required|in:Teknik Kimia Industri,Teknik Komputer dan Jaringan,Teknik Sepeda Motor,Teknik Kendaraan Ringan',
+                'jurusan_cadangan' => 'required|in:Teknik Kimia Industri,Teknik Komputer dan Jaringan,Teknik Sepeda Motor,Teknik Kendaraan Ringan|different:jurusan_utama',
+                'setuju' => 'required|accepted',
+                'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:200',
+                'ijazah' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
+                'kartu_keluarga' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
                 'akte_lahir' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
-                'ktp' => 'required|file|mimes:pdf,jpg,jpeg,png|max:200',
+                'ktp' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
                 'sertifikat' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:200',
             ], [
                 'required' => 'Kolom :attribute wajib diisi.',
@@ -66,6 +65,7 @@ class PendaftaranController extends Controller
                 'before' => 'Anda harus berusia minimal 10 tahun untuk mendaftar.',
                 'in' => 'Nilai :attribute tidak valid.',
                 'different' => 'Jurusan cadangan harus berbeda dengan jurusan utama.',
+                'accepted' => 'Anda harus menyetujui pernyataan untuk melanjutkan pendaftaran.',
                 'image' => 'File harus berupa gambar.',
                 'mimes' => 'Format file tidak didukung. Gunakan format: :values.',
                 'max' => 'Ukuran file tidak boleh lebih dari :max KB.'
@@ -83,6 +83,7 @@ class PendaftaranController extends Controller
                 'address' => 'alamat',
                 'jurusan_utama' => 'jurusan utama',
                 'jurusan_cadangan' => 'jurusan cadangan',
+                'setuju' => 'persetujuan',
                 'photo_path' => 'foto',
                 'ijazah' => 'ijazah/SKL',
                 'kartu_keluarga' => 'kartu keluarga',
@@ -92,10 +93,10 @@ class PendaftaranController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return redirect()->back()
-                    ->withErrors($validator)
-                    ->withInput();
-            }
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
 
             DB::beginTransaction();
 
@@ -121,7 +122,7 @@ class PendaftaranController extends Controller
             $user->assignRole('student');
 
             // Create student record
-            Student::create([
+            $student = Student::create([
                 'id' => Str::uuid(),
                 'user_id' => $user->id,
                 'name' => $request->name,
@@ -140,8 +141,10 @@ class PendaftaranController extends Controller
                 'status' => 'calon siswa',
                 'jurusan_utama' => $request->jurusan_utama,
                 'jurusan_cadangan' => $request->jurusan_cadangan,
-                'academic_year' => (date('Y') + 1) . '/' . (date('Y') + 2),
+                'academic_year' => AcademicYearHelper::getCurrentAcademicYear(),
             ]);
+
+            Log::info('Student created successfully. ID: ' . $student->id);
 
             DB::commit();
 
@@ -181,7 +184,6 @@ class PendaftaranController extends Controller
                 $filePath = $file->storeAs($path, $fileName, 'public');
                 
                 if (!$filePath) {
-                    Log::error("Failed to store file: {$fieldName}");
                     throw new \Exception("Gagal mengunggah file {$fieldName}. Silakan coba lagi.");
                 }
                 

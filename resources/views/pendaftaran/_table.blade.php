@@ -1,7 +1,15 @@
 @forelse ($students as $student)
   <tr>
     <td class="text-center">{{ $loop->iteration }}</td>
-    <td>{{ $student->name }}</td>
+    <td>
+      @if($student->user_id)
+        <a href="{{ route('profile.show') }}?user_id={{ $student->user_id }}" class="text-primary text-decoration-none fw-medium">
+          {{ $student->name }}
+        </a>
+      @else
+        {{ $student->name }}
+      @endif
+    </td>
     <td>{{ $student->nisn ?? '-' }}</td>
     <td>{{ $student->nik ?? '-' }}</td>
     <td>{{ $student->jurusan_utama ?? '-' }}</td>
@@ -12,21 +20,22 @@
     <td>{{ optional($student->user)->phone ?? '-' }}</td>
     <td>
       @php($st = $student->status ?? 'calon siswa')
-      <span class="badge {{ $st === 'calon siswa' ? 'badge-warning' : ($st === 'siswa' ? 'badge-success' : 'badge-secondary') }}">
+      <span class="badge rounded badge-soft-{{ $st === 'calon siswa' ? 'primary' : ($st === 'siswa' ? 'success' : 'primary') }} font-size-12">
         {{ $st === 'calon siswa' ? 'Calon siswa' : ($st === 'siswa' ? 'Siswa' : ucfirst($st)) }}
       </span>
     </td>
     <td>
       @isset($student->id)
-      <a href="{{ route('pendaftaran-siswa.show', $student->id) }}" class="btn btn-info btn-action mr-1" data-toggle="tooltip" title="Detail">
-        <i class="fas fa-eye"></i>
-      </a>
       @if(($student->status ?? 'calon siswa') === 'calon siswa')
       <button type="button" class="btn btn-success btn-action mr-1 btn-accept" data-id="{{ $student->id }}" data-name="{{ $student->name }}" data-jurusan-utama="{{ $student->jurusan_utama ?? '' }}" data-jurusan-cadangan="{{ $student->jurusan_cadangan ?? '' }}" title="Terima">
         <i class="fas fa-check"></i>
       </button>
-      <button type="button" class="btn btn-danger btn-action btn-reject" data-id="{{ $student->id }}" title="Tolak">
+      <button type="button" class="btn btn-danger btn-action btn-delete" data-id="{{ $student->id }}" data-name="{{ $student->name }}" title="Tolak">
         <i class="fas fa-times"></i>
+      </button>
+      @else
+      <button type="button" class="btn btn-success btn-action" disabled title="Sudah Diterima">
+        <i class="fas fa-check-circle"></i> Diterima
       </button>
       @endif
       @endisset

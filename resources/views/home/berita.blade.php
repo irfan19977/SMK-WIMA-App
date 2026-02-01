@@ -1,97 +1,166 @@
 @extends('home.layouts.app')
 
 @section('content')
-    <div class="hero-wrap hero-wrap-2" style="background-image: url('{{ asset('frontend/images/bg.png') }}'); background-attachment:fixed;">
-      <div class="overlay"></div>
-      <div class="container">
-        <div class="row no-gutters slider-text align-items-center justify-content-center" data-scrollax-parent="true">
-          <div class="col-md-8 ftco-animate text-center">
-            <p class="breadcrumbs"><span class="mr-2"><a href="{{ route('/') }}">Home</a></span> <span>Berita</span></p>
-            <h1 class="mb-3 bread">Berita</h1>
-          </div>
+ <!-- Start Section Banner Area -->
+        <div class="section-banner bg-2">
+            <div class="container">
+                <div class="banner-spacing">
+                    <div class="section-info">
+                        <h2 data-aos="fade-up" data-aos-delay="100">News and Blog</h2>
+                        <p data-aos="fade-up" data-aos-delay="200">SMK PGRI Lawang adalah tempat di mana mimpi terwujud, ide berkembang, dan Anda akan menemukan dukungan serta inspirasi untuk masa depan cemerlang.</p>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-
-    <section class="ftco-section">
-    	<div class="container">
-    		<div class="row d-flex">
-                @foreach ($featuredNews as $news)
-                    <div class="col-md-4 d-flex ftco-animate">
-                        <div class="blog-entry align-self-stretch d-flex flex-column" style="width: 100%;">
-                            <a href="{{ route('berita.detail', $news->slug) }}" class="block-20" style="background-image: url('{{ $news->thumbnail_url }}'); flex-shrink: 0; height: 250px; position: relative;">
-                                <span class="badge badge-primary" style="position: absolute; top: 10px; left: 10px;">{{ $news->category }}</span>
-                            </a>
-                            <div class="text p-4 d-block" style="flex: 1; display: flex; flex-direction: column;">
-                                <div class="meta mb-3">
-                                    <div><a href="">{{ $news->published_at->translatedFormat('d F Y') }}</a></div>
-                                    <div><a href="">{{ $news->user->name }}</a></div>
-                                    <div><a href="" class="meta-chat"><span class="icon-eye"></span>{{ $news->view_count }}</a></div>
-                                </div>
-                                <h3 class="heading mt-3" style="height: 3.6em; overflow: hidden; line-height: 1.2em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
-                                    <a href="{{ route('berita.detail', $news->slug) }}">{{ $news->title }}</a>
+        <!-- End Section Banner Area -->
+        
+        <!-- End Blog Area -->
+        <div class="blog-area ptb-100">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="widget-area">
+                            <div class="widget widget-search">
+                                <h3 class="widget-title">
+                                    Search
                                 </h3>
-                                <p style="height: 4.5em; overflow: hidden; line-height: 1.5em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; margin-top: auto;">
-                                    {{ Str::limit($news->excerpt, 100) }}
-                                </p>
+                                <form class="search-form">
+                                    <label>
+                                        <span class="screen-reader-text">Search for:</span>
+                                        <input type="search" class="search-field" placeholder="Search...">
+                                    </label>
+                                    <button type="submit"><i class='bx bx-search'></i></button>
+                                </form>
                             </div>
+                            <div class="widget widget-catagories">
+                                <h3 class="widget-title">
+                                    Categories
+                                </h3>
+                                
+                                <ul>
+                                    @if(isset($categories) && count($categories) > 0)
+                                        @foreach($categories as $category)
+                                            <li><h3><a href="{{ route('berita.category', $category->category) }}">{{ $category->category }}</a></h3> <span>({{ $category->total }})</span></li>
+                                        @endforeach
+                                    @else
+                                        <li><h3><a href="#">Belum ada kategori</a></h3> <span>(0)</span></li>
+                                    @endif
+                                </ul>
+
+                            </div>
+                            {{-- <div class="widget widget-tags">
+                                <h3 class="widget-title">
+                                    Popular Tags
+                                </h3>
+                                <ul>
+                                    <li><a href="#">Aktivitas</a></li>
+                                    <li><a href="#">Alumni</a></li>
+                                    <li><a href="#">Kampus</a></li>
+                                    <li><a href="#">Pembelajaran Digital</a></li>
+                                    <li><a href="#">Pendidikan</a></li>
+                                    <li><a href="#">Pengalaman</a></li>
+                                    <li><a href="#">Pembelajaran Internasional</a></li>
+                                    <li><a href="#">Kehidupan Bisnis</a></li>
+                                    <li><a href="#">Biaya Pendidikan</a></li>
+                                    <li><a href="#">Keterampilan</a></li>
+                                    <li><a href="#">Kehidupan Bisnis</a></li>
+                                    <li><a href="#">Sarjana</a></li>
+                                </ul>
+                            </div> --}}
                         </div>
-                    </div> 
-                @endforeach
-            </div>
-            <div class="row mt-5">
-                <div class="col text-center">
-                    <div class="block-27">
-                        <ul>
-                            {{-- Tombol Previous --}}
-                            @if ($featuredNews->onFirstPage())
-                                <li class="disabled"><span>&lt;</span></li>
-                            @else
-                                <li><a href="{{ $featuredNews->previousPageUrl() }}">&lt;</a></li>
-                            @endif
-
-                            {{-- Number Pages --}}
-                            @foreach ($featuredNews->getUrlRange(1, $featuredNews->lastPage()) as $page => $url)
-                                @if ($page == $featuredNews->currentPage())
-                                    <li class="active"><span>{{ $page }}</span></li>
-                                @else
-                                    <li><a href="{{ $url }}">{{ $page }}</a></li>
-                                @endif
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="row">
+                            @foreach ($featuredNews as $news)
+                            <div class="col-lg-6 col-sm-6 col-md-6">
+                                <div class="blog-single-card">
+                                    <div class="image">
+                                        <img src="{{ $news->thumbnail_url }}" alt="{{ $news->title }}">
+                                        <span class="badge badge-primary" style="position: absolute; top: 10px; left: 10px;">{{ $news->category }}</span>
+                                    </div>
+                                    
+                                    <div class="content">
+                                        <div class="meta">
+                                            <ul>
+                                                <li><a href="#">{{ $news->user->name }}</a></li>
+                                                <li>{{ $news->published_at->translatedFormat('d F Y') }}</li>
+                                            </ul>
+                                        </div>
+                                        <h3><a href="{{ route('berita.detail', $news->slug) }}">{{ $news->title }}</a></h3>
+                                        <a class="butn" href="{{ route('berita.detail', $news->slug) }}">Read More <i class="bx bx-right-arrow-alt"></i></a>
+                                    </div>
+                                </div>
+                            </div>
                             @endforeach
-
-                            {{-- Tombol Next --}}
-                            @if ($featuredNews->hasMorePages())
-                                <li><a href="{{ $featuredNews->nextPageUrl() }}">&gt;</a></li>
-                            @else
-                                <li class="disabled"><span>&gt;</span></li>
-                            @endif
-                        </ul>
+                        </div>
+                        <div class="blog-pagi">
+                            <ul class="pagination">
+                                <li class="page-item">
+                                  <a class="page-link" href="#" aria-label="Previous">
+                                    <span aria-hidden="true"><i class='bx bx-arrow-back'></i></span>
+                                  </a>
+                                </li>
+                                @foreach ($featuredNews->getUrlRange(1, $featuredNews->lastPage()) as $page => $url)
+                                    @if ($page == $featuredNews->currentPage())
+                                        <li class="page-item"><a class="page-link active" href="#">{{ $page }}</a></li>
+                                    @else
+                                        <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
+                                    @endif
+                                @endforeach
+                                <li class="page-item">
+                                  <a class="page-link" href="#" aria-label="Next">
+                                    <span aria-hidden="true"><i class='bx bx-arrow-back bx-rotate-180' ></i></span>
+                                  </a>
+                                </li>
+                              </ul>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
-		
-		<section class="ftco-section-parallax">
-      <div class="parallax-img d-flex align-items-center">
-        <div class="container">
-          <div class="row d-flex justify-content-center">
-            <div class="col-md-7 text-center heading-section heading-section-white ftco-animate">
-              <h2>Subcribe to our Newsletter</h2>
-              <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in</p>
-              <div class="row d-flex justify-content-center mt-5">
-                <div class="col-md-8">
-                  <form action="#" class="subscribe-form">
-                    <div class="form-group d-flex">
-                      <input type="text" class="form-control" placeholder="Enter email address">
-                      <input type="submit" value="Subscribe" class="submit px-3">
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+        <!-- End Blog Area -->
 @endsection
+
+@push('style')
+    <style>
+    .blog-single-card .image {
+        position: relative;
+        overflow: hidden;
+        height: 250px; /* Fixed height untuk semua foto */
+    }
+
+    .blog-single-card .image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Memastikan foto memenuhi container tanpa distortion */
+        transition: transform 0.3s ease;
+    }
+
+    .blog-single-card .image:hover img {
+        transform: scale(1.05);
+    }
+
+    .blog-single-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Badge kategori styling */
+    .blog-single-card .badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 10;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 4px;
+        background: linear-gradient(135deg, #2eca7f, #1ea971);
+        color: white;
+        box-shadow: 0 2px 8px rgba(46, 202, 127, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+</style>
+@endpush

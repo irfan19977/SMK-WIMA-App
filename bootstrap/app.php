@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             '/rfid-detect',
             '/clear-rfid-cache',
             '/get-latest-rfid',
+            '/screen-sharing/*', // Exclude WebRTC routes from CSRF
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

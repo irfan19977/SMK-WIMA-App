@@ -1,158 +1,180 @@
 @extends('home.layouts.app')
 
 @section('content')
-    <div class="hero-wrap hero-wrap-2" style="background-image: url('{{ asset('frontend/images/bg.png') }}'); background-attachment:fixed;">
-      <div class="overlay"></div>
-      <div class="container">
-        <div class="row no-gutters slider-text align-items-center justify-content-center" data-scrollax-parent="true">
-          <div class="col-md-8 ftco-animate text-center">
-            <p class="breadcrumbs"><span class="mr-2"><a href="{{ route('/') }}">Home</a></span> <span>About</span></p>
-            <h1 class="mb-3 bread">About</h1>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <section class="ftco-section">
-    	<div class="container">
-    		<div class="row d-flex">
-    			<div class="col-md-6 d-flex ftco-animate">
-    				<div class="img img-about align-self-stretch" style="background-image: url({{ asset('frontend/images/bg.png') }}); width: 100%;"></div>
-    			</div>
-    			<div class="col-md-6 pl-md-5 ftco-animate">
-    				<h2 class="mb-4">Selamat Datang di SMK PGRI Lawang</h2>
-    				<p>SMK PGRI Lawang didirikan pada tahun 2007 dengan visi mencetak generasi muda yang terampil, kompeten, dan siap bersaing di dunia kerja. Dengan pengalaman lebih dari 17 tahun, kami telah menghasilkan ribuan alumni yang sukses berkarir di berbagai bidang industri.</p>
-    				<p>Kami menyediakan pendidikan kejuruan berkualitas dengan fasilitas modern, kurikulum berbasis industri, dan tenaga pengajar profesional. SMK PGRI Lawang berkomitmen memberikan pendidikan terbaik untuk masa depan gemilang siswa.</p>
-    			</div>
-    		</div>
-    	</div>
-    </section>
-
-    <section class="ftco-section-3 img" style="background-image: url({{ asset('frontend/images/bg.png') }});">
-    	<div class="overlay"></div>
-    	<div class="container">
-    		<div class="row d-md-flex justify-content-center">
-    			<div class="col-md-9 about-video text-center">
-    				<h2 class="ftco-animate">SMK PGRI Lawang - Mencetak Lulusan Berkualitas dan Siap Kerja</h2>
-    				<div class="video d-flex justify-content-center">
-    					<a href="https://www.youtube-nocookie.com/embed/rh721JJV_ZA" class="button popup-youtube d-flex justify-content-center align-items-center" data-src="https://www.youtube-nocookie.com/embed/rh721JJV_ZA?autoplay=1" aria-label="Putar video (popup)"><span class="ion-ios-play"></span></a>
-    				</div>
-    			</div>
-    		</div>
-    	</div>
-    </section>
-    <section class="ftco-counter bg-light" id="section-counter">
-    	<div class="container">
-    		<div class="row justify-content-center">
-    			<div class="col-md-10">
-		    		<div class="row">
-		          <div class="col-md-3 d-flex justify-content-center counter-wrap ftco-animate">
-		            <div class="block-18 text-center">
-		              <div class="text">
-		                <strong class="number" data-number="{{ number_format(App\Models\Visitor::getMonthlyVisitors()) }}">0</strong>
-		                <span>Pengunjung Bulan ini</span>
-		              </div>
-		            </div>
-		          </div>
-		          <div class="col-md-3 d-flex justify-content-center counter-wrap ftco-animate">
-		            <div class="block-18 text-center">
-		              <div class="text">
-		                <strong class="number" data-number="{{ number_format(App\Models\Visitor::getTodayVisitors()) }}">0</strong>
-		                <span>Pengunjung Hari ini</span>
-		              </div>
-		            </div>
-		          </div>
-		          <div class="col-md-3 d-flex justify-content-center counter-wrap ftco-animate">
-		            <div class="block-18 text-center">
-		              <div class="text">
-		                <strong class="number" data-number="{{ number_format(App\Models\Visitor::getWeeklyVisitors()) }}">0</strong>
-		                <span>Pengunjung Minggu ini</span>
-		              </div>
-		            </div>
-		          </div>
-		          <div class="col-md-3 d-flex justify-content-center counter-wrap ftco-animate">
-		            <div class="block-18 text-center">
-		              <div class="text">
-		                <strong class="number" data-number="200">0</strong>
-		                <span>Artikel Edukasi</span>
-		              </div>
-		            </div>
-		          </div>
-		        </div>
-	        </div>
-        </div>
-    	</div>
-    </section>
-
-    <section class="ftco-section testimony-section">
-      <div class="container">
-      	<div class="row justify-content-center mb-5 pb-3">
-          <div class="col-md-7 heading-section ftco-animate text-center">
-            <h2 class="mb-4">Kata Alumni Kami</h2>
-          </div>
-        </div>
-        <div class="row">
-        	<div class="col-md-12 ftco-animate">
-            <div class="carousel-testimony owl-carousel">
-              <div class="item">
-                <div class="testimony-wrap text-center">
-                  <div class="user-img mb-5" style="background-image: url(images/person_1.jpg)">
-                    <span class="quote d-flex align-items-center justify-content-center">
-                      <i class="icon-quote-left"></i>
-                    </span>
-                  </div>
-                  <div class="text">
-                    <p class="mb-5">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-                    <p class="name">Dennis Green</p>
-                    <span class="position">CSE Student</span>
-                  </div>
+      <!-- Start Section Banner Area -->
+        <div class="section-banner bg-1">
+            <div class="container">
+                <div class="banner-spacing">
+                    <div class="section-info">
+                        <h2 data-aos="fade-up" data-aos-delay="100">Tentang SMK PGRI Lawang</h2>
+                        <p data-aos="fade-up" data-aos-delay="200">SMK PGRI Lawang adalah lembaga pendidikan vokasional yang berdedikasi untuk menghasilkan lulusan berkualitas, siap kerja, dan berdaya saing global.</p>
+                    </div>
                 </div>
-              </div>
-              <div class="item">
-                <div class="testimony-wrap text-center">
-                  <div class="user-img mb-5" style="background-image: url(images/person_2.jpg)">
-                    <span class="quote d-flex align-items-center justify-content-center">
-                      <i class="icon-quote-left"></i>
-                    </span>
-                  </div>
-                  <div class="text">
-                    <p class="mb-5">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-                    <p class="name">Dennis Green</p>
-                    <span class="position">Math Student</span>
-                  </div>
-                </div>
-              </div>
-              <div class="item">
-                <div class="testimony-wrap text-center">
-                  <div class="user-img mb-5" style="background-image: url(images/person_3.jpg)">
-                    <span class="quote d-flex align-items-center justify-content-center">
-                      <i class="icon-quote-left"></i>
-                    </span>
-                  </div>
-                  <div class="text">
-                    <p class="mb-5">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-                    <p class="name">Dennis Green</p>
-                    <span class="position">Science Students</span>
-                  </div>
-                </div>
-              </div>
-              <div class="item">
-                <div class="testimony-wrap text-center">
-                  <div class="user-img mb-5" style="background-image: url(images/person_3.jpg)">
-                    <span class="quote d-flex align-items-center justify-content-center">
-                      <i class="icon-quote-left"></i>
-                    </span>
-                  </div>
-                  <div class="text">
-                    <p class="mb-5">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-                    <p class="name">Dennis Green</p>
-                    <span class="position">English Student</span>
-                  </div>
-                </div>
-              </div>
             </div>
-          </div>
         </div>
-      </div>
-    </section>
+        <!-- End Section Banner Area -->
+
+        <!-- Start About Us Area -->
+        <div class="about-us-area ptb-100">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-5 col-md-12">
+                        <div class="text-content" data-aos="fade-up" data-aos-delay="100">
+                            <div class="sub-title">
+                                <i class='bx bxs-graduation'></i> <p>Tentang SMK PGRI Lawang</p>
+                            </div>
+                             <h2 class="title-anim">Mencetak Lulusan Berkualitas</h2>
+                            <p class="title-anim">SMK PGRI Lawang berkomitmen untuk menghasilkan lulusan yang siap kerja, berkarakter, dan berdaya saing global. Dengan pengalaman lebih dari 17 tahun, kami terus berinovasi dalam pendidikan vokasional.</p>
+                            <a class="default-btn" href="#">Kunjungi Sekolah</a>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-7">
+                        <div class="row justify-content-end">
+                            <div class="col-lg-6 col-sm-6 col-md-6">
+                                <div class="content" data-aos="fade-right" data-aos-delay="100">
+                                <img src="{{ asset('frontend/assets/img/all-img/tentara.jpeg') }}" alt="image">
+                                </div>
+                            </div>
+                            <div class="col-lg-6 col-sm-6 col-md-6">
+                                <div class="notice-content" data-aos="fade-right" data-aos-delay="200">
+                                    <i class='bx bxs-quote-left'></i>
+                                    <h4 class="title-anim">Pendidikan Berkualitas</h4>
+                                    <p class="title-anim">Kami menyediakan lingkungan belajar yang kondusif dengan kurikulum berbasis industri dan tenaga pengajar profesional.</p>
+                                    <div class="author-info">
+                                        <span>Kepala Sekolah</span>
+                                        <h5>Dr. Budi Santoso, S.Pd., M.Pd.</h5>
+                                        <p>Kepala Sekolah SMK PGRI Lawang</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End About Us Area -->
+
+        <!-- Start Academics Area -->
+        <div class="academics-area bg-color-1 ptb-100" >
+            <div class="container">
+                <div class="section-title" data-aos="fade-up" data-aos-delay="100">
+                    <div class="sub-title">
+                        <i class='bx bxs-graduation'></i> <p>Program Keahlian</p>
+                    </div>
+                    <h2>Program Keahlian Unggulan</h2>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-lg-3 col-sm-6 col-md-6">
+                        <div class="academics-item" data-aos="fade-up" data-aos-delay="100">
+                            <img src="{{ asset('frontend/assets/img/all-img/kimia.jpeg') }}" alt="icon">
+                            <h4>Teknik Kimia Industri</h4>
+                            <p>Program keahlian yang fokus pada proses kimia industri dan pengembangan produk kimia.</p>
+                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6 col-md-6">
+                        <div class="academics-item" data-aos="fade-up" data-aos-delay="200">
+                            <img src="{{ asset('frontend/assets/img/all-img/tkj.jpeg') }}" alt="icon">
+                            <h4>Teknik Komputer & Jaringan</h4>
+                            <p>Program keahlian yang mempelajari instalasi jaringan komputer dan administrasi sistem.</p>
+                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6 col-md-6">
+                        <div class="academics-item" data-aos="fade-up" data-aos-delay="300">
+                            <img src="{{ asset('frontend/assets/img/all-img/tsm.jpg') }}" alt="icon">
+                            <h4>Teknik Sepeda Motor</h4>
+                            <p>Program keahlian yang fokus pada perbaikan dan perawatan sepeda motor.</p>
+                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6 col-md-6">
+                        <div class="academics-item" data-aos="fade-up" data-aos-delay="400">
+                            <img src="{{ asset('frontend/assets/img/all-img/tkr.jpg') }}" alt="icon">
+                            <h4>Teknik Kendaraan Ringan</h4>
+                            <p>Program keahlian yang fokus pada perbaikan sistem kendaraan ringan mobil.</p>
+                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Academics Area -->
+       
+        <!-- Start Campus Tour Area -->
+        <div class="campus-tour">
+            <div class="container-fluid p-0">
+                <div class="row g-0 align-items-center flex-column-reverse flex-lg-row">
+                    <div class="col-lg-6">
+                        <div class="content" data-aos="fade-up" data-aos-delay="100">
+                            <div class="sub-title">
+                                <i class='bx bxs-graduation'></i> <p>Fasilitas Sekolah</p>
+                            </div>
+                            <h2>Sarana & Prasarana SMK PGRI Lawang</h2>
+
+                            <p>SMK PGRI Lawang dilengkapi dengan fasilitas modern untuk mendukung pembelajaran praktik dan teori.</p>
+                            <p>Kami memiliki laboratorium komputer, bengkel praktik, ruang kelas ber-AC, perpustakaan, dan area olahraga.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="image cp-bg-1" data-aos="fade-zoom-in" data-aos-delay="100">
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-0 align-items-center">
+                    
+                    <div class="col-lg-6">
+                        <div class="image cp-bg-2" data-aos="fade-zoom-in" data-aos-delay="100">
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="content" data-aos="fade-up" data-aos-delay="100">
+                            <div class="sub-title">
+                                <i class='bx bxs-graduation'></i> <p>Prestasi</p>
+                            </div>
+                            <h2>Kelulusan Unggulan</h2>
+
+                            <p>SMK PGRI Lawang bangga dengan kelulusan yang berkualitas dan siap kerja.</p>
+                            <p>Setiap tahun kami meluluskan siswa-siswi berprestasi yang diterima di berbagai industri ternama.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-0 align-items-center flex-column-reverse flex-lg-row">
+                    <div class="col-lg-6">
+                        <div class="content" data-aos="fade-up" data-aos-delay="100">
+                            <div class="sub-title">
+                                <i class='bx bxs-graduation'></i> <p>Nilai-Nilai</p>
+                            </div>
+                            <h2>Visi & Misi</h2>
+
+                            <p><strong>Visi:</strong> Menjadi sekolah vokasional unggulan yang menghasilkan lulusan berkarakter, kompeten, dan siap bersaing.</p>
+                            <p><strong>Misi:</strong> Memberikan pendidikan berkualitas dengan mengembangkan potensi siswa melalui pembelajaran terpadu.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="image cp-bg-3" data-aos="fade-zoom-in" data-aos-delay="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Campus Tour Area -->
+
+        <!-- Start Subscribe Area -->
+        <div class="subscribe-area ptb-100">
+            <div class="container">
+                <div class="section-title" data-aos="fade-up" data-aos-delay="100">
+                    <div class="sub-title">
+                        <i class='bx bxs-graduation'></i> <p>Informasi Pendaftaran</p>
+                    </div>
+                    <h2>Daftar Sekarang di SMK PGRI Lawang</h2>
+                </div>
+
+                <div class="subscribe-btn text-center" data-aos="fade-up" data-aos-delay="100">
+                    <a class="default-btn" href="application-form.html">Daftar Sekarang</a>
+                </div>
+            </div>
+        </div> 
+        <!-- End Subscribe Area -->
 @endsection

@@ -1,140 +1,180 @@
 @extends('home.layouts.app')
 
 @section('content')
-    <div class="hero-wrap hero-wrap-2" style="background-image: url('{{ asset('frontend/images/bg.png') }}'); background-attachment:fixed;">
-      <div class="overlay"></div>
-      <div class="container">
-        <div class="row no-gutters slider-text align-items-center justify-content-center" data-scrollax-parent="true">
-          <div class="col-md-8 ftco-animate text-center">
-            <p class="breadcrumbs"><span class="mr-2"><a href="{{ route('/') }}">Home</a></span> <span>TBSM</span></p>
-            <h1 class="mb-3 bread">Teknik Bisnis Sepeda Motor (TBSM)</h1>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <section class="ftco-section bg-light">
-      <div class="container">
-        <div class="row justify-content-center mb-4 pb-2">
-          <div class="col-md-10 heading-section ftco-animate text-center">
-            <h2 class="mb-3">Profil Jurusan TBSM</h2>
-            <p>Jurusan Teknik Bisnis Sepeda Motor (TBSM) SMK PGRI Lawang membekali siswa dengan kemampuan perbaikan dan perawatan sepeda motor, manajemen penjualan dan layanan purna jual, keterampilan interpersonal pelanggan, serta pengetahuan bisnis dan kewirausahaan di industri otomotif roda dua.</p>
-          </div>
-        </div>
-
-        <div class="row justify-content-center">
-          <div class="col-md-10 ftco-animate">
-            <div class="p-4 p-md-5 bg-white rounded shadow-sm">
-              <h3 class="mb-3">Kompetensi yang Dipelajari</h3>
-              <div class="row">
-                <div class="col-md-6">
-                  <ul class="mt-2">
-                    <li>Perbaikan dan pemeliharaan mesin sepeda motor.</li>
-                    <li>Sistem kelistrikan dan pengisian daya sepeda motor.</li>
-                    <li>Layanan purna jual dan customer relationship management (CRM).</li>
-                  </ul>
+ <!-- Start Section Banner Area -->
+        <div class="section-banner bg-1">
+            <div class="container">
+                <div class="banner-spacing">
+                    <div class="section-info">
+                        <h2 data-aos="fade-up" data-aos-delay="100">Teknik Bisnis Sepeda Motor</h2>
+                        <p data-aos="fade-up" data-aos-delay="200">Program keahlian TBSM SMK PGRI Lawang dirancang untuk mempersiapkan siswa menjadi ahli dalam perbaikan sepeda motor, manajemen bengkel, dan bisnis otomotif sepeda motor.</p>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                  <ul class="mt-2">
-                    <li>Manajemen bengkel dan penjualan suku cadang.</li>
-                    <li>Teknik penjualan dan negosiasi dengan pelanggan.</li>
-                    <li>Kewirausahaan dan pengelolaan bisnis otomotif roda dua.</li>
-                  </ul>
-                </div>
-              </div>
             </div>
-          </div>
         </div>
+        <!-- End Section Banner Area -->
 
-        <div class="row mt-5 justify-content-center">
-          <div class="col-md-10 heading-section ftco-animate text-center">
-            <h3 class="mb-3">Prospek Karir Lulusan TBSM</h3>
-            <p>Lulusan TBSM siap bekerja di bengkel resmi, dealer sepeda motor, showroom, atau membuka usaha bengkel dan layanan jasa perawatan sepeda motor sendiri dengan skill bisnis yang kompetitif.</p>
-          </div>
-        </div>
+        <!-- Start About Us Area -->
+        <div class="about-us-area ptb-100">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-5 col-md-12">
+                        <div class="text-content" data-aos="fade-up" data-aos-delay="100">
+                            <div class="sub-title">
+                                <i class='bx bxs-graduation'></i> <p>Tentang Jurusan TBSM</p>
+                            </div>
+                             <h2 class="title-anim">Ahli Sepeda Motor</h2>
+                            <p class="title-anim">Program TBSM SMK PGRI Lawang membekali siswa dengan kemampuan perbaikan sepeda motor, manajemen bengkel, pelayanan pelanggan, dan kewirausahaan otomotif.</p>
+                            <a class="default-btn" href="{{ route('pendaftaran.index') }}">Daftar Sekarang</a>
+                        </div>
+                    </div>
 
-        <div class="row mt-3">
-          <div class="col-md-4 d-flex align-self-stretch ftco-animate">
-            <div class="media block-6 services p-4 d-block text-center bg-white rounded shadow-sm">
-              <div class="icon d-flex justify-content-center align-items-center mb-3"><span class="flaticon-mechanic"></span></div>
-              <div class="media-body px-2">
-                <h4 class="heading mb-2">Mekanik Sepeda Motor</h4>
-                <p>Melakukan perbaikan, pemeliharaan berkala, dan troubleshooting sepeda motor dengan standar kualitas tinggi sesuai spesifikasi pabrikan.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4 d-flex align-self-stretch ftco-animate">
-            <div class="media block-6 services p-4 d-block text-center bg-white rounded shadow-sm">
-              <div class="icon d-flex justify-content-center align-items-center mb-3"><span class="flaticon-customer-service"></span></div>
-              <div class="media-body px-2">
-                <h4 class="heading mb-2">Service Advisor & Sales</h4>
-                <p>Menangani layanan purna jual, konsultasi perbaikan, penjualan suku cadang, dan membangun hubungan baik dengan pelanggan.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4 d-flex align-self-stretch ftco-animate">
-            <div class="media block-6 services p-4 d-block text-center bg-white rounded shadow-sm">
-              <div class="icon d-flex justify-content-center align-items-center mb-3"><span class="flaticon-business"></span></div>
-              <div class="media-body px-2">
-                <h4 class="heading mb-2">Pengusaha Bengkel & Dealer</h4>
-                <p>Membuka dan mengelola usaha bengkel, dealer sepeda motor, atau pusat servis dengan strategi bisnis dan customer service yang efektif.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="ftco-freeTrial">
-    	<div class="container">
-    		<div class="row">
-    			<div class="col-md-12">
-    				<div class="d-flex flex-column align-items-center text-center">
-							<div class="free-trial ftco-animate">
-								<h3>Daftar Sekarang</h3>
-								<p>Raih masa depan cemerlang! Daftarkan diri Anda dan bergabung dengan SMK PGRI Lawang untuk pendidikan berkualitas dan peluang karir yang luas.</p>
-							</div>
-							<div class="btn-join ftco-animate mt-3 mt-md-0 ml-md-4">
-								<p><a href="{{ route('pendaftaran.index') }}" class="btn btn-primary py-3 px-4">Daftar Sekarang!</a></p>
-							</div>
-						</div>
-    			</div>
-    		</div>
-    	</div>
-    </section>
-
-    <section class="ftco-section">
-      <div class="container">
-        <div class="row justify-content-center mb-5 pb-3">
-          <div class="col-md-8 heading-section ftco-animate text-center">
-            <h2 class="mb-4">Galeri Kegiatan TBSM</h2>
-            <p>Berikut beberapa dokumentasi kegiatan praktik bengkel, pelatihan penjualan, kunjungan dealer, dan kompetisi yang diikuti oleh siswa TBSM SMK PGRI Lawang.</p>
-          </div>
-        </div>
-        <div class="row g-4">
-            @foreach($galleries as $g)
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm">
-                        <img src="{{ $g->image ? url('storage/' . $g->image) : url('assets/img/default-news.jpg') }}" 
-                             class="card-img-top" 
-                             alt="{{ $g->title }}"
-                             style="height: 200px; object-fit: cover;">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ $g->title }}</h5>
-                            <p class="card-text">{{ $g->description }}</p>
+                    <div class="col-lg-7">
+                        <div class="row justify-content-end">
+                            <div class="col-lg-6 col-sm-6 col-md-6">
+                                <div class="content" data-aos="fade-right" data-aos-delay="100">
+                                <img src="{{ asset('frontend/assets/img/all-img/tsm.jpg') }}" alt="TBSM Workshop">
+                                </div>
+                            </div>
+                            <div class="col-lg-6 col-sm-6 col-md-6">
+                                <div class="notice-content" data-aos="fade-right" data-aos-delay="200">
+                                    <i class='bx bxs-quote-left'></i>
+                                    <h4 class="title-anim">Pembelajaran Praktik</h4>
+                                    <p class="title-anim">Kami menyediakan bengkel sepeda motor lengkap dengan area praktik dan simulasi bisnis untuk mendukung pembelajaran.</p>
+                                    <div class="author-info">
+                                        <span>Kepala Bengkel TBSM</span>
+                                        <h5>Susilo Wibowo, S.Pd., M.T.</h5>
+                                        <p>Koordinator Program TBSM</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                @if($loop->iteration % 3 == 0 && !$loop->last)
-                    </div><div class="row g-4">
-                @endif
-            @endforeach
+            </div>
         </div>
-        <div class="row mt-4 justify-content-center">
-          <div class="col-md-4 text-center">
-            <a href="{{ route('gallery.tbsm') }}" class="btn btn-primary py-3 px-4">Lihat Semua Galeri</a>
-          </div>
+        <!-- End About Us Area -->
+
+        <!-- Start Academics Area -->
+        <div class="academics-area bg-color-1 ptb-100" >
+            <div class="container">
+                <div class="section-title" data-aos="fade-up" data-aos-delay="100">
+                    <div class="sub-title">
+                        <i class='bx bxs-graduation'></i> <p>Kompetensi TBSM</p>
+                    </div>
+                    <h2>Kompetensi yang Dipelajari</h2>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-lg-3 col-sm-6 col-md-6">
+                        <div class="academics-item" data-aos="fade-up" data-aos-delay="100">
+                            <img src="{{ asset('frontend/assets/img/all-img/motorcycle-engine.jpg') }}" alt="icon">
+                            <h4>Mesin Sepeda Motor</h4>
+                            <p>Perbaikan mesin 2-tak dan 4-tak, sistem pendingin, karburator, dan injeksi bahan bakar sepeda motor.</p>
+                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6 col-md-6">
+                        <div class="academics-item" data-aos="fade-up" data-aos-delay="200">
+                            <img src="{{ asset('frontend/assets/img/all-img/chassis-system.jpg') }}" alt="icon">
+                            <h4>Sasis & Rangka</h4>
+                            <p>Perbaikan rangka, suspensi, rem, ban, dan sistem kemudi sepeda motor.</p>
+                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6 col-md-6">
+                        <div class="academics-item" data-aos="fade-up" data-aos-delay="300">
+                            <img src="{{ asset('frontend/assets/img/all-img/electrical-motorcycle.jpg') }}" alt="icon">
+                            <h4>Kelistrikan</h4>
+                            <p>Diagnosa dan perbaikan sistem pengapian, lampu, kelistrikan body, dan komponen elektrik.</p>
+                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6 col-md-6">
+                        <div class="academics-item" data-aos="fade-up" data-aos-delay="400">
+                            <img src="{{ asset('frontend/assets/img/all-img/business-management.jpg') }}" alt="icon">
+                            <h4>Manajemen Bengkel</h4>
+                            <p>Pengelolaan bengkel, pelayanan pelanggan, manajemen stok, dan kewirausahaan otomotif.</p>
+                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </section>
+        <!-- End Academics Area -->
+       
+        <!-- Start Campus Tour Area -->
+        <div class="campus-tour">
+            <div class="container-fluid p-0">
+                <div class="row g-0 align-items-center flex-column-reverse flex-lg-row">
+                    <div class="col-lg-6">
+                        <div class="content" data-aos="fade-up" data-aos-delay="100">
+                            <div class="sub-title">
+                                <i class='bx bxs-graduation'></i> <p>Fasilitas TBSM</p>
+                            </div>
+                            <h2>Bengkel Sepeda Motor</h2>
+
+                            <p>Bengkel TBSM dilengkapi dengan area praktik, alat perbaikan, area servis, dan simulasi bisnis otomotif.</p>
+                            <p>Siswa mendapatkan pengalaman langsung dengan berbagai merek sepeda motor dan simulasi usaha bengkel.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="image cp-bg-1" data-aos="fade-zoom-in" data-aos-delay="100">
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-0 align-items-center">
+                    
+                    <div class="col-lg-6">
+                        <div class="image cp-bg-2" data-aos="fade-zoom-in" data-aos-delay="100">
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="content" data-aos="fade-up" data-aos-delay="100">
+                            <div class="sub-title">
+                                <i class='bx bxs-graduation'></i> <p>Prospek Karir</p>
+                            </div>
+                            <h2>Peluang Karir Lulusan TBSM</h2>
+
+                            <p>Lulusan TBSM siap bekerja sebagai Motorcycle Technician, Service Advisor, Parts Manager, dan Entrepreneur Otomotif.</p>
+                            <p>Banyak lulusan kami yang sukses membuka bengkel sendiri atau bekerja di dealer resmi dan bengkel ternama.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-0 align-items-center flex-column-reverse flex-lg-row">
+                    <div class="col-lg-6">
+                        <div class="content" data-aos="fade-up" data-aos-delay="100">
+                            <div class="sub-title">
+                                <i class='bx bxs-graduation'></i> <p>Sertifikasi</p>
+                            </div>
+                            <h2>Sertifikasi Kompetensi</h2>
+
+                            <p><strong>Sertifikasi Nasional:</strong> BNSP (Badan Nasional Sertifikasi Profesi) untuk Teknisi Sepeda Motor.</p>
+                            <p><strong>Sertifikasi Merek:</strong> Yamaha Technical Academy, Honda Technical Training, Suzuki Technical Education.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="image cp-bg-3" data-aos="fade-zoom-in" data-aos-delay="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Campus Tour Area -->
+
+        <!-- Start Subscribe Area -->
+        <div class="subscribe-area ptb-100">
+            <div class="container">
+                <div class="section-title" data-aos="fade-up" data-aos-delay="100">
+                    <div class="sub-title">
+                        <i class='bx bxs-graduation'></i> <p>Informasi Pendaftaran</p>
+                    </div>
+                    <h2>Daftar Sekarang di Jurusan TBSM</h2>
+                </div>
+
+                <div class="subscribe-btn text-center" data-aos="fade-up" data-aos-delay="100">
+                    <a class="default-btn" href="{{ route('pendaftaran.index') }}">Daftar Sekarang</a>
+                </div>
+            </div>
+        </div> 
+        <!-- End Subscribe Area -->
 @endsection

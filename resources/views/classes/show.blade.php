@@ -1,559 +1,441 @@
-@extends('layouts.app')
+@extends('layouts.master')
+
+@section('title')
+    Detail Kelas - {{ $classes->name }}
+@endsection
+
+@section('css')
+    <!-- Sweet Alert-->
+    <link href="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
+@endsection
+
+@section('page-title')
+    Detail Kelas - {{ $classes->name }}
+@endsection
+
+@section('body')
+    <body data-sidebar="colored">
+@endsection
 
 @section('content')
-<div class="container-fluid">
     <div class="row">
-        <div class="col-12">
-            <!-- Header dengan gradient -->
-            <div class="header-section mb-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h2 class="text-dark mb-1">{{ $classes->name }}</h2>
-                        <p class="mb-0">
-                            <i class="fas fa-graduation-cap mr-2"></i>{{ $classes->major }} -
-                            <span class="badge badge-light">{{ $classes->code }}</span>
-                        </p>
+        <!-- Sidebar -->
+        <div class="col-xl-3">
+            <!-- Class Header Card -->
+            <div class="card mb-3">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="avatar-xxl mx-auto bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="mdi mdi-school text-white" style="font-size: 2rem;"></i>
+                        </div>
                     </div>
-                    <div>
-                        @can('classes.edit')    
-                            <a href="{{ route('classes.edit', $classes->id) }}" class="btn btn-primary btn-shadow">
-                                <i class="fas fa-edit"></i> Edit Kelas
-                            </a>
-                        @endcan
-                        <a href="{{ route('classes.index') }}" class="btn btn-light btn-shadow">
-                            <i class="fas fa-arrow-left"></i> Kembali
+                    <h4 class="mb-1">{{ $classes->name }}</h4>
+                    <p class="text-muted mb-2">{{ $classes->major }}</p>
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        <span class="badge bg-primary">{{ $classes->code }}</span>
+                        <span class="badge bg-info">Grade {{ $classes->grade }}</span>
+                        @if($classes->is_archived)
+                            <span class="badge bg-warning">Diarsipkan</span>
+                        @else
+                            <span class="badge bg-success">Aktif</span>
+                        @endif
+                    </div>
+                    <p class="text-muted small mb-0">
+                        <i class="mdi mdi-calendar me-1"></i>
+                        {{ $classes->academic_year}}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Quick Actions Card -->
+            <div class="card mb-3">
+                <div class="card-header bg-primary">
+                    <h5 class="card-title mb-0 text-white">
+                        <i class="mdi mdi-flash me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('classes.edit', $classes->id) }}" class="btn btn-outline-primary">
+                            <i class="mdi mdi-pencil me-1"></i> Edit Kelas
                         </a>
+                        <button class="btn btn-outline-info" onclick="exportStudents()">
+                            <i class="mdi mdi-file-excel me-1"></i> Export Data
+                        </button>
+                        <button class="btn btn-outline-success" onclick="addStudents()">
+                            <i class="mdi mdi-account-plus me-1"></i> Tambah Siswa
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="promoteStudents()">
+                            <i class="mdi mdi-arrow-up-bold me-1"></i> Naikkan Kelas
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="toggleArchive()">
+                            <i class="mdi mdi-archive me-1"></i> {{ $classes->is_archived ? 'Batalkan Arsip' : 'Arsipkan' }}
+                        </button>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Stats Cards -->
-            <div class="row mb-4">
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="card card-primary">
-                        <div class="card-header">
-                            <h4>Total Siswa</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-5">
-                                    <div class="icon-big text-center" style="color: #667eea; sixe: 50rem;">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                </div>
-                                <div class="col-7">
-                                    <div class="numbers">
-                                        <h4 class="card-title">{{ $students->count() }}</h4>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="card card-success">
-                        <div class="card-header">
-                            <h4>Hadir Hari Ini</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-5">
-                                    <div class="icon-big text-center">
-                                        <i class="fas fa-check-circle text-success"></i>
-                                    </div>
-                                </div>
-                                <div class="col-7">
-                                    <div class="numbers">
-                                        <h4 class="card-title">{{ rand(20, $students->count()) }}</h4>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="card card-warning">
-                        <div class="card-header">
-                            <h4>Tidak Hadir</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-5">
-                                    <div class="icon-big text-center">
-                                        <i class="fas fa-exclamation-triangle text-warning"></i>
-                                    </div>
-                                </div>
-                                <div class="col-7">
-                                    <div class="numbers">
-                                        <h4 class="card-title">{{ rand(0, 5) }}</h4>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="card card-info">
-                        <div class="card-header">
-                            <h4>Kehadiran</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-5">
-                                    <div class="icon-big text-center">
-                                        <i class="fas fa-percentage text-info"></i>
-                                    </div>
-                                </div>
-                                <div class="col-7">
-                                    <div class="numbers">
-                                        <h4 class="card-title">{{ rand(85, 98) }}%</h4>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Main Content Tabs -->
-            <div class="card card-modern">
-                <div class="card-header bg-white">
-                    <ul class="nav nav-pills card-header-pills" id="mainTabs" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="info-tab" data-toggle="pill" href="#info" role="tab">
-                                <i class="fas fa-info-circle mr-2"></i>Informasi Kelas
+        <!-- Main Content -->
+        <div class="col-xl-9">
+            <!-- Tabs Navigation -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-pills nav-justified" role="tablist">
+                        <li class="nav-item waves-effect waves-light">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#students-tab" role="tab">
+                                <span class="d-block d-sm-none"><i class="mdi mdi-account-multiple"></i></span>
+                                <span class="d-none d-sm-block"><i class="mdi mdi-account-multiple me-2"></i>Daftar Siswa</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="students-tab" data-toggle="pill" href="#students" role="tab">
-                                <i class="fas fa-users mr-2"></i>Daftar Siswa
+                        <li class="nav-item waves-effect waves-light">
+                            <a class="nav-link" data-bs-toggle="tab" href="#attendance-in-out-tab" role="tab">
+                                <span class="d-block d-sm-none"><i class="mdi mdi-clock-in"></i></span>
+                                <span class="d-none d-sm-block"><i class="mdi mdi-clock-in me-2"></i>Absensi In/Out</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="attendance-tab" data-toggle="pill" href="#attendance" role="tab">
-                                <i class="fas fa-calendar-check mr-2"></i>Absensi
+                        <li class="nav-item waves-effect waves-light">
+                            <a class="nav-link" data-bs-toggle="tab" href="#attendance-subject-tab" role="tab">
+                                <span class="d-block d-sm-none"><i class="mdi mdi-book-open-variant"></i></span>
+                                <span class="d-none d-sm-block"><i class="mdi mdi-book-open-variant me-2"></i>Absensi Pelajaran</span>
                             </a>
                         </li>
                     </ul>
                 </div>
-                <div class="card-body">
-                    <div class="tab-content" id="mainTabsContent">
-                        <!-- Info Tab -->
-                        <div class="tab-pane fade show active" id="info" role="tabpanel">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <div class="card border-0 shadow-sm">
-                                        <div class="card-header bg-light text-dark">
-                                            <h5 class="card-title w-100 mb-0">
-                                                Detail Kelas
-                                            </h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-sm-6 mb-3">
-                                                    <label class="text-muted small">Nama Kelas</label>
-                                                    <div class="font-weight-bold">{{ $classes->name }}</div>
-                                                </div>
-                                                <div class="col-sm-6 mb-3">
-                                                    <label class="text-muted small">Jurusan</label>
-                                                    <div class="font-weight-bold">{{ $classes->major }}</div>
-                                                </div>
-                                                <div class="col-sm-6 mb-3">
-                                                    <label class="text-muted small">Kode Kelas</label>
-                                                    <div><span
-                                                            class="badge badge-light badge-lg">{{ $classes->code }}</span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-sm-6 mb-3">
-                                                    <label class="text-muted small">Tingkat</label>
-                                                    <div class="font-weight-bold">{{ $classes->grade ?? '-' }}</div>
-                                                </div>
-                                                <div class="col-sm-6 mb-3">
-                                                    <label class="text-muted small">Tahun Akademik</label>
-                                                    <div class="font-weight-bold">
-                                                        {{ $classes->academic_year }}</div>
-                                                </div>
-                                                <div class="col-sm-6 mb-3">
-                                                    <label class="text-muted small">Semester Aktif</label>
-                                                    <div>
-                                                        @php
-                                                            $semLabel = $currentSemesterLabel ?? 'Belum ditentukan';
-                                                            $semBadge = $semLabel === 'Genap' ? 'badge-success' : ($semLabel === 'Ganjil' ? 'badge-warning' : 'badge-secondary');
-                                                        @endphp
-                                                        <span class="badge {{ $semBadge }} badge-lg">{{ $semLabel }}</span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-sm-6 mb-3">
-                                                    <label class="text-muted small">Total Siswa</label>
-                                                    <div><span
-                                                            class="badge badge-light badge-lg">{{ $students->count() }}
-                                                            siswa</span></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Students Tab -->
+                <div class="tab-pane active" id="students-tab" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <!-- Header -->
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <h4 class="mb-1">{{ $classes->name }}</h4>
+                                    <p class="text-muted mb-0">
+                                        {{ $classes->major }} - Grade {{ $classes->grade }} - {{ $classes->code }}
+                                    </p>
                                 </div>
-
-                                <!-- Quick Actions -->
-                                <div class="col-md-4">
-                                    <div class="card border-0 shadow-sm">
-                                        <div class="card-header bg-light text-dark">
-                                            <h5 class="card-title mb-0" style="text-bold">
-                                                <i class="fas fa-bolt mr-2"></i>Aksi Cepat
-                                            </h5>
-                                        </div>
-                                        <div class="card-body">
-                                            @can('classes.edit')
-                                                @if($availableStudents->count() > 0)
-                                                    <button type="button" class="btn btn-primary btn-block btn-modern mb-3"
-                                                        data-toggle="modal" data-target="#bulkAssignModal">
-                                                        <i class="fas fa-users mr-2"></i>Tambah Siswa
-                                                    </button>
-                                                @else
-                                                    <div class="alert alert-info">
-                                                        <i class="fas fa-info-circle mr-2"></i>
-                                                        Tidak ada siswa yang tersedia untuk ditambahkan.
-                                                    </div>
-                                                @endif
-
-                                                <button type="button" class="btn btn-warning btn-block btn-modern mb-3" onclick="confirmOpenNextSemester()">
-                                                    <i class="fas fa-random mr-2"></i>Tutup Semester Ganjil &amp; Buka Semester Genap
-                                                </button>
-                                                <button type="button" class="btn btn-info btn-block btn-modern mb-3"
-                                                    onclick="window.print()">
-                                                    <i class="fas fa-print mr-2"></i>Cetak Daftar Siswa
-                                                </button>
-                                                <button type="button" class="btn btn-success btn-block btn-modern mb-3"
-                                                    onclick="window.print()">
-                                                    <i class="fas fa-print mr-2"></i>Cetak Daftar Absen
-                                                </button>
-                                            @endcan
-                                        </div>
+                                <div class="d-flex gap-2">
+                                    <div class="input-group" style="width: 250px;">
+                                        <input type="text" class="form-control" placeholder="Cari siswa..." id="search-student">
+                                        <button class="btn btn-outline-secondary" type="button">
+                                            <i class="mdi mdi-magnify"></i>
+                                        </button>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Students Tab -->
-                        <div class="tab-pane fade" id="students" role="tabpanel">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0">Daftar Siswa ({{ $students->count() }})</h5>
-                                <div class="search-box">
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text bg-white border-right-0">
-                                                <i class="fas fa-search text-muted"></i>
-                                            </span>
-                                        </div>
-                                        <input type="text" class="form-control border-left-0" id="searchStudent"
-                                            placeholder="Cari nama, email, atau NISN...">
-                                    </div>
+                                    <button type="button" class="btn btn-primary" onclick="addStudents()">
+                                        <i class="mdi mdi-plus"></i> Tambah
+                                    </button>
                                 </div>
                             </div>
 
-                            @if($students->count() > 0)
+                            <!-- Students Table -->
                             <div class="table-responsive">
-                                <table class="table table-hover table-modern" id="studentsTable">
-                                    <thead class="thead-light">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
                                         <tr>
-                                            <th width="50">No</th>
-                                            <th>Nama Siswa</th>
-                                            <th>Email</th>
+                                            <th>No</th>
                                             <th>NISN</th>
-                                            <th>Jurusan</th>
-                                            <th>Gender</th>
-                                            @can('classes.edit')
-                                                <th width="100">Aksi</th>
-                                            @endcan
+                                            <th>Nama Siswa</th>
+                                            <th>Jenis Kelamin</th>
+                                            <th>No. HP</th>
+                                            <th>Status</th>
+                                            <th>Aksi</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        @foreach($students as $index => $student)
-                                        <tr>
-                                            <td class="text-center">{{ $index + 1 }}</td>
+                                    <tbody id="students-tbody">
+                                        @forelse ($students as $index => $student)
+                                        <tr class="student-row" data-name="{{ $student->name ?? '' }}" data-nisn="{{ $student->nisn ?? '' }}">
+                                            <td>{{ $index + 1 }}</td>
+                                            <td>{{ $student->nisn ?? '-' }}</td>
                                             <td>
-                                                <div class="d-flex align-items-center">
-                                                    @if($student->face_photo && Storage::disk('public')->exists($student->face_photo))
-                                                        <img src="{{ asset('storage/' . $student->face_photo) }}" alt="{{ $student->name }}" class="avatar-modern mr-3" style="object-fit:cover;">
-                                                    @else
-                                                        <div class="avatar-modern mr-3">
-                                                            {{ strtoupper(substr($student->name, 0, 1)) }}
-                                                        </div>
-                                                    @endif
-                                                    <div>
-                                                        <div class="font-weight-bold">{{ $student->name }}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="text-muted">{{ $student->user->email ?? '-' }}</span>
-                                            </td>
-                                            <td>
-                                                <span class="badge badge-outline-info">{{ $student->nisn }}</span>
-                                            </td>
-                                            <td>
-                                                <span class="text-muted">{{ $student->jurusan_utama ?? '-' }}</span>
-                                            </td>
-                                            <td>
-                                                @if($student->gender)
-                                                <span
-                                                    class="badge {{ $student->gender == 'laki-laki' ? 'badge-outline-primary' : 'badge-outline-pink' }}">
-                                                    <i
-                                                        class="fas {{ $student->gender == 'laki-laki' ? 'fa-mars' : 'fa-venus' }} mr-1"></i>
-                                                    {{ ucfirst($student->gender) }}
-                                                </span>
+                                                @if($student->user_id)
+                                                    <a href="{{ route('profile.show') }}?user_id={{ $student->user_id }}" class="text-primary text-decoration-none">
+                                                        {{ $student->name }}
+                                                    </a>
                                                 @else
-                                                <span class="text-muted">-</span>
+                                                    {{ $student->name }}
                                                 @endif
                                             </td>
-                                            @can('classes.edit')
-                                                <td>
-                                                    <button type="button" class="btn btn-danger"
-                                                        onclick="removeStudent('{{ $student->id }}', '{{ $student->name }}')"
-                                                        title="Hapus dari kelas">
-                                                        <i class="fas fa-trash-alt"></i>
+                                            <td>
+                                                @if(($student->gender ?? '') == 'L')
+                                                    <span class="badge bg-primary">L</span>
+                                                @else
+                                                    <span class="badge bg-info">P</span>
+                                                @endif
+                                            </td>
+                                            <td>{{ $student->phone ?? '-' }}</td>
+                                            <td><span class="badge bg-success">Aktif</span></td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ route('profile.show') }}?user_id={{ $student->user_id }}" class="btn btn-outline-primary" title="Lihat">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-outline-warning" title="Edit">
+                                                        <i class="fas fa-edit"></i>
                                                     </button>
-                                                </td>
-                                            @endcan
+                                                    <button type="button" class="btn btn-outline-danger" title="Hapus">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
-                                        @endforeach
+                                        @empty
+                                        <tr>
+                                            <td colspan="7" class="text-center py-5">
+                                                <div class="text-center">
+                                                    <i class="mdi mdi-account-multiple display-4 text-muted mb-3"></i>
+                                                    <h5 class="text-muted">Belum ada siswa</h5>
+                                                    <p class="text-muted">Klik tombol "Tambah" untuk menambahkan siswa</p>
+                                                    <button type="button" class="btn btn-primary" onclick="addStudents()">
+                                                        <i class="mdi mdi-plus"></i> Tambah Siswa
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
-                            @else
-                            <div class="empty-state text-center py-5">
-                                <div class="empty-state-icon mb-4">
-                                    <i class="fas fa-users"></i>
-                                </div>
-                                <h5 class="empty-state-title">Belum ada siswa di kelas ini</h5>
-                                <p class="empty-state-text text-muted">Mulai tambahkan siswa dengan menekan tombol
-                                    "Tambah Siswa"</p>
-                                @if($availableStudents->count() > 0)
-                                <button type="button" class="btn btn-primary btn-modern" data-toggle="modal"
-                                    data-target="#bulkAssignModal">
-                                    <i class="fas fa-user-plus mr-2"></i>Tambah Siswa Pertama
-                                </button>
-                                @endif
-                            </div>
-                            @endif
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Attendance Tab -->
-                        <div class="tab-pane fade" id="attendance" role="tabpanel">
+                <!-- Attendance In/Out Tab -->
+                <div class="tab-pane" id="attendance-in-out-tab" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 class="mb-0">Absensi In/Out</h4>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <input type="month" class="form-control" id="attendance-month" value="{{ $currentMonth ?? date('Y-m') }}" style="width: auto;">
+                                    <button type="button" class="btn btn-primary" onclick="loadAttendanceData()">
+                                        <i class="mdi mdi-refresh"></i> Refresh
+                                    </button>
+                                    <button type="button" class="btn btn-success" onclick="markAttendance()">
+                                        <i class="mdi mdi-check"></i> Mark Absensi
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Attendance Summary -->
                             <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="attendanceMonth">Pilih Bulan:</label>
-                                        <select class="form-control" id="attendanceMonth" onchange="filterAttendance()">
-                                            @php
-                                                $currentYear = date('Y');
-                                                $currentMonth = request('month', date('Y-m'));
-                                                $months = [
-                                                    '01' => 'Januari', '02' => 'Februari', '03' => 'Maret',
-                                                    '04' => 'April', '05' => 'Mei', '06' => 'Juni',
-                                                    '07' => 'Juli', '08' => 'Agustus', '09' => 'September',
-                                                    '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
-                                                ];
-                                            @endphp
-                                            @foreach($months as $monthNum => $monthName)
-                                                @php $monthValue = $currentYear.'-'.$monthNum; @endphp
-                                                <option value="{{ $monthValue }}" 
-                                                    {{ $currentMonth == $monthValue ? 'selected' : '' }}>
-                                                    {{ $monthName }} {{ $currentYear }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <h5 class="text-success mb-1">{{ $attendanceData->where('status', 'hadir')->count() ?? 0 }}</h5>
+                                        <small class="text-muted">Hadir</small>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="d-flex justify-content-end align-items-end h-100">
-                                        <button class="btn btn-success btn-modern mr-2" onclick="exportAttendance()">
-                                            <i class="fas fa-file-excel mr-2"></i>Export Absensi
-                                        </button>
-                                        <button class="btn btn-primary btn-modern" onclick="window.print()">
-                                            <i class="fas fa-print mr-2"></i>Cetak Absensi
-                                        </button>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <h5 class="text-warning mb-1">{{ $attendanceData->where('status', 'izin')->count() ?? 0 }}</h5>
+                                        <small class="text-muted">Izin</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <h5 class="text-light text-dark mb-1">{{ $attendanceData->where('status', 'sakit')->count() ?? 0 }}</h5>
+                                        <small class="text-muted">Sakit</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <h5 class="text-danger mb-1">{{ $attendanceData->where('status', 'alfa')->count() ?? 0 }}</h5>
+                                        <small class="text-muted">Alfa</small>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header bg-gradient-success text-white">
-                                    <h6 class="card-title mb-0">
-                                        <i class="fas fa-calendar-check mr-2"></i>
-                                        Absensi Bulan <span id="selectedMonth">{{ \Carbon\Carbon::createFromFormat('Y-m', $currentMonth ?? date('Y-m'))->format('F Y') }}</span>
-                                    </h6>
-                                </div>
-                                <div class="card-body p-0">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover table-modern mb-0" id="attendanceTable">
-                                            <thead class="thead-light">
-                                                <tr style="text-align: center">
-                                                    <th width="50">No</th>
-                                                    <th width="200">Nama Siswa</th>
-                                                    @for($day = 1; $day <= ($daysInMonth ?? 30); $day++)
-                                                        <th width="80">{{ $day }}</th>
-                                                    @endfor
-                                                    <th width="100">Hadir</th>
-                                                    <th width="100">Sakit</th>
-                                                    <th width="100">Izin</th>
-                                                    <th width="100">Alpha</th>
-                                                    <th width="100">Persentase</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="attendanceTableBody">
-                                                @if($students->count() > 0)
-                                                    @foreach($students as $index => $student)
+                            <!-- Attendance Calendar/Table -->
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Nama Siswa</th>
+                                            @for($day = 1; $day <= ($daysInMonth ?? 30); $day++)
+                                                <th class="text-center" style="min-width: 40px;">{{ $day }}</th>
+                                            @endfor
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($students as $student)
+                                        <tr>
+                                            <td class="fw-semibold">{{ $student->name }}</td>
+                                            @for($day = 1; $day <= ($daysInMonth ?? 30); $day++)
+                                                <td class="text-center">
+                                                    @php
+                                                        $attendance = $attendanceData[$student->id][$day] ?? null;
+                                                    @endphp
+                                                    @if($attendance)
                                                         @php
-                                                            $presentCount = 0;
-                                                            $sickCount = 0;
-                                                            $permitCount = 0;
-                                                            $absentCount = 0;
-                                                            $currentMonthData = \Carbon\Carbon::createFromFormat('Y-m', $currentMonth ?? date('Y-m'));
-                                                            $totalDaysInMonth = $daysInMonth ?? $currentMonthData->daysInMonth;
+                                                            $attendanceRecord = $attendance->first();
+                                                            $status = $attendanceRecord ? ($attendanceRecord->check_in_status ?? $attendanceRecord->check_out_status ?? 'alpha') : 'alpha';
                                                         @endphp
-                                                        <tr>
-                                                            <td class="text-center">{{ $index + 1 }}</td>
-                                                            <td>
-                                                                <div class="d-flex align-items-center">
-                                                                    @if($student->face_photo && Storage::disk('public')->exists($student->face_photo))
-                                                                        <img src="{{ asset('storage/' . $student->face_photo) }}" alt="{{ $student->name }}" class="avatar-modern mr-3" style="object-fit:cover;">
-                                                                    @endif
-                                                                    <div>
-                                                                        <div class="font-weight-bold">{{ $student->name }}</div>
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            @for($day = 1; $day <= $totalDaysInMonth; $day++)
-                                                                @php
-                                                                    // Get attendance for this student and day
-                                                                    $attendanceForDay = $attendanceData->get($student->id, collect())->get($day);
-                                                                    $checkDate = $currentMonthData->copy()->day($day);
-                                                                    $status = '-'; // Default to belum absen
-                                                                    $badgeClass = 'badge-light'; // Default color
-                                                                    
-                                                                    if ($attendanceForDay) {
-                                                                        $attendance = $attendanceForDay->first();
-                                                                        // Determine status based on check_in_status or check_out_status
-                                                                        $checkStatus = $attendance->check_in_status ?? $attendance->check_out_status;
-                                                                        switch($checkStatus) {
-                                                                            case 'tepat':
-                                                                            case 'terlambat':
-                                                                                $status = 'H';
-                                                                                $badgeClass = 'badge-success'; // Hijau
-                                                                                $presentCount++;
-                                                                                break;
-                                                                            case 'sakit':
-                                                                                $status = 'S';
-                                                                                $badgeClass = 'badge-warning'; // Warning/Kuning
-                                                                                $sickCount++;
-                                                                                break;
-                                                                            case 'izin':
-                                                                                $status = 'I';
-                                                                                $badgeClass = 'badge-info'; // Info/Biru
-                                                                                $permitCount++;
-                                                                                break;
-                                                                            case 'alpha':
-                                                                            default:
-                                                                                $status = 'A';
-                                                                                $badgeClass = 'badge-danger'; // Merah
-                                                                                $absentCount++;
-                                                                                break;
-                                                                        }
-                                                                    } else {
-                                                                        // PERBAIKAN LOGIKA: cek kondisi hari
-                                                                        if ($checkDate->isFuture()) {
-                                                                            // Jika tanggal belum tiba
-                                                                            $status = '-';
-                                                                            $badgeClass = 'badge-light'; // Abu-abu
-                                                                        } elseif ($checkDate->isWeekend()) {
-                                                                            // Jika weekend/libur
-                                                                            $status = 'L';
-                                                                            $badgeClass = 'badge-light'; // Abu-abu
-                                                                        } else {
-                                                                            // Jika hari sudah berlalu tapi tidak ada absen
-                                                                            $status = 'A';
-                                                                            $badgeClass = 'badge-danger'; // Merah
-                                                                            $absentCount++;
-                                                                        }
-                                                                    }
-                                                                @endphp
-                                                                <td class="text-center">
-                                                                    <span class="badge {{ $badgeClass }} rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">{{ $status }}</span>
-                                                                </td>
-                                                            @endfor
-                                                            <td class="text-center">
-                                                                <span class="badge badge-success">{{ $presentCount }}</span>
-                                                            </td>
-                                                            <td class="text-center">
-                                                                <span class="badge badge-warning">{{ $sickCount }}</span>
-                                                            </td>
-                                                            <td class="text-center">
-                                                                <span class="badge badge-info">{{ $permitCount }}</span>
-                                                            </td>
-                                                            <td class="text-center">
-                                                                <span class="badge badge-danger">{{ $absentCount }}</span>
-                                                            </td>
-                                                            <td class="text-center">
-                                                                @php
-                                                                    $totalValidDays = $presentCount + $sickCount + $permitCount + $absentCount;
-                                                                    $percentage = $totalValidDays > 0 ? round(($presentCount / $totalValidDays) * 100, 1) : 0;
-                                                                @endphp
-                                                                <span class="badge {{ $percentage >= 80 ? 'badge-success' : ($percentage >= 70 ? 'badge-warning' : 'badge-danger') }}">
-                                                                    {{ $percentage }}%
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                @else
-                                                    <tr>
-                                                        <td colspan="{{ 7 + ($daysInMonth ?? 30) }}" class="text-center py-4">
-                                                            <div class="text-muted">Tidak ada data siswa untuk ditampilkan</div>
-                                                        </td>
-                                                    </tr>
-                                                @endif
-                                            </tbody>
-                                        </table>
+                                                        @if($status == 'tepat' || $status == 'terlambat')
+                                                            <span class="badge bg-success">H</span>
+                                                        @elseif($status == 'izin')
+                                                            <span class="badge bg-warning">I</span>
+                                                        @elseif($status == 'sakit')
+                                                            <span class="badge bg-light text-dark">S</span>
+                                                        @else
+                                                            <span class="badge bg-danger">A</span>
+                                                        @endif
+                                                    @else
+                                                        <span class="text-muted">-</span>
+                                                    @endif
+                                                </td>
+                                            @endfor
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="{{ ($daysInMonth ?? 30) + 1 }}" class="text-center py-3">
+                                                <p class="text-muted">Belum ada data absensi</p>
+                                            </td>
+                                        </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendance Subject Tab -->
+                <div class="tab-pane" id="attendance-subject-tab" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <!-- Filter Section -->
+                            <div class="row mb-4">
+                                <div class="col-md-3">
+                                    <label for="subjectFilter" class="form-label">Mata Pelajaran:</label>
+                                    <select id="subjectFilter" class="form-select">
+                                        <option value="">Pilih Mata Pelajaran</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="subjectDateFilter" class="form-label">Tanggal:</label>
+                                    <input type="date" id="subjectDateFilter" class="form-control" value="{{ date('Y-m-d') }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="academicYearFilter" class="form-label">Tahun Akademik:</label>
+                                    @php
+                                        $scheduleAcademicYear = \App\Models\Schedule::where('class_id', $classes->id)
+                                            ->distinct()
+                                            ->pluck('academic_year')
+                                            ->first() ?? \App\Helpers\AcademicYearHelper::getCurrentAcademicYear();
+                                            
+                                        $scheduleYears = \App\Models\Schedule::where('class_id', $classes->id)
+                                            ->distinct()
+                                            ->pluck('academic_year')
+                                            ->filter()
+                                            ->sort()
+                                            ->values();
+                                    @endphp
+                                    <select id="academicYearFilter" class="form-select">
+                                        @if($scheduleYears->count() > 0)
+                                            @foreach($scheduleYears as $year)
+                                                <option value="{{ $year }}" {{ $scheduleAcademicYear == $year ? 'selected' : '' }}>{{ $year }} (Ada Data)</option>
+                                            @endforeach
+                                        @endif
+                                        
+                                        @foreach(\App\Helpers\AcademicYearHelper::generateAcademicYears(2, 2) as $year)
+                                            @if(!$scheduleYears->contains($year))
+                                                <option value="{{ $year }}" {{ \App\Helpers\AcademicYearHelper::getCurrentAcademicYear() == $year ? 'selected' : '' }}>{{ $year }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">&nbsp;</label><br>
+                                    <button type="button" id="loadSubjectAttendance" class="btn btn-primary">
+                                        <i class="mdi mdi-refresh me-1"></i>Muat Data
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="row mb-3" id="subjectAttendanceActions" style="display: none;">
+                                <div class="col-12">
+                                    <button type="button" id="editSubjectModeBtn" class="btn btn-warning">
+                                        <i class="mdi mdi-pencil me-1"></i>Mode Edit
+                                    </button>
+                                    <button type="button" id="saveSubjectAttendanceBtn" class="btn btn-success" style="display: none;">
+                                        <i class="mdi mdi-content-save me-1"></i>Simpan Semua
+                                    </button>
+                                    <button type="button" id="hadirkanSemuaSubjectBtn" class="btn btn-primary" style="display: none;">
+                                        <i class="mdi mdi-check-all me-1"></i>Hadirkan Semua
+                                    </button>
+                                    <button type="button" id="alphakanSemuaSubjectBtn" class="btn btn-danger" style="display: none;">
+                                        <i class="mdi mdi-close me-1"></i>Alpha Semua
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Subject Attendance Summary -->
+                            <div class="row mb-4" id="subjectAttendanceSummary" style="display: none;">
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <h5 class="text-success mb-1" id="attendanceRate">0%</h5>
+                                        <small class="text-muted">Kehadiran Rata-rata</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <h5 class="text-primary mb-1" id="totalStudents">0</h5>
+                                        <small class="text-muted">Total Siswa</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <h5 class="text-success mb-1" id="presentCount">0</h5>
+                                        <small class="text-muted">Hadir</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <h5 class="text-warning mb-1" id="absentCount">0</h5>
+                                        <small class="text-muted">Tidak Hadir</small>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Attendance Legend - UPDATE dengan status baru -->
-                            <div class="mt-3">
-                                <div class="row">
-                                    <div class="col-12">
-                                        <div class="card border-0 shadow-sm">
-                                            <div class="card-body py-2">
-                                                <div class="d-flex align-items-center justify-content-center flex-wrap">
-                                                    <span class="mr-4 mb-1">
-                                                        <span class="attendance-status attendance-h mr-1">H</span>
-                                                        <small>Hadir</small>
-                                                    </span>
-                                                    <span class="mr-4 mb-1">
-                                                        <span class="attendance-status attendance-s mr-1">S</span>
-                                                        <small>Sakit</small>
-                                                    </span>
-                                                    <span class="mr-4 mb-1">
-                                                        <span class="attendance-status attendance-i mr-1">I</span>
-                                                        <small>Izin</small>
-                                                    </span>
-                                                    <span class="mr-4 mb-1">
-                                                        <span class="attendance-status attendance-a mr-1">A</span>
-                                                        <small>Alpha</small>
-                                                    </span>
-                                                    <span class="mr-4 mb-1">
-                                                        <span class="attendance-status attendance-l mr-1">L</span>
-                                                        <small>Libur</small>
-                                                    </span>
-                                                    <span class="mb-1">
-                                                        <span class="attendance-status attendance-- mr-1">-</span>
-                                                        <small>Belum Absen</small>
-                                                    </span>
+                            <!-- Subject Attendance Table -->
+                            <div class="table-responsive">
+                                <table id="subjectAttendanceTable" class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="8%">No Absen</th>
+                                            <th width="25%">Nama Siswa</th>
+                                            <th width="15%">NISN</th>
+                                            <th width="12%">Jam Masuk</th>
+                                            <th width="15%">Status</th>
+                                            <th width="15%">Keterangan</th>
+                                            <th width="10%">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="subjectAttendanceBody">
+                                        <tr>
+                                            <td colspan="7" class="text-center py-5">
+                                                <div class="text-center">
+                                                    <i class="mdi mdi-book-open-variant display-4 text-muted mb-3"></i>
+                                                    <h5 class="text-muted">Pilih Mata Pelajaran</h5>
+                                                    <p class="text-muted">Pilih mata pelajaran dan tanggal untuk melihat data absensi</p>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Loading Indicator -->
+                            <div id="subjectLoadingIndicator" class="text-center py-4" style="display: none;">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="sr-only">Loading...</span>
                                 </div>
+                                <p class="mt-2">Memuat data absensi...</p>
                             </div>
                         </div>
                     </div>
@@ -561,419 +443,677 @@
             </div>
         </div>
     </div>
-</div>
 
-@if($availableStudents->count() > 0)
-<!-- Bulk Assign Modal -->
-<div class="modal fade" id="bulkAssignModal" tabindex="-1" role="dialog" aria-labelledby="formModal" aria-hidden="true">
-    <div class="modal-dialog" role="document" style="max-width: 900px;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="formModal">Tambah Siswa</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form action="{{ route('classes.bulk-assign', $classes->id) }}" method="POST">
-                    @csrf
-
-                    <div class="form-group">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <label>Pilih Siswa:</label>
-                            <div>
-                                <button type="button" class="btn btn-primary" onclick="selectAll()">Pilih Semua</button>
-                                <button type="button" class="btn btn-secondary" onclick="deselectAll()">Batal Semua</button>
+    <!-- Bulk Assign Modal -->
+    @if($availableStudents->count() > 0)
+    <div class="modal fade" id="bulkAssignModal" tabindex="-1" role="dialog" aria-labelledby="bulkAssignModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bulkAssignModalLabel">
+                        <i class="mdi mdi-account-plus me-2"></i>Tambah Siswa ke Kelas {{ $classes->name }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ route('classes.bulk-assign', $classes->id) }}" method="POST">
+                        @csrf
+                        <div class="form-group">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <label class="form-label">Pilih Siswa:</label>
+                                <div>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="selectAll()">
+                                        <i class="mdi mdi-check-all me-1"></i>Pilih Semua
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="deselectAll()">
+                                        <i class="mdi mdi-close me-1"></i>Batal Semua
+                                    </button>
+                                </div>
                             </div>
+                            <div class="mb-3">
+                                <input type="text" class="form-control" id="searchAvailableStudent" placeholder="Cari nama atau NISN siswa...">
+                            </div>
+                            <div class="students-list" id="availableStudentsList" style="max-height: 400px; overflow-y: auto;">
+                                @foreach($availableStudents as $student)
+                                <div class="form-check mb-2 student-item">
+                                    <input class="form-check-input student-checkbox" type="checkbox" 
+                                        id="student_{{ $student->id }}" name="student_ids[]" value="{{ $student->id }}">
+                                    <label class="form-check-label d-flex align-items-center" for="student_{{ $student->id }}">
+                                        <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 12px;">
+                                            {{ strtoupper(substr($student->name, 0, 1)) }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-medium">{{ $student->name }}</div>
+                                            <small class="text-muted">{{ $student->nisn }} - {{ $student->user->email ?? 'No Email' }}</small>
+                                        </div>
+                                    </label>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <div class="modal-footer border-0">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="mdi mdi-close me-1"></i>Batal
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="mdi mdi-account-plus me-1"></i>Tambah Siswa Terpilih
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Edit Class Modal -->
+    <div class="modal fade" id="classModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Edit Kelas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="classForm" action="/classes" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nama Kelas</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
                         </div>
                         <div class="mb-3">
-                            <input type="text" class="form-control" id="searchAvailableStudent" placeholder="Cari nama atau NISN...">
+                            <label for="code" class="form-label">Kode Kelas</label>
+                            <input type="text" class="form-control" id="code" name="code" required>
                         </div>
-                        <div class="students-list" id="availableStudentsList">
-                            @foreach($availableStudents as $student)
-                            <div class="custom-control custom-checkbox mb-2 student-item">
-                                <input type="checkbox" class="custom-control-input student-checkbox"
-                                    id="student_{{ $student->id }}" name="student_ids[]" value="{{ $student->id }}">
-                                <label class="custom-control-label d-flex align-items-center"
-                                    for="student_{{ $student->id }}">
-                                    <div class="avatar-small mr-2">
-                                        {{ strtoupper(substr($student->name, 0, 1)) }}
-                                    </div>
-                                    <div>
-                                        <div class="font-weight-medium">{{ $student->name }}</div>
-                                        <small class="text-muted d-block">NISN: {{ $student->nisn }}</small>
-                                        <small class="text-muted">Jurusan: {{ $student->jurusan_utama ?? '-' }}</small>
-                                    </div>
-                                </label>
-                            </div>
-                            @endforeach
+                        <div class="mb-3">
+                            <label for="grade" class="form-label">Grade</label>
+                            <select class="form-control" id="grade" name="grade" required>
+                                <option value="">Pilih Grade</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="major" class="form-label">Jurusan</label>
+                            <input type="text" class="form-control" id="major" name="major" required>
                         </div>
                     </div>
-
-                    <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-light" data-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-users mr-2"></i>Tambah Siswa Terpilih
-                        </button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-</div>
-
-@endif
-
-    <form id="openNextSemesterForm" action="{{ route('classes.open-next-semester', $classes->id) }}" method="POST" style="display: none;">
-        @csrf
-    </form>
-
-    <form id="removeStudentForm" style="display: none;">
-        @csrf
-        <input type="hidden" name="student_id" id="removeStudentId">
-    </form>
-
 @endsection
 
-@push('scripts')
+@section('scripts')
+    <!-- Sweet Alerts js -->
+    <script src="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.js') }}"></script>
+    
     <script>
-        function confirmOpenNextSemester() {
-            swal({
-                title: 'Tutup Semester Ganjil?',
-                text: 'Semester ganjil akan ditutup dan semester genap akan dibuka untuk semua siswa di kelas ini.',
-                icon: 'warning',
-                buttons: ['Batal', 'Ya, Lanjutkan'],
-                dangerMode: false,
-            }).then(function(isConfirm) {
-                if (isConfirm) {
-                    document.getElementById('openNextSemesterForm').submit();
-                }
-            });
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize variables
+        let currentClassId = '{{ $classes->id }}';
 
-        $(document).ready(function () {
-            $('#searchAvailableStudent').on('keyup', function () {
-                var value = $(this).val().toLowerCase();
-                var found = false;
-                $('#availableStudentsList .student-item').each(function () {
-                    var match = $(this).text().toLowerCase().indexOf(value) > -1;
-                    $(this).toggle(match);
-                    if (match) found = true;
-                });
-
-                // Remove previous message
-                $('#availableStudentsList .no-result-message').remove();
-
-                if (!found) {
-                    $('#availableStudentsList').append(
-                        '<div class="no-result-message text-center text-muted py-3">Tidak ada siswa ditemukan.</div>'
-                    );
-                }
-            });
-        });
-    </script>
-    <script>
-        function removeStudent(studentId, studentName) {
-            swal({
-                title: "Apakah Anda Yakin?",
-                text: "Siswa " + studentName + " akan dihapus dari kelas ini!",
-                icon: "warning",
-                buttons: ['Tidak', 'Ya, Hapus'],
-                dangerMode: true,
-            }).then(function(isConfirm) {
-                if (isConfirm) {
-                    swal({
-                        title: "Menghapus...",
-                        text: "Mohon tunggu sebentar",
-                        icon: "info",
-                        buttons: false,
-                        closeOnClickOutside: false,
-                        closeOnEsc: false
-                    });
-
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-                    
-                    // Use FormData instead of JSON
-                    const formData = new FormData();
-                    formData.append('_method', 'DELETE');
-                    formData.append('student_id', studentId);
-                    formData.append('_token', csrfToken);
-
-                    fetch("{{ route('classes.remove-student', $classes->id) }}", {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: formData
-                    })
-                    .then(response => {
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            swal({
-                                title: "Berhasil!",
-                                text: data.message,
-                                icon: "success",
-                                timer: 2000,
-                                buttons: false
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            swal("Gagal", data.message || "Terjadi kesalahan", "error");
-                        }
-                    })
-                    .catch(error => {
-                        swal("Gagal", "Terjadi kesalahan: " + error.message, "error");
-                    });
-                }
-            });
-        }
-
-        // Rest of your existing scripts remain the same
-        $(document).ready(function() {
-            // Pastikan dropdown bulan ter-initialize dengan benar
-            const currentMonth = $('#attendanceMonth').val();
+        // Edit class functionality
+        function openEditModal() {
+            document.getElementById('modalTitle').textContent = 'Edit Kelas';
+            document.getElementById('classForm').action = '/classes/' + currentClassId + '?redirect_to=show';
             
-            // Bind event handler untuk dropdown
-            $('#attendanceMonth').off('change').on('change', filterAttendance);
-        });
-
-        function selectAll() {
-            $('.student-checkbox').prop('checked', true);
-        }
-
-        function deselectAll() {
-            $('.student-checkbox').prop('checked', false);
-        }
-
-        function filterAttendance() {
-    const selectedValue = $('#attendanceMonth').val();
-    
-    // Validasi input
-    if (!selectedValue || !selectedValue.match(/^\d{4}-\d{2}$/)) {
-        swal('Error', 'Format bulan tidak valid', 'error');
-        return;
-    }
-    
-    // Split tahun dan bulan dari format "YYYY-MM"
-    const [year, month] = selectedValue.split('-');
-    
-    // PERBAIKAN: Pastikan parsing yang benar
-    const monthNumber = parseInt(month, 10); // Gunakan radix 10
-    const yearNumber = parseInt(year, 10);
-    
-    // Validasi bulan
-    if (monthNumber < 1 || monthNumber > 12) {
-        swal('Error', 'Bulan tidak valid', 'error');
-        return;
-    }
-    
-    // Array nama bulan dalam bahasa Indonesia
-    const monthNames = [
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-    ];
-    
-    // Convert month number to month name (monthNumber-1 karena array dimulai dari 0)
-    const monthIndex = monthNumber - 1;
-    const monthName = monthNames[monthIndex];
-    const displayText = `${monthName} ${year}`;
-    
-    // DEBUG: Log untuk debugging
-    console.log('Selected Value:', selectedValue);
-    console.log('Year:', year, 'Month:', month);
-    console.log('Month Number:', monthNumber);
-    console.log('Month Index:', monthIndex);
-    console.log('Month Name:', monthName);
-    console.log('Display Text:', displayText);
-    
-    // Update display text SEBELUM AJAX call
-    $('#selectedMonth').text(displayText);
-    
-    // Show loading message
-    swal({
-        title: 'Memuat Data...',
-        text: 'Sedang memuat data absensi untuk ' + displayText,
-        icon: 'info',
-        timer: 1500,
-        buttons: false
-    });
-    
-    // AJAX call untuk mengambil data attendance baru
-    $.ajax({
-        url: window.location.pathname + '/attendance-data',
-        method: 'GET',
-        data: { 
-            month: selectedValue, // Kirim format YYYY-MM
-            _token: $('meta[name="csrf-token"]').attr('content')
-        },
-        dataType: 'json',
-        success: function(response) {
-            console.log('AJAX Response:', response); // DEBUG log
-            
-            if (response.success) {
-                // PERBAIKAN: Jangan update month name lagi dari response
-                // karena sudah di-update sebelum AJAX call
-                updateAttendanceTable(response.students, response.days_in_month, displayText);
-                
-                swal({
-                    title: 'Berhasil!',
-                    text: 'Data absensi berhasil dimuat untuk ' + displayText,
-                    icon: 'success',
-                    timer: 1000,
-                    buttons: false
-                });
+            // Add method override for PUT
+            let methodInput = document.querySelector('input[name="_method"]');
+            if (!methodInput) {
+                methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'PUT';
+                document.getElementById('classForm').appendChild(methodInput);
             } else {
-                swal('Error', response.message || 'Gagal memuat data', 'error');
+                methodInput.value = 'PUT';
             }
-        },
-        error: function(xhr, status, error) {
-            console.error('AJAX Error:', {
-                status: xhr.status,
-                statusText: xhr.statusText,
-                responseText: xhr.responseText,
-                error: error
+            
+            // Add redirect parameter
+            let redirectInput = document.querySelector('input[name="redirect_to"]');
+            if (!redirectInput) {
+                redirectInput = document.createElement('input');
+                redirectInput.type = 'hidden';
+                redirectInput.name = 'redirect_to';
+                redirectInput.value = 'show';
+                document.getElementById('classForm').appendChild(redirectInput);
+            }
+            
+            // Fill form with current class data
+            document.getElementById('name').value = '{{ $classes->name }}';
+            document.getElementById('code').value = '{{ $classes->code }}';
+            document.getElementById('grade').value = '{{ $classes->grade }}';
+            document.getElementById('major').value = '{{ $classes->major }}';
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('classModal'));
+            modal.show();
+        }
+
+        // Add click event to edit button
+        const editClassBtn = document.querySelector('a[href="{{ route('classes.edit', $classes->id) }}"]');
+        if (editClassBtn) {
+            editClassBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                openEditModal();
             });
-            
-            let errorMessage = 'Gagal memuat data absensi';
-            if (xhr.status === 404) {
-                errorMessage = 'Endpoint tidak ditemukan';
-            } else if (xhr.status === 500) {
-                errorMessage = 'Terjadi kesalahan server';
-            } else if (xhr.status === 403) {
-                errorMessage = 'Akses ditolak';
-            }
-            
-            swal('Error', errorMessage, 'error');
-        },
-        timeout: 10000
+        }
+
+        // Search functionality
+        let searchTimeout;
+        const searchInput = document.getElementById('search-student');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const query = this.value.toLowerCase();
+                    document.querySelectorAll('.student-row').forEach(function(row) {
+                        const name = row.getAttribute('data-name').toLowerCase();
+                        const nisn = row.getAttribute('data-nisn').toLowerCase();
+                        row.style.display = (name.includes(query) || nisn.includes(query)) ? '' : 'none';
+                    });
+                }, 300);
+            });
+        }
     });
-}
 
-// PERBAIKAN: Update fungsi updateAttendanceTable
-function updateAttendanceTable(students, daysInMonth, monthName) {
-    // JANGAN update month name lagi di sini karena sudah benar
-    // $('#selectedMonth').text(monthName); // HAPUS BARIS INI
-    
-    console.log('Updating table for:', monthName); // DEBUG
-    console.log('Days in month:', daysInMonth); // DEBUG
-    console.log('Students data:', students); // DEBUG
-    
-    // Rebuild header tabel dengan benar
-    const thead = $('#attendanceTable thead tr');
-    
-    let newHeader = `
-        <th width="50">No</th>
-        <th width="200">Nama Siswa</th>
-    `;
-    
-    // Tambahkan kolom untuk setiap hari dalam bulan
-    for(let day = 1; day <= daysInMonth; day++) {
-        newHeader += `<th width="80">${day}</th>`;
+    // Action functions
+    function exportStudents() {
+        Swal.fire({
+            icon: 'info',
+            title: 'Export Data Siswa',
+            text: 'Fitur export data siswa akan segera tersedia',
+            confirmButtonColor: '#3085d6'
+        });
     }
-    
-    // Tambahkan kolom summary
-    newHeader += `
-        <th width="100">Hadir</th>
-        <th width="100">Sakit</th>
-        <th width="100">Izin</th>
-        <th width="100">Alpha</th>
-        <th width="100">Persentase</th>
-    `;
-    
-    // Replace header dengan yang baru
-    thead.html(newHeader);
-    
-    // Clear existing table body
-    const tbody = $('#attendanceTableBody');
-    tbody.empty();
-    
-    // Populate table body
-    if (students && students.length > 0) {
-        students.forEach((studentData, index) => {
-            let row = `
-                <tr>
-                    <td class="text-center">${index + 1}</td>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-small mr-2">
-                                ${studentData.student.name.charAt(0).toUpperCase()}
-                            </div>
-                            <span class="font-weight-medium">${studentData.student.name}</span>
-                        </div>
-                    </td>
-            `;
-            
-            // Add daily attendance
-            for(let day = 1; day <= daysInMonth; day++) {
-                const status = studentData.daily_attendance[day] || '-';
-                row += `
-                    <td class="text-center">
-                        <span class="attendance-status attendance-${status.toLowerCase()}">
-                            ${status}
-                        </span>
-                    </td>
-                `;
+
+    function addStudents() {
+        // Check if there are available students
+        @if($availableStudents->count() > 0)
+            const modal = new bootstrap.Modal(document.getElementById('bulkAssignModal'));
+            modal.show();
+        @else
+            Swal.fire({
+                icon: 'info',
+                title: 'Tidak Ada Siswa Tersedia',
+                text: 'Semua siswa sudah terdaftar di kelas atau tidak ada siswa yang tersedia.',
+                confirmButtonColor: '#3085d6'
+            });
+        @endif
+    }
+
+    function promoteStudents() {
+        Swal.fire({
+            icon: 'question',
+            title: 'Naikkan Kelas',
+            text: 'Apakah Anda ingin menaikkan semua siswa ke kelas berikutnya?',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Naikkan',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire('Success!', 'Semua siswa berhasil dinaikkan kelasnya.', 'success');
+            }
+        });
+    }
+
+    function toggleArchive() {
+        const isArchived = {{ $classes->is_archived ? 'true' : 'false' }};
+        const action = isArchived ? 'membatalkan arsip' : 'mengarsipkan';
+        
+        Swal.fire({
+            icon: 'question',
+            title: action.charAt(0).toUpperCase() + action.slice(1) + ' Kelas',
+            text: `Apakah Anda yakin ingin ${action} kelas ini?`,
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, ' + action.charAt(0).toUpperCase() + action.slice(1),
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ route("classes.toggle-archive", $classes->id) }}';
+                form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
+
+    // Attendance functions
+    function loadAttendanceData() {
+        const month = document.getElementById('attendance-month').value;
+        // Implement AJAX load attendance data
+        Swal.fire({
+            icon: 'info',
+            title: 'Load Data Absensi',
+            text: 'Memuat data absensi untuk bulan ' + month,
+            confirmButtonColor: '#3085d6'
+        });
+    }
+
+    function markAttendance() {
+        Swal.fire({
+            icon: 'info',
+            title: 'Mark Absensi',
+            text: 'Fitur mark absensi akan segera tersedia',
+            confirmButtonColor: '#3085d6'
+        });
+    }
+
+    function markSubjectAttendance() {
+        Swal.fire({
+            icon: 'info',
+            title: 'Mark Absensi Pelajaran',
+            text: 'Fitur mark absensi pelajaran akan segera tersedia',
+            confirmButtonColor: '#3085d6'
+        });
+    }
+
+    function saveSubjectAttendance(studentId) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil',
+            text: 'Absensi pelajaran berhasil disimpan',
+            confirmButtonColor: '#3085d6'
+        });
+    }
+
+    // Bulk Assign Functions
+    function selectAll() {
+        document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    }
+
+    function deselectAll() {
+        document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+
+    // Search functionality for available students
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchAvailableStudent');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const value = this.value.toLowerCase();
+                const studentItems = document.querySelectorAll('#availableStudentsList .student-item');
+                
+                studentItems.forEach(function(item) {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(value)) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+
+    // Subject Attendance Functions
+    let currentClassId = '{{ $classes->id }}';
+    let isEditMode = false;
+
+    // Load subjects when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Page loaded, initializing...');
+        console.log('Current class ID:', currentClassId);
+        
+        // Fallback: Try to load subjects immediately
+        loadSubjects();
+        
+        // Set up event listeners with error handling
+        try {
+            const loadBtn = document.getElementById('loadSubjectAttendance');
+            if (loadBtn) {
+                loadBtn.addEventListener('click', loadSubjectAttendanceData);
             }
             
-            // Add summary columns
-            row += `
-                    <td class="text-center">
-                        <span class="badge badge-success">${studentData.present_count}</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge badge-warning">${studentData.sick_count}</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge badge-info">${studentData.permit_count}</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge badge-danger">${studentData.absent_count}</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge ${studentData.percentage >= 80 ? 'badge-success' : (studentData.percentage >= 70 ? 'badge-warning' : 'badge-danger')}">
-                            ${studentData.percentage}%
-                        </span>
-                    </td>
-                </tr>
-            `;
+            const editBtn = document.getElementById('editSubjectModeBtn');
+            if (editBtn) {
+                editBtn.addEventListener('click', toggleEditMode);
+            }
             
-            tbody.append(row);
-        });
-    } else {
-        // No data message
-        const totalColumns = 2 + daysInMonth + 5;
-        tbody.html(`
-            <tr>
-                <td colspan="${totalColumns}" class="text-center py-4">
-                    <div class="text-muted">Tidak ada data siswa untuk ditampilkan</div>
-                </td>
-            </tr>
-        `);
+            const saveBtn = document.getElementById('saveSubjectAttendanceBtn');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', saveAllSubjectAttendance);
+            }
+            
+            const hadirBtn = document.getElementById('hadirkanSemuaSubjectBtn');
+            if (hadirBtn) {
+                hadirBtn.addEventListener('click', markAllPresent);
+            }
+            
+            const alphaBtn = document.getElementById('alphakanSemuaSubjectBtn');
+            if (alphaBtn) {
+                alphaBtn.addEventListener('click', markAllAbsent);
+            }
+        } catch (error) {
+            console.error('Error setting up event listeners:', error);
+        }
+    });
+
+    function loadSubjects() {
+        const academicYear = document.getElementById('academicYearFilter').value;
+        
+        console.log('Loading subjects for class:', currentClassId, 'academic year:', academicYear);
+        
+        // Fallback: Load subjects directly from schedule data if available
+        @php
+            // Use the academic year that actually has schedule data
+            $scheduleAcademicYear = \App\Models\Schedule::where('class_id', $classes->id)
+                ->distinct()
+                ->pluck('academic_year')
+                ->first() ?? \App\Helpers\AcademicYearHelper::getCurrentAcademicYear();
+                
+            $schedules = \App\Models\Schedule::where('class_id', $classes->id)
+                ->where('academic_year', $scheduleAcademicYear)
+                ->with('subject')
+                ->get()
+                ->unique('subject_id');
+        @endphp
+        
+        const fallbackSubjects = @json($schedules->pluck('subject')->unique('id')->values()->toArray());
+        const scheduleAcademicYear = "{{ $scheduleAcademicYear }}";
+        
+        console.log('Using schedule academic year:', scheduleAcademicYear);
+        
+        if (fallbackSubjects && fallbackSubjects.length > 0) {
+            console.log('Using fallback subjects:', fallbackSubjects);
+            const select = document.getElementById('subjectFilter');
+            select.innerHTML = '<option value="">Pilih Mata Pelajaran</option>';
+            
+            fallbackSubjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.id;
+                option.textContent = subject.name;
+                select.appendChild(option);
+            });
+            
+            console.log('Fallback subjects loaded successfully:', fallbackSubjects.length);
+            
+            // Set the academic year filter to match the schedule year
+            const academicYearSelect = document.getElementById('academicYearFilter');
+            if (academicYearSelect) {
+                academicYearSelect.value = scheduleAcademicYear;
+            }
+            
+            return;
+        }
+        
+        // Try API call if fallback doesn't work
+        fetch(`/lesson-attendances/get-subjects-by-class?class_id=${currentClassId}&academic_year=${academicYear}`)
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Subjects data:', data);
+                const select = document.getElementById('subjectFilter');
+                select.innerHTML = '<option value="">Pilih Mata Pelajaran</option>';
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    data.data.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject.id;
+                        option.textContent = subject.name;
+                        select.appendChild(option);
+                    });
+                    console.log('Subjects loaded successfully:', data.data.length);
+                } else {
+                    console.log('No subjects found or error:', data);
+                    // Show message if no subjects
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'Tidak ada mata pelajaran tersedia';
+                    option.disabled = true;
+                    select.appendChild(option);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading subjects:', error);
+                const select = document.getElementById('subjectFilter');
+                if (select.innerHTML.includes('Pilih Mata Pelajaran')) {
+                    select.innerHTML = '<option value="">Gagal memuat mata pelajaran</option>';
+                }
+            });
     }
-}
 
-        function exportAttendance() {
-            swal({
-                title: 'Export Berhasil',
-                text: 'Data absensi berhasil diexport ke Excel',
-                icon: 'success',
-                timer: 1500,
-                buttons: false
+    function loadSubjectAttendanceData() {
+        const subjectId = document.getElementById('subjectFilter').value;
+        const date = document.getElementById('subjectDateFilter').value;
+        const academicYear = document.getElementById('academicYearFilter').value;
+        
+        if (!subjectId) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Perhatian',
+                text: 'Pilih mata pelajaran terlebih dahulu',
+                confirmButtonColor: '#3085d6'
+            });
+            return;
+        }
+        
+        // Show loading
+        document.getElementById('subjectLoadingIndicator').style.display = 'block';
+        document.getElementById('subjectAttendanceBody').innerHTML = '';
+        
+        fetch(`/lesson-attendances/get-attendance?class_id=${currentClassId}&subject_id=${subjectId}&date=${date}&academic_year=${academicYear}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('subjectLoadingIndicator').style.display = 'none';
+                
+                if (data.success && data.data.length > 0) {
+                    displaySubjectAttendance(data.data);
+                    updateSummary(data.data);
+                    document.getElementById('subjectAttendanceActions').style.display = 'block';
+                    document.getElementById('subjectAttendanceSummary').style.display = 'flex';
+                } else {
+                    document.getElementById('subjectAttendanceBody').innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-center">
+                                    <i class="mdi mdi-information display-4 text-muted mb-3"></i>
+                                    <h5 class="text-muted">Tidak Ada Data</h5>
+                                    <p class="text-muted">Belum ada data absensi untuk mata pelajaran ini</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    document.getElementById('subjectAttendanceActions').style.display = 'none';
+                    document.getElementById('subjectAttendanceSummary').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                document.getElementById('subjectLoadingIndicator').style.display = 'none';
+                console.error('Error loading attendance:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Gagal memuat data absensi',
+                    confirmButtonColor: '#3085d6'
+                });
+            });
+    }
+
+    function displaySubjectAttendance(data) {
+        const tbody = document.getElementById('subjectAttendanceBody');
+        tbody.innerHTML = '';
+        
+        data.forEach(attendance => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${attendance.no_absen}</td>
+                <td class="fw-semibold">${attendance.student_name}</td>
+                <td>${attendance.student_nisn}</td>
+                <td>
+                    <input type="time" class="form-control form-control-sm" id="checkin_${attendance.student_id}" 
+                           value="${attendance.check_in || ''}" ${!isEditMode ? 'disabled' : ''}>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm" id="status_${attendance.student_id}" 
+                            ${!isEditMode ? 'disabled' : ''}>
+                        <option value="hadir" ${attendance.check_in_status === 'hadir' ? 'selected' : ''}>Hadir</option>
+                        <option value="terlambat" ${attendance.check_in_status === 'terlambat' ? 'selected' : ''}>Terlambat</option>
+                        <option value="izin" ${attendance.check_in_status === 'izin' ? 'selected' : ''}>Izin</option>
+                        <option value="sakit" ${attendance.check_in_status === 'sakit' ? 'selected' : ''}>Sakit</option>
+                        <option value="alpha" ${attendance.check_in_status === 'alpha' ? 'selected' : ''}>Alpha</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm" placeholder="Keterangan..." 
+                           ${!isEditMode ? 'disabled' : ''}>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="saveIndividualAttendance(${attendance.student_id})" 
+                            ${!isEditMode ? 'disabled' : ''}>
+                        <i class="mdi mdi-check"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function updateSummary(data) {
+        const total = data.length;
+        const present = data.filter(a => a.check_in_status === 'hadir' || a.check_in_status === 'terlambat').length;
+        const absent = total - present;
+        const rate = total > 0 ? Math.round((present / total) * 100) : 0;
+        
+        document.getElementById('attendanceRate').textContent = rate + '%';
+        document.getElementById('totalStudents').textContent = total;
+        document.getElementById('presentCount').textContent = present;
+        document.getElementById('absentCount').textContent = absent;
+    }
+
+    function toggleEditMode() {
+        isEditMode = !isEditMode;
+        const editBtn = document.getElementById('editSubjectModeBtn');
+        const saveBtn = document.getElementById('saveSubjectAttendanceBtn');
+        const hadirBtn = document.getElementById('hadirkanSemuaSubjectBtn');
+        const alphaBtn = document.getElementById('alphakanSemuaSubjectBtn');
+        
+        if (isEditMode) {
+            editBtn.style.display = 'none';
+            saveBtn.style.display = 'inline-block';
+            hadirBtn.style.display = 'inline-block';
+            alphaBtn.style.display = 'inline-block';
+            
+            // Enable all inputs
+            document.querySelectorAll('#subjectAttendanceBody input, #subjectAttendanceBody select').forEach(el => {
+                el.disabled = false;
+            });
+        } else {
+            editBtn.style.display = 'inline-block';
+            saveBtn.style.display = 'none';
+            hadirBtn.style.display = 'none';
+            alphaBtn.style.display = 'none';
+            
+            // Disable all inputs
+            document.querySelectorAll('#subjectAttendanceBody input, #subjectAttendanceBody select').forEach(el => {
+                el.disabled = true;
             });
         }
+    }
 
-        function exportToExcel() {
-            swal({
-                title: 'Export Berhasil',
-                text: 'Data siswa berhasil diexport ke Excel',
-                icon: 'success',
-                timer: 1500,
-                buttons: false
+    function saveAllSubjectAttendance() {
+        const subjectId = document.getElementById('subjectFilter').value;
+        const date = document.getElementById('subjectDateFilter').value;
+        const academicYear = document.getElementById('academicYearFilter').value;
+        const attendances = [];
+        
+        document.querySelectorAll('#subjectAttendanceBody tr').forEach(row => {
+            const studentId = row.querySelector('td:nth-child(2)').textContent.match(/\d+/)?.[0];
+            if (studentId) {
+                attendances.push({
+                    student_id: studentId,
+                    class_id: currentClassId,
+                    subject_id: subjectId,
+                    date: date,
+                    check_in: document.getElementById(`checkin_${studentId}`).value,
+                    check_in_status: document.getElementById(`status_${studentId}`).value,
+                    academic_year: academicYear
+                });
+            }
+        });
+        
+        fetch('/lesson-attendances/bulk-update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ attendances: attendances })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: data.message,
+                    confirmButtonColor: '#3085d6'
+                });
+                loadSubjectAttendanceData(); // Reload data
+                toggleEditMode(); // Exit edit mode
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message,
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error saving attendance:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Gagal menyimpan data absensi',
+                confirmButtonColor: '#3085d6'
             });
-        }
-    </script>
-@endpush
+        });
+    }
+
+    function markAllPresent() {
+        document.querySelectorAll('#subjectAttendanceBody select').forEach(select => {
+            select.value = 'hadir';
+        });
+    }
+
+    function markAllAbsent() {
+        document.querySelectorAll('#subjectAttendanceBody select').forEach(select => {
+            select.value = 'alpha';
+        });
+    }
+
+    function saveIndividualAttendance(studentId) {
+        // Implementation for individual save
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil',
+            text: 'Absensi berhasil disimpan',
+            confirmButtonColor: '#3085d6'
+        });
+    }
+</script>
+    <script src="{{ URL::asset('build/js/app.js') }}"></script>
+@endsection

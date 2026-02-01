@@ -20,15 +20,13 @@ class PendaftaranSiswaController extends Controller
     {
         $this->authorize('pendaftaran-siswa.index');
         // Ambil semua siswa (calon maupun sudah diterima) untuk tahun akademik terpilih, kecuali yang ditolak
-        $studentsQuery = Student::with('user')
+        $studentsQuery = Student::with('user')->orderBy('created_at', 'DESC')
             ->where('status', '!=', 'ditolak');
 
         // Filter Tahun Akademik berdasarkan kolom academic_year
         $selectedYear = $request->input('tahun_akademik');
         if (!$selectedYear) {
-            $current = AcademicYearHelper::getCurrentAcademicYear();
-            [$s, $e] = explode('/', $current);
-            $selectedYear = ((int)$s + 1) . '/' . ((int)$e + 1); // default ke tahun depan
+            $selectedYear = AcademicYearHelper::getCurrentAcademicYear(); // default ke tahun akademik saat ini
         }
         $studentsQuery->where('academic_year', $selectedYear);
 
@@ -39,7 +37,6 @@ class PendaftaranSiswaController extends Controller
                 $qb->where('name', 'like', "%$q%")
                    ->orWhere('nisn', 'like', "%$q%")
                    ->orWhere('nik', 'like', "%$q%")
-                   ->orWhere('email', 'like', "%$q%")
                    ->orWhere('jurusan_utama', 'like', "%$q%")
                    ->orWhere('jurusan_cadangan', 'like', "%$q%")
                    ->orWhere('gender', 'like', "%$q%")
@@ -148,7 +145,6 @@ class PendaftaranSiswaController extends Controller
                 $qb->where('name', 'like', "%$q%")
                    ->orWhere('nisn', 'like', "%$q%")
                    ->orWhere('nik', 'like', "%$q%")
-                   ->orWhere('email', 'like', "%$q%")
                    ->orWhere('jurusan_utama', 'like', "%$q%")
                    ->orWhere('jurusan_cadangan', 'like', "%$q%")
                    ->orWhere('gender', 'like', "%$q%")
@@ -212,7 +208,6 @@ class PendaftaranSiswaController extends Controller
                 $qb->where('name', 'like', "%$q%")
                    ->orWhere('nisn', 'like', "%$q%")
                    ->orWhere('nik', 'like', "%$q%")
-                   ->orWhere('email', 'like', "%$q%")
                    ->orWhere('jurusan_utama', 'like', "%$q%")
                    ->orWhere('jurusan_cadangan', 'like', "%$q%")
                    ->orWhere('gender', 'like', "%$q%")
@@ -248,7 +243,6 @@ class PendaftaranSiswaController extends Controller
                 $qb->where('name', 'like', "%$q%")
                    ->orWhere('nisn', 'like', "%$q%")
                    ->orWhere('nik', 'like', "%$q%")
-                   ->orWhere('email', 'like', "%$q%")
                    ->orWhere('jurusan_utama', 'like', "%$q%")
                    ->orWhere('jurusan_cadangan', 'like', "%$q%")
                    ->orWhere('gender', 'like', "%$q%")

@@ -1,485 +1,366 @@
-@extends('layouts.app')
-
-@section('content')
-
-<section class="section">
-  <div class="card">
-    <div class="card-header">
-      <h4>Daftar Pendaftar Baru</h4>
-      <div class="card-header-action d-flex">
-        <div class="input-group">
-          <input type="text" class="form-control" placeholder="Cari Siswa (Nama, NISN)" name="q" id="search-input" autocomplete="off">
-          <div class="input-group-btn">
-            <button type="button" class="btn btn-primary" id="search-button" style="margin-top: 1px;">
-              <i class="fas fa-search"></i>
-            </button>
-            <button type="button" class="btn btn-primary" id="clear-search" title="Clear Search" style="display: none; margin-top: 1px;">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card-body">
-      <div class="row mb-3">
-        <div class="col-md-6">
-            <label for="kelasFilter" class="form-label">Tahun Kademik:</label>
-            <select class="form-control select2" id="academic-year-filter">
-              @php
-                $currentYear = \App\Helpers\AcademicYearHelper::getCurrentAcademicYear();
-                [$startY, $endY] = explode('/', $currentYear);
-                $startY = (int) $startY;
-                $endY = (int) $endY;
-                $nextYear = ($startY + 1) . '/' . ($endY + 1);
-                $academicYears = \App\Helpers\AcademicYearHelper::generateAcademicYears(1, 3); // 1 tahun sebelumnya, 3 tahun ke depan
-                $selectedYear = request('tahun_akademik', $nextYear);
-              @endphp
-              @foreach($academicYears as $year)
-                <option value="{{ $year }}" {{ $year === $selectedYear ? 'selected' : '' }}>{{ $year }}</option>
-              @endforeach
-            </select>
-        </div>
-        <div class="col-md-6 d-flex align-items-end justify-content-end">
-          <div>
-            <button class="btn btn-primary btn-modern mr-2" onclick="exportExcel()">
-              <i class="fas fa-file-excel mr-2"></i>Export Excel
-            </button>
-            <button class="btn btn-primary btn-modern" onclick="printAttendance()">
-              <i class="fas fa-print mr-2"></i>Cetak PDF
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-striped" id="sortable-table" style="font-size: 12px;">
-          <thead>
-            <tr class="text-center">
-              <th>No.</th>
-              <th>Nama</th>
-              <th>NISN</th>
-              <th>NIK</th>
-              <th>Jurusan Utama</th>
-              <th>Jurusan Cadangan</th>
-              <th>Jenis Kelamin</th>
-              <th>Tempat Lahir</th>
-              <th>Tanggal Lahir</th>
-              <th>Nomor HP</th>
-              <th>Status</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="students-tbody">
-            @include('pendaftaran._table')
-          </tbody>
-        </table>
-      </div>
-    </div>
-</section>
-
+@extends('layouts.master')
+@section('title')
+    Daftar Pendaftar
 @endsection
+@section('css')
+    <!-- Sweet Alert-->
+    <link href="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
+@endsection
+@section('page-title')
+    Daftar Pendaftar
+@endsection
+@section('body')
 
-@push('styles')
-  <style>
-    #sortable-table th:nth-child(1) { width: 3%; }  /* No */
-    #sortable-table th:nth-child(2) { width: 15%; } /* Nama */
-    #sortable-table th:nth-child(3) { width: 8%; }  /* NISN */
-    #sortable-table th:nth-child(4) { width: 10%; } /* NIK */
-    #sortable-table th:nth-child(5) { width: 12%; } /* Jurusan Utama */
-    #sortable-table th:nth-child(6) { width: 12%; } /* Jurusan Cadangan */
-    #sortable-table th:nth-child(7) { width: 8%; }  /* Jenis Kelamin */
-    #sortable-table th:nth-child(8) { width: 10%; } /* Tempat Lahir */
-    #sortable-table th:nth-child(9) { width: 8%; }  /* Tanggal Lahir */
-    #sortable-table th:nth-child(10) { width: 8%; } /* Nomor HP */
-    #sortable-table th:nth-child(11) { width: 6%; } /* Status */
-    #sortable-table th:nth-child(12) { width: 6%; } /* Aksi */
+    <body data-sidebar="colored">
+@endsection
+@section('content')
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h4 class="card-title mb-1">Daftar Pendaftar Baru</h4>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success" onclick="exportExcel()">
+                                    <i class="mdi mdi-file-excel"></i> Export Excel
+                                </button>
+                                <button class="btn btn-info" onclick="printPDF()">
+                                    <i class="mdi mdi-file-pdf"></i> Cetak PDF
+                                </button>
+                            </div>
+                        </div>
 
-    #sortable-table td {
-      padding: 8px 4px;
-      vertical-align: middle;
-    }
+                        <!-- Search and Filter -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Cari Siswa (Nama, NISN)" id="search-input">
+                                    <button class="btn btn-primary" type="button" id="search-button">
+                                        <i class="mdi mdi-magnify"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <select class="form-select" id="academic-year-filter">
+                                    @php
+                                        $currentYear = \App\Helpers\AcademicYearHelper::getCurrentAcademicYear();
+                                        $academicYears = \App\Helpers\AcademicYearHelper::generateAcademicYears(1, 3);
+                                        $selectedYear = request('tahun_akademik', $currentYear);
+                                    @endphp
+                                    @foreach($academicYears as $year)
+                                        <option value="{{ $year }}" {{ $year === $selectedYear ? 'selected' : '' }}>
+                                            {{ $year }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
 
-    .btn-action {
-      padding: 4px 8px;
-      font-size: 12px;
-    }
-  </style>
-@endpush
-@push('scripts')
-  <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const clearButton = document.getElementById('clear-search');
-    const searchButton = document.getElementById('search-button');
-    const searchInput = document.getElementById('search-input');
-    const academicYearFilter = document.getElementById('academic-year-filter');
-    // Buttons use inline onclick handlers per user's preference
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>No.</th>
+                                        <th>Nama</th>
+                                        <th>NISN</th>
+                                        <th>NIK</th>
+                                        <th>Jurusan Utama</th>
+                                        <th>Jurusan Cadangan</th>
+                                        <th>Jenis Kelamin</th>
+                                        <th>Tempat Lahir</th>
+                                        <th>Tanggal Lahir</th>
+                                        <th>Nomor HP</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="students-tbody">
+                                    @include('pendaftaran._table')
+                                </tbody>
+                            </table>
+                        </div>
 
-    if (academicYearFilter) {
-      academicYearFilter.addEventListener('change', function() {
-        reloadTable();
-      });
-      // Jika Select2 digunakan, dengarkan event select2:select
-      if (window.$ && typeof $.fn.select2 === 'function') {
-        $(academicYearFilter).on('select2:select', function () {
-          reloadTable();
-        });
-      }
-    }
-
-    clearButton.addEventListener('click', function() {
-      searchInput.value = '';
-      clearTimeout(searchInput.searchTimeout);
-      searchInput.focus();
-      clearButton.style.display = 'none';
-      searchButton.style.display = 'block';
-      reloadTable();
-    });
-
-    async function reloadTable() {
-      const url = new URL(window.location.href);
-      const q = (searchInput.value || '').trim();
-      if (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
-      if (academicYearFilter && academicYearFilter.value) {
-        url.searchParams.set('tahun_akademik', academicYearFilter.value);
-      } else {
-        url.searchParams.delete('tahun_akademik');
-      }
-      // Minta partial saja
-      url.searchParams.set('partial', '1');
-
-      try {
-        const res = await fetch(url.toString(), {
-          headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        if (!res.ok) throw new Error('Gagal memuat data');
-        const html = await res.text();
-        const tbody = document.getElementById('students-tbody');
-        if (tbody) {
-          tbody.innerHTML = html;
-        }
-        bindAcceptButtons();
-        // Update URL tanpa reload dan tanpa param partial
-        const cleanUrl = new URL(window.location.href);
-        if (q) cleanUrl.searchParams.set('q', q); else cleanUrl.searchParams.delete('q');
-        if (academicYearFilter && academicYearFilter.value) {
-          cleanUrl.searchParams.set('tahun_akademik', academicYearFilter.value);
-        } else {
-          cleanUrl.searchParams.delete('tahun_akademik');
-        }
-        cleanUrl.searchParams.delete('partial');
-        window.history.pushState({}, '', cleanUrl.toString());
-      } catch (e) {
-        if (window.toastr) toastr.error(e.message || 'Terjadi kesalahan');
-      }
-    }
-
-    // Initialize search timeout
-    searchInput.searchTimeout = null;
-
-    searchInput.addEventListener('input', function() {
-      if (this.value.trim() !== '') {
-        clearButton.style.display = 'block';
-        searchButton.style.display = 'none';
-      } else {
-        clearButton.style.display = 'none';
-        searchButton.style.display = 'block';
-      }
-
-      // Debounce search - trigger after user stops typing for 500ms
-      clearTimeout(this.searchTimeout);
-      this.searchTimeout = setTimeout(() => {
-        reloadTable();
-      }, 500);
-    });
-
-    // Klik tombol search untuk reload
-    if (searchButton) {
-      searchButton.addEventListener('click', function() {
-        clearTimeout(searchInput.searchTimeout);
-        reloadTable();
-      });
-    }
-
-    // Tekan Enter di input untuk reload
-    if (searchInput) {
-      searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          clearTimeout(searchInput.searchTimeout);
-          reloadTable();
-        }
-      });
-    }
-
-    function bindAcceptButtons() {
-      document.querySelectorAll('.btn-accept').forEach(function(btn) {
-        btn.addEventListener('click', async function () {
-          const id = this.getAttribute('data-id');
-          const name = this.getAttribute('data-name') || '';
-          const jurusanUtama = this.getAttribute('data-jurusan-utama') || '';
-          const jurusanCadangan = this.getAttribute('data-jurusan-cadangan') || '';
-          if (!id) return;
-
-        if (window.swal) {
-          const content = document.createElement('div');
-          let optionsHtml = '';
-          if (jurusanUtama) {
-            optionsHtml += `<option value="${jurusanUtama}">${jurusanUtama} (Utama)</option>`;
-          }
-          if (jurusanCadangan && jurusanCadangan !== jurusanUtama) {
-            optionsHtml += `<option value="${jurusanCadangan}">${jurusanCadangan} (Cadangan)</option>`;
-          }
-          content.innerHTML = `
-            <div style="text-align:left;">
-              <div class="form-group">
-                <label>Nama Siswa</label>
-                <input type="text" class="swal-content__input" value="${name}" readonly>
-              </div>
-              <div class="form-group">
-                <label>Jurusan diterima</label>
-                <select id="swal-jurusan" class="swal-content__input">
-                  ${optionsHtml || '<option value="">Pilih jurusan</option>'}
-                </select>
-              </div>
-              <div class="form-group">
-                <label>No Absen</label>
-                <input type="text" id="swal-no-absen" class="swal-content__input" placeholder="mis. 1, 2, 10">
-              </div>
+                    </div>
+                </div>
             </div>
-          `;
+        </div>
+        <!-- end row -->
+@endsection
+@section('scripts')
+        <!-- Sweet Alerts js -->
+        <script src="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.js') }}"></script>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const searchInput = document.getElementById('search-input');
+                const searchButton = document.getElementById('search-button');
+                const academicYearFilter = document.getElementById('academic-year-filter');
 
-          const confirmed = await new Promise(resolve => {
-            swal({
-              title: 'Terima calon siswa ini?',
-              content: content,
-              icon: 'warning',
-              buttons: {
-                cancel: 'Batal',
-                confirm: 'Ya, Simpan'
-              },
-              dangerMode: false,
-            }).then(value => resolve(!!value));
-          });
-          if (!confirmed) return;
+                // Academic year filter change
+                if (academicYearFilter) {
+                    academicYearFilter.addEventListener('change', function() {
+                        reloadTable();
+                    });
+                }
 
-          const jurusanDiterimaInput = document.getElementById('swal-jurusan');
-          const noAbsenInput = document.getElementById('swal-no-absen');
-          const jurusanDiterima = jurusanDiterimaInput ? jurusanDiterimaInput.value.trim() : '';
-          const noAbsen = noAbsenInput ? noAbsenInput.value.trim() : '';
+                // Search functionality
+                let searchTimeout;
+                
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        reloadTable();
+                    }, 500);
+                });
 
-          if (!jurusanDiterima) {
-            if (window.toastr) {
-              toastr.error('Pilih jurusan diterima terlebih dahulu');
-            }
-            return;
-          }
+                searchButton.addEventListener('click', function() {
+                    clearTimeout(searchTimeout);
+                    reloadTable();
+                });
 
-          try {
-            const res = await fetch(`{{ url('pendaftaran-siswa') }}/${id}/accept`, {
-              method: 'POST',
-              headers: {
-                'X-CSRF-TOKEN': `{{ csrf_token() }}`,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                jurusan_diterima: jurusanDiterima,
-                no_absen: noAbsen
-              })
+                searchInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        clearTimeout(searchTimeout);
+                        reloadTable();
+                    }
+                });
+
+                // Reload table function
+                async function reloadTable() {
+                    const url = new URL(window.location.href);
+                    const q = (searchInput.value || '').trim();
+                    
+                    if (q) url.searchParams.set('q', q);
+                    else url.searchParams.delete('q');
+                    
+                    if (academicYearFilter && academicYearFilter.value) {
+                        url.searchParams.set('tahun_akademik', academicYearFilter.value);
+                    } else {
+                        url.searchParams.delete('tahun_akademik');
+                    }
+                    
+                    url.searchParams.set('partial', '1');
+
+                    try {
+                        const res = await fetch(url.toString(), {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        });
+                        
+                        if (!res.ok) throw new Error('Gagal memuat data');
+                        const html = await res.text();
+                        const tbody = document.getElementById('students-tbody');
+                        if (tbody) {
+                            tbody.innerHTML = html;
+                        }
+                        
+                        bindActionButtons();
+                        
+                        // Update URL without partial param
+                        const cleanUrl = new URL(window.location.href);
+                        if (q) cleanUrl.searchParams.set('q', q);
+                        else cleanUrl.searchParams.delete('q');
+                        if (academicYearFilter && academicYearFilter.value) {
+                            cleanUrl.searchParams.set('tahun_akademik', academicYearFilter.value);
+                        } else {
+                            cleanUrl.searchParams.delete('tahun_akademik');
+                        }
+                        cleanUrl.searchParams.delete('partial');
+                        window.history.pushState({}, '', cleanUrl.toString());
+                        
+                    } catch (e) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: e.message || 'Terjadi kesalahan saat memuat data'
+                        });
+                    }
+                }
+
+                // Bind action buttons
+                function bindActionButtons() {
+                    // Accept buttons
+                    document.querySelectorAll('.btn-accept').forEach(function(btn) {
+                        btn.addEventListener('click', async function () {
+                            const id = this.getAttribute('data-id');
+                            const name = this.getAttribute('data-name') || '';
+                            const jurusanUtama = this.getAttribute('data-jurusan-utama') || '';
+                            const jurusanCadangan = this.getAttribute('data-jurusan-cadangan') || '';
+                            
+                            if (!id) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'ID pendaftar tidak ditemukan'
+                                });
+                                return;
+                            }
+
+                            let optionsHtml = '';
+                            if (jurusanUtama) {
+                                optionsHtml += `<option value="${jurusanUtama}">${jurusanUtama}</option>`;
+                            }
+                            if (jurusanCadangan) {
+                                optionsHtml += `<option value="${jurusanCadangan}">${jurusanCadangan}</option>`;
+                            }
+
+                            // Jika tidak ada jurusan sama sekali, tampilkan error
+                            if (!jurusanUtama && !jurusanCadangan) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'Pendaftar tidak memiliki jurusan pilihan'
+                                });
+                                return;
+                            }
+
+                            const { value: jurusan } = await Swal.fire({
+                                title: 'Terima Pendaftar',
+                                html: `
+                                    <p>Terima pendaftar <strong>${name}</strong> ke jurusan:</p>
+                                    <select id="jurusan-select" class="swal2-select">
+                                        ${optionsHtml}
+                                    </select>
+                                `,
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonColor: '#3085d6',
+                                cancelButtonColor: '#d33',
+                                confirmButtonText: 'Ya, terima!',
+                                cancelButtonText: 'Batal',
+                                preConfirm: () => {
+                                    const select = document.getElementById('jurusan-select');
+                                    if (!select) {
+                                        Swal.showValidationMessage('Pilih jurusan terlebih dahulu');
+                                        return false;
+                                    }
+                                    return select.value;
+                                }
+                            });
+
+                            if (jurusan) {
+                                try {
+                                    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                                    if (!csrfToken) {
+                                        throw new Error('CSRF token not found');
+                                    }
+                                    
+                                    const res = await fetch(`/pendaftaran-siswa/${id}/accept`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': csrfToken.getAttribute('content')
+                                        },
+                                        body: JSON.stringify({ jurusan: jurusan })
+                                    });
+
+                                    if (!res.ok) throw new Error('Gagal menerima pendaftar');
+                                    
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Berhasil',
+                                        text: 'Pendaftar berhasil diterima',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    });
+                                    
+                                    reloadTable();
+                                    
+                                } catch (e) {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: e.message || 'Terjadi kesalahan'
+                                    });
+                                }
+                            }
+                        });
+                    });
+
+                    // Delete buttons (Reject)
+                    document.querySelectorAll('.btn-delete').forEach(function(btn) {
+                        btn.addEventListener('click', async function () {
+                            const id = this.getAttribute('data-id');
+                            const name = this.getAttribute('data-name') || '';
+                            
+                            if (!id) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'ID pendaftar tidak ditemukan'
+                                });
+                                return;
+                            }
+
+                            const result = await Swal.fire({
+                                title: 'Apakah Anda yakin?',
+                                text: `Pendaftar "${name}" akan ditolak dan datanya dihapus permanen!`,
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#3085d6',
+                                cancelButtonColor: '#d33',
+                                confirmButtonText: 'Ya, tolak!',
+                                cancelButtonText: 'Batal'
+                            });
+
+                            if (result.isConfirmed) {
+                                try {
+                                    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                                    if (!csrfToken) {
+                                        throw new Error('CSRF token not found');
+                                    }
+                                    
+                                    const res = await fetch(`/pendaftaran-siswa/${id}/reject`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRF-TOKEN': csrfToken.getAttribute('content')
+                                        }
+                                    });
+
+                                    if (!res.ok) throw new Error('Gagal menolak pendaftar');
+                                    
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Berhasil',
+                                        text: 'Pendaftar berhasil ditolak',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    });
+                                    
+                                    reloadTable();
+                                    
+                                } catch (e) {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: e.message || 'Terjadi kesalahan'
+                                    });
+                                }
+                            }
+                        });
+                    });
+                }
+
+                // Export functions
+                window.exportExcel = function() {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('export', 'excel');
+                    window.open(url.toString(), '_blank');
+                };
+
+                window.printPDF = function() {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('print', 'pdf');
+                    window.open(url.toString(), '_blank');
+                };
+
+                // Initialize buttons
+                bindActionButtons();
             });
-
-          if (!res.ok) {
-            // Try to read message
-            let msg = 'Gagal memproses permintaan.';
-            try {
-              const data = await res.json();
-              if (data && data.message) msg = data.message;
-            } catch (e) {}
-            throw new Error(msg);
-          }
-
-            let message = 'Calon siswa telah diterima.';
-            try {
-              const data = await res.json();
-              if (data && data.message) message = data.message;
-            } catch (e) {}
-
-            await reloadTable();
-
-            if (window.swal) {
-              await new Promise(resolve => {
-                swal({
-                  title: 'Berhasil!',
-                  text: message,
-                  icon: 'success',
-                  timer: 2000,
-                }).then(() => resolve());
-              });
-            } else if (window.toastr) {
-              toastr.success(message);
-            } else {
-              alert(message);
-            }
-          } catch (err) {
-            if (window.swal) {
-              swal({
-                title: 'Gagal!',
-                text: err.message || 'Terjadi kesalahan.',
-                icon: 'error'
-              });
-            } else if (window.toastr) {
-              toastr.error(err.message || 'Terjadi kesalahan.');
-            } else {
-              alert(err.message || 'Terjadi kesalahan.');
-            }
-          }
-        } else {
-          if (!confirm('Terima calon siswa ini?')) return;
-
-          try {
-            const res = await fetch(`{{ url('pendaftaran-siswa') }}/${id}/accept`, {
-              method: 'POST',
-              headers: {
-                'X-CSRF-TOKEN': `{{ csrf_token() }}`,
-                'Accept': 'application/json'
-              }
-            });
-
-            if (!res.ok) {
-              let msg = 'Gagal memproses permintaan.';
-              try {
-                const data = await res.json();
-                if (data && data.message) msg = data.message;
-              } catch (e) {}
-              throw new Error(msg);
-            }
-
-            let message = 'Calon siswa telah diterima.';
-            try {
-              const data = await res.json();
-              if (data && data.message) message = data.message;
-            } catch (e) {}
-
-            await reloadTable();
-
-            if (window.toastr) {
-              toastr.success(message);
-            } else {
-              alert(message);
-            }
-          } catch (err) {
-            if (window.toastr) {
-              toastr.error(err.message || 'Terjadi kesalahan.');
-            } else {
-              alert(err.message || 'Terjadi kesalahan.');
-            }
-          }
-        }
-      });
-      });
-
-      document.querySelectorAll('.btn-reject').forEach(function(btn) {
-        btn.addEventListener('click', async function () {
-          const id = this.getAttribute('data-id');
-          if (!id) return;
-
-          if (window.swal) {
-            const confirmed = await new Promise(resolve => {
-              swal({
-                title: 'Tolak calon siswa ini?',
-                text: 'Data tetap disimpan dengan status ditolak.',
-                icon: 'warning',
-                buttons: {
-                  cancel: 'Batal',
-                  confirm: 'Ya, Tolak'
-                },
-                dangerMode: true,
-              }).then(value => resolve(!!value));
-            });
-            if (!confirmed) return;
-          } else {
-            if (!confirm('Tolak calon siswa ini?')) return;
-          }
-
-          try {
-            const res = await fetch(`{{ url('pendaftaran-siswa') }}/${id}/reject`, {
-              method: 'POST',
-              headers: {
-                'X-CSRF-TOKEN': `{{ csrf_token() }}`,
-                'Accept': 'application/json'
-              }
-            });
-
-            if (!res.ok) {
-              let msg = 'Gagal memproses permintaan.';
-              try {
-                const data = await res.json();
-                if (data && data.message) msg = data.message;
-              } catch (e) {}
-              throw new Error(msg);
-            }
-
-            let message = 'Calon siswa telah ditolak.';
-            try {
-              const data = await res.json();
-              if (data && data.message) message = data.message;
-            } catch (e) {}
-
-            await reloadTable();
-
-            if (window.swal) {
-              await new Promise(resolve => {
-                swal({
-                  title: 'Berhasil!',
-                  text: message,
-                  icon: 'success',
-                  timer: 2000,
-                }).then(() => resolve());
-              });
-            } else if (window.toastr) {
-              toastr.success(message);
-            } else {
-              alert(message);
-            }
-          } catch (err) {
-            if (window.swal) {
-              swal({
-                title: 'Gagal!',
-                text: err.message || 'Terjadi kesalahan.',
-                icon: 'error'
-              });
-            } else if (window.toastr) {
-              toastr.error(err.message || 'Terjadi kesalahan.');
-            } else {
-              alert(err.message || 'Terjadi kesalahan.');
-            }
-          }
-        });
-      });
-    }
-
-    // initial bind
-    bindAcceptButtons();
-
-    window.exportExcel = function() {
-      const url = new URL(`{{ route('pendaftaran-siswa.export-excel') }}`);
-      const q = (searchInput.value || '').trim();
-      if (q) url.searchParams.set('q', q);
-      if (academicYearFilter && academicYearFilter.value) {
-        url.searchParams.set('tahun_akademik', academicYearFilter.value);
-      }
-      window.location.href = url.toString();
-    }
-
-    window.printAttendance = function() {
-      const url = new URL(`{{ route('pendaftaran-siswa.print') }}`);
-      const q = (searchInput.value || '').trim();
-      if (q) url.searchParams.set('q', q);
-      if (academicYearFilter && academicYearFilter.value) {
-        url.searchParams.set('tahun_akademik', academicYearFilter.value);
-      }
-      window.open(url.toString(), '_blank');
-    }
-  });
-  </script>
-@endpush
+        </script>
+        
+        <!-- App js -->
+        <script src="{{ URL::asset('build/js/app.js') }}"></script>
+    @endsection

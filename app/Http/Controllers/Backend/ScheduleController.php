@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Models\Classes;
 use App\Models\Schedule;
+use App\Models\Semester;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -27,38 +28,47 @@ class ScheduleController extends Controller
         $selectedClassId = $request->get('class_id', $classes->first()?->id);
         $selectedClass = $classes->find($selectedClassId);
 
-        // Tahun akademik filter (default tahun aktif)
-        $selectedAcademicYear = $request->get('academic_year', AcademicYearHelper::getCurrentAcademicYear());
+        // Tahun akademik filter (default dari semester aktif)
+        $currentSemester = Semester::getCurrentActiveSemester();
+        $selectedAcademicYear = $request->get('academic_year', 
+            $currentSemester ? $currentSemester->academic_year : AcademicYearHelper::getCurrentAcademicYear()
+        );
 
         // Tentukan semester terpilih
         $selectedSemester = $request->get('semester');
         if (!$selectedSemester) {
-            // Otomatis: kalau semua sudah di semester genap untuk tahun aktif, jadikan default Genap
-            $ganjilValues = ['1', 'ganjil', 1];
-            $genapValues = ['2', 'genap', 2];
-
-            $hasActiveGenap = DB::table('student_class')
-                ->where('academic_year', $selectedAcademicYear)
-                ->whereIn('semester', $genapValues)
-                ->where('status', 'active')
-                ->whereNull('deleted_at')
-                ->exists();
-
-            $hasActiveGanjil = DB::table('student_class')
-                ->where('academic_year', $selectedAcademicYear)
-                ->where(function ($q) use ($ganjilValues) {
-                    $q->whereIn('semester', $ganjilValues)
-                      ->orWhereNull('semester')
-                      ->orWhere('semester', '');
-                })
-                ->where('status', 'active')
-                ->whereNull('deleted_at')
-                ->exists();
-
-            if ($hasActiveGenap && !$hasActiveGanjil) {
-                $selectedSemester = 'Genap';
+            // Gunakan semester aktif dari model Semester
+            $currentSemester = Semester::getCurrentActiveSemester();
+            if ($currentSemester) {
+                $selectedSemester = ucfirst($currentSemester->semester_type);
             } else {
-                $selectedSemester = 'Ganjil';
+                // Fallback ke logic lama jika tidak ada semester aktif
+                $ganjilValues = ['1', 'ganjil', 1];
+                $genapValues = ['2', 'genap', 2];
+
+                $hasActiveGenap = DB::table('student_class')
+                    ->where('academic_year', $selectedAcademicYear)
+                    ->whereIn('semester', $genapValues)
+                    ->where('status', 'active')
+                    ->whereNull('deleted_at')
+                    ->exists();
+
+                $hasActiveGanjil = DB::table('student_class')
+                    ->where('academic_year', $selectedAcademicYear)
+                    ->where(function ($q) use ($ganjilValues) {
+                        $q->whereIn('semester', $ganjilValues)
+                          ->orWhereNull('semester')
+                          ->orWhere('semester', '');
+                    })
+                    ->where('status', 'active')
+                    ->whereNull('deleted_at')
+                    ->exists();
+
+                if ($hasActiveGenap && !$hasActiveGanjil) {
+                    $selectedSemester = 'Genap';
+                } else {
+                    $selectedSemester = 'Ganjil';
+                }
             }
         }
         

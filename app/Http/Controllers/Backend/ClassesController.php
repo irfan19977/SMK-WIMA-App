@@ -6,6 +6,7 @@ use App\Helpers\AcademicYearHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Classes;
+use App\Models\Semester;
 use App\Models\Student;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -120,7 +121,9 @@ class ClassesController extends Controller
               ->orderByRaw("FIELD(major, '" . implode("','", $majorOrder) . "') ASC");
 
         // Tampilkan semua kelas (tanpa pagination) sesuai filter
-        $classes = $query->get();
+        $classes = $query->withCount(['students' => function($query) {
+            $query->whereNull('student_class.deleted_at');
+        }])->get();
         
         // Return JSON for AJAX requests
         if ($request->ajax() || $request->expectsJson()) {
@@ -231,22 +234,71 @@ class ClassesController extends Controller
 
     public function show(string $id)
     {
-        try {
-            $classes = Classes::findOrFail($id);
-            
-            // Get students in this class through pivot table
-            $students = Student::whereHas('classes', function($query) use ($id) {
-                $query->where('classes.id', $id);
-            })->with('user')
-            ->orderByRaw('CAST(no_absen AS UNSIGNED) ASC')
-            ->get();
-            
-            // Get available students (siswa yang belum memiliki kelas sama sekali)
-            $availableStudents = Student::whereDoesntHave('classes')->with('user')->orderByRaw('CAST(no_absen AS UNSIGNED) ASC')->get();
-            
-            // Determine current active semester for this class in its academic year
-            $currentSemesterLabel = null;
-            if ($classes->academic_year) {
+        // Debug logging
+        \Log::info('ClassesController@show called', [
+            'class_id' => $id,
+            'user_id' => Auth::id(),
+            'url' => request()->fullUrl(),
+            'method' => request()->method(),
+            'ajax' => request()->ajax(),
+            'expects_json' => request()->expectsJson()
+        ]);
+        
+        $classes = Classes::findOrFail($id);
+        
+        \Log::info('Class found', [
+            'class_name' => $classes->name,
+            'class_code' => $classes->code
+        ]);
+        
+        // Get students in this class through pivot table
+        $students = Student::whereHas('classes', function($query) use ($id) {
+            $query->where('classes.id', $id);
+        })->with('user')
+        ->orderByRaw('CAST(no_absen AS UNSIGNED) ASC')
+        ->get();
+        
+        // Get available students (siswa yang belum memiliki kelas sama sekali)
+        $availableStudents = Student::whereDoesntHave('classes')->with('user')->orderByRaw('CAST(no_absen AS UNSIGNED) ASC')->get();
+        
+        // Determine current active semester for this class in its academic year
+        $currentSemesterLabel = null;
+        if ($classes->academic_year) {
+            try {
+                // Cek apakah ada semester aktif untuk academic year ini
+                $activeSemester = Semester::where('academic_year', $classes->academic_year)
+                    ->where('is_active', true)
+                    ->first();
+                    
+                if ($activeSemester) {
+                    $currentSemesterLabel = ucfirst($activeSemester->semester_type);
+                } else {
+                    // Fallback ke logic lama jika tidak ada semester aktif
+                    $activePivot = DB::table('student_class')
+                        ->where('class_id', $classes->id)
+                        ->where('academic_year', $classes->academic_year)
+                        ->where('status', 'active')
+                        ->whereNull('deleted_at')
+                        ->first();
+
+                    if ($activePivot) {
+                        $sem = $activePivot->semester;
+                        if ($sem === null || $sem === '' || $sem === '1' || $sem === 1 || strtolower((string) $sem) === 'ganjil') {
+                            $currentSemesterLabel = 'Ganjil';
+                        } elseif ($sem === '2' || $sem === 2 || strtolower((string) $sem) === 'genap') {
+                            $currentSemesterLabel = 'Genap';
+                        } else {
+                            $currentSemesterLabel = 'Belum ditentukan';
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Handle jika tabel semesters tidak ada
+                \Log::warning('Semesters table not found, using fallback logic', [
+                    'error' => $e->getMessage()
+                ]);
+                
+                // Fallback ke logic lama
                 $activePivot = DB::table('student_class')
                     ->where('class_id', $classes->id)
                     ->where('academic_year', $classes->academic_year)
@@ -265,73 +317,70 @@ class ClassesController extends Controller
                     }
                 }
             }
-            
-            // Get current month and year
-            $currentMonth = request('month', Carbon::now()->format('Y-m'));
-            $monthDate = Carbon::createFromFormat('Y-m', $currentMonth);
-            $daysInMonth = $monthDate->daysInMonth;
-            
-            // Get attendance data for current month and class
-            $attendanceData = Attendance::whereHas('student.classes', function($query) use ($id) {
-                    $query->where('classes.id', $id);
-                })
-                ->whereYear('date', $monthDate->year)
-                ->whereMonth('date', $monthDate->month)
-                ->get()
-                ->groupBy(['student_id', function($item) {
-                    return Carbon::parse($item->date)->day;
-                }]);
-            
-            // Return JSON for AJAX requests
-            if (request()->ajax() || request()->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'class' => [
-                        'id' => $classes->id,
-                        'name' => $classes->name,
-                        'major' => $classes->major,
-                        'code' => $classes->code,
-                        'grade' => $classes->grade,
-                        'academic_year' => $classes->academic_year,
-                        'students_count' => $students->count(),
-                        'created_at' => $classes->created_at,
-                        'updated_at' => $classes->updated_at,
-                    ],
-                    'students' => $students->map(function($student) {
-                        return [
-                            'id' => $student->id,
-                            'name' => $student->name,
-                            'nisn' => $student->nisn,
-                            'email' => $student->user->email ?? '-',
-                            'gender' => $student->gender,
-                            'created_at' => $student->created_at,
-                        ];
-                    }),
-                    'available_students' => $availableStudents->map(function($student) {
-                        return [
-                            'id' => $student->id,
-                            'name' => $student->name,
-                            'nisn' => $student->nisn,
-                            'email' => $student->user->email ?? '-',
-                        ];
-                    }),
-                    'attendance_data' => $attendanceData,
-                    'current_month' => $currentMonth,
-                    'days_in_month' => $daysInMonth
-                ]);
-            }
-            
-            return view('classes.show', compact('classes', 'students', 'availableStudents', 'attendanceData', 'currentMonth', 'daysInMonth', 'currentSemesterLabel'));
-        } catch (\Exception $e) {
-            if (request()->ajax() || request()->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Kelas tidak ditemukan.'
-                ], 404);
-            }
-            
-            return redirect()->route('classes.index')->with('error', 'Kelas tidak ditemukan.');
         }
+        
+        // Get current month and year
+        $currentMonth = request('month', Carbon::now()->format('Y-m'));
+        $monthDate = Carbon::createFromFormat('Y-m', $currentMonth);
+        $daysInMonth = $monthDate->daysInMonth;
+        
+        // Get attendance data for current month and class
+        $attendanceData = Attendance::whereHas('student.classes', function($query) use ($id) {
+                $query->where('classes.id', $id);
+            })
+            ->whereYear('date', $monthDate->year)
+            ->whereMonth('date', $monthDate->month)
+            ->get()
+            ->groupBy(['student_id', function($item) {
+                return Carbon::parse($item->date)->day;
+            }]);
+        
+        // Return JSON for AJAX requests
+        if (request()->ajax() || request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'class' => [
+                    'id' => $classes->id,
+                    'name' => $classes->name,
+                    'major' => $classes->major,
+                    'code' => $classes->code,
+                    'grade' => $classes->grade,
+                    'academic_year' => $classes->academic_year,
+                    'students_count' => $students->count(),
+                    'created_at' => $classes->created_at,
+                    'updated_at' => $classes->updated_at,
+                ],
+                'students' => $students->map(function($student) {
+                    return [
+                        'id' => $student->id,
+                        'name' => $student->name,
+                        'nisn' => $student->nisn,
+                        'email' => $student->user->email ?? '-',
+                        'gender' => $student->gender,
+                        'created_at' => $student->created_at,
+                    ];
+                }),
+                'available_students' => $availableStudents->map(function($student) {
+                    return [
+                        'id' => $student->id,
+                        'name' => $student->name,
+                        'nisn' => $student->nisn,
+                        'email' => $student->user->email ?? '-',
+                    ];
+                }),
+                'attendance_data' => $attendanceData,
+                'current_month' => $currentMonth,
+                'days_in_month' => $daysInMonth
+            ]);
+        }
+        
+        \Log::info('About to return view', [
+            'class_id' => $id,
+            'students_count' => $students->count(),
+            'available_students_count' => $availableStudents->count()
+        ]);
+        
+        return view('classes.show', compact('classes', 'students', 'availableStudents', 'attendanceData', 'currentMonth', 'daysInMonth', 'currentSemesterLabel'));
     }
 
     public function getAttendanceData(Request $request, $classId)
@@ -550,6 +599,13 @@ class ClassesController extends Controller
                 ]);
             }
 
+            // Check redirect parameter
+            $redirectTo = $request->input('redirect_to', 'index');
+            
+            if ($redirectTo === 'show') {
+                return redirect()->route('classes.show', $id)->with('success', 'Kelas berhasil diperbarui.');
+            }
+            
             return redirect()->route('classes.index')->with('success', 'Kelas berhasil diperbarui.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Handle validation errors specifically

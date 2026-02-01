@@ -1,408 +1,349 @@
-@extends ('layouts.app')
-
-@section('content')
-<div class="row">
-    <div class="col-xl-3 col-lg-6 mb-4">
-        <div class="card h-100">
-            <div class="card-body card-type-3 d-flex flex-column">
-                <div class="row">
-                    <div class="col">
-                        <h6 class="text-muted mb-0">Total Siswa Aktif</h6>
-                        <span class="font-weight-bold mb-0" style="font-size:1.5rem;">{{ \App\Models\Student::whereHas('user', function($q) { $q->where('status', 1); })->count() }}</span>
-                    </div>
-                    <div class="col-auto">
-                        <div class="card-circle l-bg-orange text-white">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                    </div>
-                </div>
-                <p class="mt-auto mb-0 text-muted text-sm">
-                    <span class="text-success mr-2"><i class="fa fa-arrow-up"></i></span>
-                    <span class="text-nowrap">Aktif saat ini</span>
-                </p>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-lg-6 mb-4">
-        <div class="card h-100">
-            <div class="card-body card-type-3 d-flex flex-column">
-                <div class="row">
-                    <div class="col">
-                        <h6 class="text-muted mb-0">Total Guru Aktif</h6>
-                        <span class="font-weight-bold mb-0" style="font-size:1.5rem;">{{ \App\Models\Teacher::whereHas('user', function($q) { $q->where('status', 1); })->count() }}</span>
-                    </div>
-                    <div class="col-auto">
-                        <div class="card-circle l-bg-cyan text-white">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                        </div>
-                    </div>
-                </div>
-                <p class="mt-auto mb-0 text-muted text-sm">
-                    <span class="text-success mr-2"><i class="fa fa-arrow-up"></i></span>
-                    <span class="text-nowrap">Aktif saat ini</span>
-                </p>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-lg-6 mb-4">
-        <div class="card h-100">
-            <div class="card-body card-type-3 d-flex flex-column">
-                <div class="row">
-                    <div class="col">
-                        <h6 class="text-muted mb-0">Total Kelas</h6>
-                        <span class="font-weight-bold mb-0" style="font-size:1.5rem;">{{ \App\Models\Classes::count() }}</span>
-                    </div>
-                    <div class="col-auto">
-                        <div class="card-circle l-bg-green text-white">
-                            <i class="fas fa-door-open"></i>
-                        </div>
-                    </div>
-                </div>
-                <p class="mt-auto mb-0 text-muted text-sm">
-                    <span class="text-success mr-2"><i class="fa fa-arrow-up"></i></span>
-                    <span class="text-nowrap">Total kelas terdaftar</span>
-                </p>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-lg-6 mb-4">
-        <div class="card h-100">
-            <div class="card-body card-type-3 d-flex flex-column">
-                <div class="row">
-                    <div class="col">
-                        <h6 class="text-muted mb-0">Total Mapel</h6>
-                        <span class="font-weight-bold mb-0" style="font-size:1.5rem;">{{ \App\Models\Subject::count() }}</span>
-                    </div>
-                    <div class="col-auto">
-                        <div class="card-circle l-bg-purple text-white">
-                            <i class="fas fa-book"></i>
-                        </div>
-                    </div>
-                </div>
-                <p class="mt-auto mb-0 text-muted text-sm">
-                    <span class="text-success mr-2"><i class="fa fa-arrow-up"></i></span>
-                    <span class="text-nowrap">Total mapel terdaftar</span>
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="row">
-    <div class="col-12 col-sm-12 col-lg-12">
-        <div class="card ">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">Grafik Kehadiran Siswa</h4>
-                <div class="card-header-action">
-                    <select id="attendanceRange" class="form-control">
-                        <option value="daily" {{ request('range', 'daily') == 'daily' ? 'selected' : '' }}>Harian</option>
-                        <option value="weekly" {{ request('range') == 'weekly' ? 'selected' : '' }}>Mingguan</option>
-                        <option value="monthly" {{ request('range') == 'monthly' ? 'selected' : '' }}>Bulanan</option>
-                        <option value="yearly" {{ request('range') == 'yearly' ? 'selected' : '' }}>Tahunan</option>
-                    </select>
-                </div>
-            </div>
-            <div class="card-body">
-                <canvas id="attendanceChart" height="100"></canvas>
-                <div class="row mt-4">
-                    <div class="col-12 d-flex justify-content-center">
-                        <div id="attendanceLegend" class="chart-legend"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-@php
-    use App\Models\Attendance;
-    use Illuminate\Support\Facades\DB;
-    use Carbon\Carbon;
-
-    $statuses = ['terlambat', 'tepat', 'izin', 'alpha'];
-    $range = request('range', 'daily');
-
-    function getAttendanceData($range, $statuses) {
-        $labels = [];
-        $datasets = [];
-        $now = Carbon::now();
-
-        $chartColors = [
-            'terlambat' => 'rgba(255, 99, 132, 0.8)',
-            'tepat' => 'rgba(54, 162, 235, 0.8)',
-            'izin' => 'rgba(255, 206, 86, 0.8)',
-            'alpha' => 'rgba(75, 192, 192, 0.8)',
-        ];
-
-        if ($range == 'daily') {
-            for ($i = 6; $i >= 0; $i--) {
-                $date = $now->copy()->subDays($i)->format('Y-m-d');
-                $labels[] = $now->copy()->subDays($i)->format('d M');
-            }
-            foreach ($statuses as $status) {
-                $data = [];
-                for ($i = 6; $i >= 0; $i--) {
-                    $date = $now->copy()->subDays($i)->format('Y-m-d');
-                    $data[] = Attendance::whereDate('created_at', $date)
-                        ->where('check_in_status', $status)
-                        ->count();
-                }
-                $datasets[] = [
-                    'label' => ucfirst($status),
-                    'data' => $data,
-                    'borderColor' => $chartColors[$status],
-                    'backgroundColor' => $chartColors[$status],
-                    'pointBackgroundColor' => $chartColors[$status],
-                    'pointBorderColor' => '#fff',
-                    'pointHoverBackgroundColor' => '#fff',
-                    'pointHoverBorderColor' => $chartColors[$status],
-                ];
-            }
-        } elseif ($range == 'weekly') {
-            for ($i = 7; $i >= 0; $i--) {
-                $start = $now->copy()->subWeeks($i)->startOfWeek();
-                $end = $start->copy()->endOfWeek();
-                $labels[] = $start->format('d M') . ' - ' . $end->format('d M');
-            }
-            foreach ($statuses as $status) {
-                $data = [];
-                for ($i = 7; $i >= 0; $i--) {
-                    $start = $now->copy()->subWeeks($i)->startOfWeek();
-                    $end = $start->copy()->endOfWeek();
-                    $data[] = Attendance::whereBetween('created_at', [$start, $end])
-                        ->where('check_in_status', $status)
-                        ->count();
-                }
-                $datasets[] = [
-                    'label' => ucfirst($status),
-                    'data' => $data,
-                    'borderColor' => $chartColors[$status],
-                    'backgroundColor' => $chartColors[$status],
-                    'pointBackgroundColor' => $chartColors[$status],
-                    'pointBorderColor' => '#fff',
-                    'pointHoverBackgroundColor' => '#fff',
-                    'pointHoverBorderColor' => $chartColors[$status],
-                ];
-            }
-        } elseif ($range == 'monthly') {
-            for ($i = 11; $i >= 0; $i--) {
-                $date = $now->copy()->subMonths($i);
-                $labels[] = $date->format('M Y');
-            }
-            foreach ($statuses as $status) {
-                $data = [];
-                for ($i = 11; $i >= 0; $i--) {
-                    $date = $now->copy()->subMonths($i);
-                    $data[] = Attendance::whereYear('created_at', $date->year)
-                        ->whereMonth('created_at', $date->month)
-                        ->where('check_in_status', $status)
-                        ->count();
-                }
-                $datasets[] = [
-                    'label' => ucfirst($status),
-                    'data' => $data,
-                    'borderColor' => $chartColors[$status],
-                    'backgroundColor' => $chartColors[$status],
-                    'pointBackgroundColor' => $chartColors[$status],
-                    'pointBorderColor' => '#fff',
-                    'pointHoverBackgroundColor' => '#fff',
-                    'pointHoverBorderColor' => $chartColors[$status],
-                ];
-            }
-        } else {
-            for ($i = 4; $i >= 0; $i--) {
-                $year = $now->copy()->subYears($i)->year;
-                $labels[] = $year;
-            }
-            foreach ($statuses as $status) {
-                $data = [];
-                for ($i = 4; $i >= 0; $i--) {
-                    $year = $now->copy()->subYears($i)->year;
-                    $data[] = Attendance::whereYear('created_at', $year)
-                        ->where('check_in_status', $status)
-                        ->count();
-                }
-                $datasets[] = [
-                    'label' => ucfirst($status),
-                    'data' => $data,
-                    'borderColor' => $chartColors[$status],
-                    'backgroundColor' => $chartColors[$status],
-                    'pointBackgroundColor' => $chartColors[$status],
-                    'pointBorderColor' => '#fff',
-                    'pointHoverBackgroundColor' => '#fff',
-                    'pointHoverBorderColor' => $chartColors[$status],
-                ];
-            }
-        }
-
-        return ['labels' => $labels, 'datasets' => $datasets];
-    }
-
-    $attendanceData = getAttendanceData($range, $statuses);
-@endphp
-
-
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h4>Siswa Terlambat - {{ \Carbon\Carbon::parse($date)->format('d F Y') }}</h4>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th class="text-center">No</th>
-                                <th>Nama Siswa</th>
-                                <th>NISN</th>
-                                <th>Kelas</th>
-                                <th>Jam Masuk</th>
-                                <th>Status</th>
-                                <th>Email</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($lateStudents as $index => $student)
-                            <tr>
-                                <td class="text-center">{{ $index + 1 }}</td>
-                                <td>{{ $student->student_name }}</td>
-                                <td>{{ $student->nisn }}</td>
-                                <td>{{ $student->class_name }}</td>
-                                <td>
-                                    <span class="badge badge-warning">
-                                        {{ \Carbon\Carbon::parse($student->check_in)->format('H:i') }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="badge badge-danger">Terlambat</div>
-                                </td>
-                                <td>{{ $student->email }}</td>
-                                <td>
-                                    <a href="#" class="btn btn-outline-primary btn-sm">Detail</a>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="8" class="text-center py-4">
-                                    <div class="empty-state">
-                                        <div class="empty-state-icon">
-                                            <i class="fas fa-users"></i>
-                                        </div>
-                                        <h2>Tidak ada siswa yang terlambat</h2>
-                                        <p class="lead">Pada tanggal {{ \Carbon\Carbon::parse($date)->format('d F Y') }} tidak ada siswa yang terlambat.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            @if($lateStudents->count() > 0)
-            <div class="card-footer text-right">
-                <div class="d-inline-block">
-                    <small class="text-muted">
-                        Total siswa terlambat: <strong>{{ $lateStudents->count() }}</strong>
-                    </small>
-                </div>
-            </div>
-            @endif
-        </div>
-    </div>
-</div>
+@extends('layouts.master')
+@section('title')
+    Dashboard
 @endsection
+@section('css')
+    <!-- jsvectormap css -->
+    <link href="{{ URL::asset('build/libs/jsvectormap/jsvectormap.min.css') }}" rel="stylesheet" type="text/css" />
+@endsection
+@section('page-title')
+    Dashboard
+@endsection
+@section('body')
 
-@push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        let attendanceChart;
-        const chartColors = {
-            terlambat: 'rgba(255, 99, 132, 0.8)',
-            tepat: 'rgba(54, 162, 235, 0.8)',
-            izin: 'rgba(255, 206, 86, 0.8)',
-            alpha: 'rgba(75, 192, 192, 0.8)'
-        };
+    <body data-sidebar="colored">
+    @endsection
+    @section('content')
+        <div class="row">
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-md flex-shrink-0">
+                                <span class="avatar-title bg-subtle-primary text-primary rounded fs-2">
+                                    <i class="mdi mdi-account-group"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden ms-4">
+                                <p class="text-muted text-truncate font-size-15 mb-2"> Total Siswa</p>
+                                <h3 class="fs-4 flex-grow-1 mb-3">{{ $totalStudents }} <span class="text-muted font-size-16">Siswa</span>
+                                </h3>
+                                <p class="text-muted mb-0 text-truncate"><span
+                                        class="badge bg-subtle-success text-success font-size-12 fw-normal me-1"><i
+                                            class="mdi mdi-arrow-top-right"></i> 5.2% Peningkatan</span> vs semester lalu</p>
+                            </div>
+                            <div class="flex-shrink-0 align-self-start">
+                                <div class="dropdown">
+                                    <a class="dropdown-toggle btn-icon border rounded-circle" href="#"
+                                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="ri-more-2-fill text-muted font-size-16"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        <a class="dropdown-item" href="#">Yearly</a>
+                                        <a class="dropdown-item" href="#">Monthly</a>
+                                        <a class="dropdown-item" href="#">Weekly</a>
+                                        <a class="dropdown-item" href="#">Today</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        function renderAttendanceChart(labels, datasets) {
-            const ctx = document.getElementById('attendanceChart').getContext('2d');
-            if (attendanceChart) attendanceChart.destroy();
-            attendanceChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: datasets.map(ds => ({
-                        label: ds.label,
-                        data: ds.data,
-                        fill: false,
-                        borderColor: ds.borderColor,
-                        backgroundColor: ds.backgroundColor,
-                        pointBackgroundColor: ds.pointBackgroundColor,
-                        pointBorderColor: ds.pointBorderColor,
-                        pointHoverBackgroundColor: ds.pointHoverBackgroundColor,
-                        pointHoverBorderColor: ds.pointHoverBorderColor,
-                        borderWidth: 3,
-                        pointRadius: 5,
-                        pointHoverRadius: 7,
-                        tension: 0.4,
-                    }))
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false // We'll use a custom legend
-                        },
-                        tooltip: {
-                            enabled: true,
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + context.parsed.y;
-                                }
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-md flex-shrink-0">
+                                <span class="avatar-title bg-subtle-primary text-primary rounded fs-2">
+                                    <i class="mdi mdi-book-open-variant"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden ms-4">
+                                <p class="text-muted text-truncate font-size-15 mb-2"> Kelas Aktif</p>
+                                <h3 class="fs-4 flex-grow-1 mb-3">{{ $activeClasses }} <span class="text-muted font-size-16">Kelas</span>
+                                </h3>
+                                <p class="text-muted mb-0 text-truncate"><span
+                                        class="badge bg-subtle-success text-success font-size-12 fw-normal me-1"><i
+                                            class="mdi mdi-arrow-top-right"></i> +8 Kelas</span> vs semester lalu</p>
+                            </div>
+                            <div class="flex-shrink-0 align-self-start">
+                                <div class="dropdown">
+                                    <a class="dropdown-toggle btn-icon border rounded-circle" href="#"
+                                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="ri-more-2-fill text-muted font-size-16"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        <a class="dropdown-item" href="#">Yearly</a>
+                                        <a class="dropdown-item" href="#">Monthly</a>
+                                        <a class="dropdown-item" href="#">Weekly</a>
+                                        <a class="dropdown-item" href="#">Today</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-md flex-shrink-0">
+                                <span class="avatar-title bg-subtle-primary text-primary rounded fs-2">
+                                    <i class="mdi mdi-check-circle"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden ms-4">
+                                <p class="text-muted text-truncate font-size-15 mb-2"> Kehadiran Hari Ini</p>
+                                <h3 class="fs-4 flex-grow-1 mb-3">{{ $todayAttendance }}<span class="text-muted font-size-16">%</span>
+                                </h3>
+                                <p class="text-muted mb-0 text-truncate"><span
+                                        class="badge bg-subtle-success text-success font-size-12 fw-normal me-1"><i
+                                            class="mdi mdi-arrow-top-right"></i> 2.3% Peningkatan</span> vs minggu lalu</p>
+                            </div>
+                            <div class="flex-shrink-0 align-self-start">
+                                <div class="dropdown">
+                                    <a class="dropdown-toggle btn-icon border rounded-circle" href="#"
+                                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="ri-more-2-fill text-muted font-size-16"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        <a class="dropdown-item" href="#">Yearly</a>
+                                        <a class="dropdown-item" href="#">Monthly</a>
+                                        <a class="dropdown-item" href="#">Weekly</a>
+                                        <a class="dropdown-item" href="#">Today</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-md flex-shrink-0">
+                                <span class="avatar-title bg-subtle-primary text-primary rounded fs-2">
+                                    <i class="mdi mdi-calendar"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden ms-4">
+                                <p class="text-muted text-truncate font-size-15 mb-2"> Mata Pelajaran</p>
+                                <h3 class="fs-4 flex-grow-1 mb-3">{{ $totalSubjects }} <span
+                                        class="text-muted font-size-16">Mapel</span></h3>
+                                <p class="text-muted mb-0 text-truncate"><span
+                                        class="badge bg-subtle-success text-success font-size-12 fw-normal me-1"><i
+                                            class="mdi mdi-arrow-top-right"></i> 6 Mapel</span> untuk hari ini</p>
+                            </div>
+                            <div class="flex-shrink-0 align-self-start">
+                                <div class="dropdown">
+                                    <a class="dropdown-toggle btn-icon border rounded-circle" href="#"
+                                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="ri-more-2-fill text-muted font-size-16"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        <a class="dropdown-item" href="#">Yearly</a>
+                                        <a class="dropdown-item" href="#">Monthly</a>
+                                        <a class="dropdown-item" href="#">Weekly</a>
+                                        <a class="dropdown-item" href="#">Today</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END ROW -->
+
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-header border-0 align-items-center d-flex pb-0">
+                        <h4 class="card-title mb-0 flex-grow-1">Audiences Metrics</h4>
+                        <div>
+                            <button type="button" class="btn btn-soft-secondary btn-sm" id="filter-all" data-period="all">
+                                ALL
+                            </button>
+                            <button type="button" class="btn btn-soft-secondary btn-sm" id="filter-1m" data-period="1m">
+                                1M
+                            </button>
+                            <button type="button" class="btn btn-soft-secondary btn-sm" id="filter-6m" data-period="6m">
+                                6M
+                            </button>
+                            <button type="button" class="btn btn-soft-primary btn-sm" id="filter-1y" data-period="1y">
+                                1Y
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-xl-8 audiences-border">
+                                <div id="column-chart" class="apex-charts"></div>
+                            </div>
+                            <div class="col-xl-4">
+                                <div id="donut-chart" class="apex-charts"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END ROW -->
+
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-header border-0 align-items-center d-flex pb-0">
+                        <h4 class="card-title mb-0 flex-grow-1">Daftar Siswa Terlambat</h4>
+                        <div>
+                            <div class="dropdown">
+                                <a class="dropdown-toggle text-reset" href="#" data-bs-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false">
+                                    <span class="fw-semibold">Sort By:</span>
+                                    <span class="text-muted">Yearly<i class="mdi mdi-chevron-down ms-1"></i></span>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <a class="dropdown-item" href="#">Yearly</a>
+                                    <a class="dropdown-item" href="#">Monthly</a>
+                                    <a class="dropdown-item" href="#">Weekly</a>
+                                    <a class="dropdown-item" href="#">Today</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body pt-2">
+                        <div class="table-responsive">
+                            <table class="table align-middle table-nowrap mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>NIS</th>
+                                        <th>Nama Siswa</th>
+                                        <th>Kelas</th>
+                                        <th>Tanggal</th>
+                                        <th>Waktu</th>
+                                        <th>Keterangan</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if(isset($lateStudents) && count($lateStudents) > 0)
+                                        @foreach($lateStudents as $student)
+                                    <tr>
+                                        <td><a href="javascript: void(0);" class="text-body">#{{ $student->nis }}</a> </td>
+                                        <td><img src="{{ URL::asset('build/images/users/avatar-2.jpg') }}"
+                                                class="avatar-xs rounded-circle me-2" alt="..."> {{ $student->name }}</td>
+                                        <td>
+                                            <p class="mb-0">{{ $student->class }}</p>
+                                        </td>
+                                        <td>
+                                            {{ date('d M, Y', strtotime($student->date)) }}
+                                        </td>
+                                        <td>
+                                            {{ date('h:i A', strtotime($student->time)) }}
+                                        </td>
+                                        <td>
+                                            <i class="mdi mdi-clock me-1"></i> {{ $student->late_duration }} menit
+                                        </td>
+                                        <td>
+                                            @if($student->late_duration <= 15)
+                                                <span class="badge rounded badge-soft-warning font-size-12">Terlambat</span>
+                                            @else
+                                                <span class="badge rounded badge-soft-danger font-size-12">Sangat Terlambat</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                        @endforeach
+                                    @else
+                                    <tr>
+                                        <td colspan="7" class="text-center">
+                                            <p class="text-muted mb-0">Tidak ada siswa yang terlambat hari ini</p>
+                                        </td>
+                                    </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- end table-responsive -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END ROW -->
+    @endsection
+    @section('scripts')
+        <!-- apexcharts -->
+        <script src="{{ URL::asset('build/libs/apexcharts/apexcharts.min.js') }}"></script>
+
+        <!-- Vector map-->
+        <script src="{{ URL::asset('build/libs/jsvectormap/jsvectormap.min.js') }}"></script>
+        <script src="{{ URL::asset('build/libs/jsvectormap/maps/world-merc.js') }}"></script>
+
+        <!-- Pass data to JavaScript -->
+        <script>
+            window.lateStatistics = @json($lateStatistics);
+            window.donutStatistics = @json($donutStatistics);
+            
+            // Filter functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const filterButtons = document.querySelectorAll('[data-period]');
+                const columnChart = ApexCharts.getChartByID('column-chart');
+                
+                filterButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const period = this.getAttribute('data-period');
+                        
+                        // Update button states
+                        filterButtons.forEach(btn => {
+                            btn.classList.remove('btn-soft-primary');
+                            btn.classList.add('btn-soft-secondary');
+                        });
+                        this.classList.remove('btn-soft-secondary');
+                        this.classList.add('btn-soft-primary');
+                        
+                        // Load new data based on period
+                        loadChartData(period);
+                    });
+                });
+                
+                function loadChartData(period) {
+                    fetch(`/dashboard/chart-data?period=${period}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (columnChart) {
+                                columnChart.updateOptions({
+                                    xaxis: {
+                                        categories: data.months
+                                    },
+                                    series: [{
+                                        name: 'Siswa Tepat Waktu',
+                                        data: data.onTimeCount
+                                    }, {
+                                        name: 'Siswa Terlambat',
+                                        data: data.lateCount
+                                    }]
+                                });
                             }
-                        },
-                        title: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            precision: 0,
-                            grid: {
-                                color: '#f1f1f1'
-                            }
-                        }
-                    }
+                        })
+                        .catch(error => console.error('Error loading chart data:', error));
                 }
             });
-            // Custom legend
-            const legendContainer = document.getElementById('attendanceLegend');
-            legendContainer.innerHTML = attendanceChart.data.datasets.map(ds => `
-                <span style="display:inline-flex;align-items:center;margin-right:20px;">
-                    <span style="display:inline-block;width:16px;height:16px;background:${ds.borderColor};border-radius:50%;margin-right:8px;"></span>
-                    <span>${ds.label}</span>
-                </span>
-            `).join('');
-        }
+        </script>
 
-        // Initial render
-        renderAttendanceChart(@json($attendanceData['labels']), @json($attendanceData['datasets']));
-
-        document.getElementById('attendanceRange').addEventListener('change', function() {
-            const range = this.value;
-            window.location.href = '?range=' + range;
-        });
-    </script>
-    <style>
-        .chart-legend span {
-            font-size: 15px;
-            font-weight: 500;
-        }
-    </style>
-@endpush
+        <script src="{{ URL::asset('build/js/pages/dashboard.init.js') }}"></script>
+        <!-- Fallback to resources version if build version not available -->
+        <script>
+            if (typeof ApexCharts === 'undefined') {
+                var script = document.createElement('script');
+                script.src = '{{ URL::asset("js/dashboard.init.js") }}';
+                document.head.appendChild(script);
+            }
+        </script>
+        <!-- App js -->
+        <script src="{{ URL::asset('build/js/app.js') }}"></script>
+    @endsection

@@ -19,11 +19,14 @@ class AcademicYearHelper
         $year = $year ?? now()->year;
         
         if ($month >= 7) {
-            // Juli-Desember: tahun akademik dimulai dari tahun ini
-            return $year . '/' . ($year + 1);
+            // Juli-Desember: tahun akademik dimulai dari tahun berikutnya
+            return ($year + 1) . '/' . ($year + 2);
+        } elseif ($month >= 6) {
+            // Juni: tahun akademik dimulai dari tahun depannya (skip 1 tahun)
+            return ($year + 2) . '/' . ($year + 3);
         } else {
-            // Januari-Juni: tahun akademik dimulai dari tahun lalu
-            return ($year - 1) . '/' . $year;
+            // Januari-Mei: tahun akademik dimulai dari tahun ini
+            return $year . '/' . ($year + 1);
         }
     }
     
@@ -111,7 +114,8 @@ class AcademicYearHelper
     public static function getSemesterFromMonth($month)
     {
         // Semester 1: Juli - Desember
-        // Semester 2: Januari - Juni
+        // Semester 2: Januari - Mei
+        // Juni: Bulan transisi ke tahun ajaran baru (masih semester 2)
         return ($month >= 7) ? 1 : 2;
     }
     
@@ -160,9 +164,80 @@ class AcademicYearHelper
         return [
             'academic_year' => $academicYear,
             'semester' => $semester,
+            'semester_text' => $semester == 1 ? 'ganjil' : 'genap',
             'month_name' => $months[$month],
             'year' => $year,
             'formatted' => self::formatAcademicYear($academicYear) . " - Semester $semester"
+        ];
+    }
+    
+    /**
+     * Cek apakah saat ini adalah waktu kenaikan kelas (semester genap)
+     * 
+     * @return bool
+     */
+    public static function isClassPromotionPeriod()
+    {
+        $currentInfo = self::getAcademicYearInfo();
+        return $currentInfo['semester'] == 2; // Semester genap
+    }
+    
+    /**
+     * Mendapatkan tingkat kelas berikutnya
+     * 
+     * @param string $currentGrade
+     * @return string|null
+     */
+    public static function getNextGrade($currentGrade)
+    {
+        $gradeMapping = [
+            '10' => '11',
+            '11' => '12',
+            '12' => 'lulus'
+        ];
+        
+        return $gradeMapping[$currentGrade] ?? null;
+    }
+    
+    /**
+     * Mendapatkan tahun akademik berikutnya untuk kenaikan kelas
+     * 
+     * @param string $currentAcademicYear
+     * @return string
+     */
+    public static function getNextAcademicYear($currentAcademicYear)
+    {
+        $years = explode('/', $currentAcademicYear);
+        $startYear = (int) $years[0];
+        $endYear = (int) $years[1];
+        
+        return ($startYear + 1) . '/' . ($endYear + 1);
+    }
+    
+    /**
+     * Proses kenaikan kelas untuk semester genap
+     * 
+     * @param string $currentAcademicYear
+     * @return array
+     */
+    public static function processClassPromotion($currentAcademicYear = null)
+    {
+        if (!self::isClassPromotionPeriod()) {
+            return [
+                'success' => false,
+                'message' => 'Bukan periode kenaikan kelas (semester genap)'
+            ];
+        }
+        
+        $currentAcademicYear = $currentAcademicYear ?? self::getCurrentAcademicYear();
+        $nextAcademicYear = self::getNextAcademicYear($currentAcademicYear);
+        
+        return [
+            'success' => true,
+            'current_academic_year' => $currentAcademicYear,
+            'next_academic_year' => $nextAcademicYear,
+            'current_semester' => 'genap',
+            'next_semester' => 'ganjil'
         ];
     }
 }

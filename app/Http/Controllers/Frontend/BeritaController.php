@@ -16,8 +16,17 @@ class BeritaController extends Controller
             ->latest('published_at')
             ->paginate(12);
 
+        // Get categories with counts for sidebar
+        $categories = News::published()
+            ->selectRaw('category, COUNT(*) as total')
+            ->whereNotNull('category')
+            ->groupBy('category')
+            ->orderBy('category')
+            ->get();
+
         return view('home.berita', compact(
             'featuredNews',
+            'categories',
         ));
     }
     
@@ -30,8 +39,16 @@ class BeritaController extends Controller
             ->latest('published_at')
             ->paginate(12);
 
+        // Get categories with counts for sidebar
+        $categories = News::published()
+            ->selectRaw('category, COUNT(*) as total')
+            ->whereNotNull('category')
+            ->groupBy('category')
+            ->orderBy('category')
+            ->get();
+
         // Gunakan view yang sama dengan index, dengan variabel paginator yang konsisten
-        return view('home.berita', compact('featuredNews'));
+        return view('home.berita', compact('featuredNews', 'categories'));
     }
 
     public function byTag($tag)

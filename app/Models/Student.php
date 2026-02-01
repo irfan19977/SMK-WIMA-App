@@ -14,6 +14,7 @@ class Student extends Model
     protected $keyType = 'string';
     public $incrementing = false;
     protected $table = 'student';
+    protected $with = ['classes'];
     protected $guarded = [];
 
     protected static function boot()

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Screen Sharing Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        #testResults {
+            white-space: pre-wrap;
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Screen Sharing Test</h1>
+    
+    <div class="test-section info">
+        <h2>Test Overview</h2>
+        <p>This test will verify the screen sharing functionality:</p>
+        <ol>
+            <li>Test cache functionality for frame storage</li>
+            <li>Test API endpoints for broadcasting and receiving frames</li>
+            <li>Test JavaScript functionality for screen capture</li>
+        </ol>
+    </div>
+
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="clearResults()">Clear Results</button>
+    
+    <div id="testResults"></div>
+
+    <script>
+        let testResults = '';
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            testResults += `[${timestamp}] ${message}\n`;
+            updateResults();
+        }
+        
+        function updateResults() {
+            document.getElementById('testResults').textContent = testResults;
+            document.getElementById('testResults').scrollTop = document.getElementById('testResults').scrollHeight;
+        }
+        
+        function clearResults() {
+            testResults = '';
+            updateResults();
+        }
+        
+        async function runAllTests() {
+            log('=== Starting Screen Sharing Tests ===');
+            
+            // Test 1: Cache functionality
+            await testCacheFunctionality();
+            
+            // Test 2: API endpoints
+            await testAPIEndpoints();
+            
+            // Test 3: Screen capture
+            await testScreenCapture();
+            
+            log('=== Tests Complete ===');
+        }
+        
+        async function testCacheFunctionality() {
+            log('\n--- Test 1: Cache Functionality ---');
+            
+            try {
+                // Test public endpoint first
+                const response = await fetch('/public-test-screen/test-session-123');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✓ Cache endpoint accessible');
+                    log('  Response: ' + JSON.stringify(data));
+                } else {
+                    log('✗ Cache endpoint failed: ' + response.status);
+                }
+            } catch (error) {
+                log('✗ Cache test error: ' + error.message);
+            }
+        }
+        
+        async function testAPIEndpoints() {
+            log('\n--- Test 2: API Endpoints ---');
+            
+            try {
+                // Test update endpoint with a valid screen share ID
+                const response = await fetch('/screen-shares/019bf037-035c-71d4-8d3a-c894d6809043/update');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✓ Update endpoint accessible');
+                    log('  Response: ' + JSON.stringify(data));
+                } else {
+                    log('✗ Update endpoint failed: ' + response.status);
+                    log('  Response: ' + await response.text());
+                }
+            } catch (error) {
+                log('✗ API test error: ' + error.message);
+            }
+        }
+        
+        async function testScreenCapture() {
+            log('\n--- Test 3: Screen Capture ---');
+            
+            try {
+                // Test if screen capture is supported
+                if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+                    log('✓ Screen capture API supported');
+                    
+                    // Try to get screen (this will prompt user)
+                    const stream = await navigator.mediaDevices.getDisplayMedia({
+                        video: {
+                            mediaSource: 'screen'
+                        }
+                    });
+                    
+                    log('✓ Screen capture successful');
+                    
+                    // Stop the stream immediately
+                    stream.getTracks().forEach(track => track.stop());
+                    log('✓ Test stream stopped');
+                } else {
+                    log('✗ Screen capture API not supported');
+                }
+            } catch (error) {
+                if (error.name === 'NotAllowedError') {
+                    log('⚠ Screen capture permission denied (user cancelled)');
+                } else {
+                    log('✗ Screen capture error: ' + error.message);
+                }
+            }
+        }
+        
+        // Initialize
+        log('Screen sharing test ready');
+        log('Click "Run All Tests" to begin testing');
+    </script>
+</body>
+</html>
