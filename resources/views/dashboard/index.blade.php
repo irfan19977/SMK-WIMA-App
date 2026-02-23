@@ -7,7 +7,7 @@
     <link href="{{ URL::asset('build/libs/jsvectormap/jsvectormap.min.css') }}" rel="stylesheet" type="text/css" />
 @endsection
 @section('page-title')
-    Dashboard
+    <span data-translate="page_title">{{ __('index.page_title') }}</span>
 @endsection
 @section('body')
 
@@ -25,12 +25,12 @@
                                 </span>
                             </div>
                             <div class="flex-grow-1 overflow-hidden ms-4">
-                                <p class="text-muted text-truncate font-size-15 mb-2"> Total Siswa</p>
-                                <h3 class="fs-4 flex-grow-1 mb-3">{{ $totalStudents }} <span class="text-muted font-size-16">Siswa</span>
+                                <p class="text-muted text-truncate font-size-15 mb-2" data-translate="total_students">{{ __('index.total_students') }}</p>
+                                <h3 class="fs-4 flex-grow-1 mb-3">{{ $totalStudents }} <span class="text-muted font-size-16" data-translate="students">{{ __('index.students') }}</span>
                                 </h3>
                                 <p class="text-muted mb-0 text-truncate"><span
                                         class="badge bg-subtle-success text-success font-size-12 fw-normal me-1"><i
-                                            class="mdi mdi-arrow-top-right"></i> 5.2% Peningkatan</span> vs semester lalu</p>
+                                            class="mdi mdi-arrow-top-right"></i> 5.2% <span data-translate="increase">{{ __('index.increase') }}</span></span> <span data-translate="vs_last_semester">{{ __('index.vs_last_semester') }}</span></p>
                             </div>
                             <div class="flex-shrink-0 align-self-start">
                                 <div class="dropdown">
@@ -39,10 +39,10 @@
                                         <i class="ri-more-2-fill text-muted font-size-16"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-end">
-                                        <a class="dropdown-item" href="#">Yearly</a>
-                                        <a class="dropdown-item" href="#">Monthly</a>
-                                        <a class="dropdown-item" href="#">Weekly</a>
-                                        <a class="dropdown-item" href="#">Today</a>
+                                        <a class="dropdown-item" href="#" data-translate="yearly">{{ __('index.yearly') }}</a>
+                                        <a class="dropdown-item" href="#" data-translate="monthly">{{ __('index.monthly') }}</a>
+                                        <a class="dropdown-item" href="#" data-translate="weekly">{{ __('index.weekly') }}</a>
+                                        <a class="dropdown-item" href="#" data-translate="today">{{ __('index.today') }}</a>
                                     </div>
                                 </div>
                             </div>
@@ -61,12 +61,12 @@
                                 </span>
                             </div>
                             <div class="flex-grow-1 overflow-hidden ms-4">
-                                <p class="text-muted text-truncate font-size-15 mb-2"> Kelas Aktif</p>
-                                <h3 class="fs-4 flex-grow-1 mb-3">{{ $activeClasses }} <span class="text-muted font-size-16">Kelas</span>
+                                <p class="text-muted text-truncate font-size-15 mb-2" data-translate="active_classes">{{ __('index.active_classes') }}</p>
+                                <h3 class="fs-4 flex-grow-1 mb-3">{{ $activeClasses }} <span class="text-muted font-size-16" data-translate="classes">{{ __('index.classes') }}</span>
                                 </h3>
                                 <p class="text-muted mb-0 text-truncate"><span
                                         class="badge bg-subtle-success text-success font-size-12 fw-normal me-1"><i
-                                            class="mdi mdi-arrow-top-right"></i> +8 Kelas</span> vs semester lalu</p>
+                                            class="mdi mdi-arrow-top-right"></i> +8 <span data-translate="classes">{{ __('index.classes') }}</span></span> <span data-translate="vs_last_semester">{{ __('index.vs_last_semester') }}</span></p>
                             </div>
                             <div class="flex-shrink-0 align-self-start">
                                 <div class="dropdown">
@@ -75,10 +75,10 @@
                                         <i class="ri-more-2-fill text-muted font-size-16"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-end">
-                                        <a class="dropdown-item" href="#">Yearly</a>
-                                        <a class="dropdown-item" href="#">Monthly</a>
-                                        <a class="dropdown-item" href="#">Weekly</a>
-                                        <a class="dropdown-item" href="#">Today</a>
+                                        <a class="dropdown-item" href="#" data-translate="yearly">{{ __('index.yearly') }}</a>
+                                        <a class="dropdown-item" href="#" data-translate="monthly">{{ __('index.monthly') }}</a>
+                                        <a class="dropdown-item" href="#" data-translate="weekly">{{ __('index.weekly') }}</a>
+                                        <a class="dropdown-item" href="#" data-translate="today">{{ __('index.today') }}</a>
                                     </div>
                                 </div>
                             </div>
@@ -97,12 +97,12 @@
                                 </span>
                             </div>
                             <div class="flex-grow-1 overflow-hidden ms-4">
-                                <p class="text-muted text-truncate font-size-15 mb-2"> Kehadiran Hari Ini</p>
+                                <p class="text-muted text-truncate font-size-15 mb-2" data-translate="todays_attendance">{{ __('index.todays_attendance') }}</p>
                                 <h3 class="fs-4 flex-grow-1 mb-3">{{ $todayAttendance }}<span class="text-muted font-size-16">%</span>
                                 </h3>
                                 <p class="text-muted mb-0 text-truncate"><span
                                         class="badge bg-subtle-success text-success font-size-12 fw-normal me-1"><i
-                                            class="mdi mdi-arrow-top-right"></i> 2.3% Peningkatan</span> vs minggu lalu</p>
+                                            class="mdi mdi-arrow-top-right"></i> 2.3% <span data-translate="increase">{{ __('index.increase') }}</span></span> <span data-translate="vs_last_week">{{ __('index.vs_last_week') }}</span></p>
                             </div>
                             <div class="flex-shrink-0 align-self-start">
                                 <div class="dropdown">
@@ -111,10 +111,10 @@
                                         <i class="ri-more-2-fill text-muted font-size-16"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-end">
-                                        <a class="dropdown-item" href="#">Yearly</a>
-                                        <a class="dropdown-item" href="#">Monthly</a>
-                                        <a class="dropdown-item" href="#">Weekly</a>
-                                        <a class="dropdown-item" href="#">Today</a>
+                                        <a class="dropdown-item" href="#" data-translate="yearly">{{ __('index.yearly') }}</a>
+                                        <a class="dropdown-item" href="#" data-translate="monthly">{{ __('index.monthly') }}</a>
+                                        <a class="dropdown-item" href="#" data-translate="weekly">{{ __('index.weekly') }}</a>
+                                        <a class="dropdown-item" href="#" data-translate="today">{{ __('index.today') }}</a>
                                     </div>
                                 </div>
                             </div>
@@ -133,12 +133,12 @@
                                 </span>
                             </div>
                             <div class="flex-grow-1 overflow-hidden ms-4">
-                                <p class="text-muted text-truncate font-size-15 mb-2"> Mata Pelajaran</p>
+                                <p class="text-muted text-truncate font-size-15 mb-2" data-translate="subjects">{{ __('index.subjects') }}</p>
                                 <h3 class="fs-4 flex-grow-1 mb-3">{{ $totalSubjects }} <span
-                                        class="text-muted font-size-16">Mapel</span></h3>
+                                        class="text-muted font-size-16" data-translate="mapel">{{ __('index.mapel') }}</span></h3>
                                 <p class="text-muted mb-0 text-truncate"><span
                                         class="badge bg-subtle-success text-success font-size-12 fw-normal me-1"><i
-                                            class="mdi mdi-arrow-top-right"></i> 6 Mapel</span> untuk hari ini</p>
+                                            class="mdi mdi-arrow-top-right"></i> 6 <span data-translate="mapel">{{ __('index.mapel') }}</span></span> <span data-translate="for_today">{{ __('index.for_today') }}</span></p>
                             </div>
                             <div class="flex-shrink-0 align-self-start">
                                 <div class="dropdown">
@@ -147,10 +147,10 @@
                                         <i class="ri-more-2-fill text-muted font-size-16"></i>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-end">
-                                        <a class="dropdown-item" href="#">Yearly</a>
-                                        <a class="dropdown-item" href="#">Monthly</a>
-                                        <a class="dropdown-item" href="#">Weekly</a>
-                                        <a class="dropdown-item" href="#">Today</a>
+                                        <a class="dropdown-item" href="#" data-translate="yearly">{{ __('index.yearly') }}</a>
+                                        <a class="dropdown-item" href="#" data-translate="monthly">{{ __('index.monthly') }}</a>
+                                        <a class="dropdown-item" href="#" data-translate="weekly">{{ __('index.weekly') }}</a>
+                                        <a class="dropdown-item" href="#" data-translate="today">{{ __('index.today') }}</a>
                                     </div>
                                 </div>
                             </div>
@@ -165,19 +165,15 @@
             <div class="col-xl-12">
                 <div class="card">
                     <div class="card-header border-0 align-items-center d-flex pb-0">
-                        <h4 class="card-title mb-0 flex-grow-1">Audiences Metrics</h4>
+                        <h4 class="card-title mb-0 flex-grow-1" data-translate="attendance_statistics">{{ __('index.attendance_statistics') }}</h4>
                         <div>
-                            <button type="button" class="btn btn-soft-secondary btn-sm" id="filter-all" data-period="all">
-                                ALL
+                            <button type="button" class="btn btn-soft-secondary btn-sm" id="filter-all" data-period="all" data-translate="all">{{ __('index.all') }}
                             </button>
-                            <button type="button" class="btn btn-soft-secondary btn-sm" id="filter-1m" data-period="1m">
-                                1M
+                            <button type="button" class="btn btn-soft-secondary btn-sm" id="filter-1m" data-period="1m" data-translate="one_month">{{ __('index.one_month') }}
                             </button>
-                            <button type="button" class="btn btn-soft-secondary btn-sm" id="filter-6m" data-period="6m">
-                                6M
+                            <button type="button" class="btn btn-soft-secondary btn-sm" id="filter-6m" data-period="6m" data-translate="six_months">{{ __('index.six_months') }}
                             </button>
-                            <button type="button" class="btn btn-soft-primary btn-sm" id="filter-1y" data-period="1y">
-                                1Y
+                            <button type="button" class="btn btn-soft-primary btn-sm" id="filter-1y" data-period="1y" data-translate="one_year">{{ __('index.one_year') }}
                             </button>
                         </div>
                     </div>
@@ -200,19 +196,19 @@
             <div class="col-xl-12">
                 <div class="card">
                     <div class="card-header border-0 align-items-center d-flex pb-0">
-                        <h4 class="card-title mb-0 flex-grow-1">Daftar Siswa Terlambat</h4>
+                        <h4 class="card-title mb-0 flex-grow-1" data-translate="late_students_list">{{ __('index.late_students_list') }}</h4>
                         <div>
                             <div class="dropdown">
                                 <a class="dropdown-toggle text-reset" href="#" data-bs-toggle="dropdown"
                                     aria-haspopup="true" aria-expanded="false">
-                                    <span class="fw-semibold">Sort By:</span>
-                                    <span class="text-muted">Yearly<i class="mdi mdi-chevron-down ms-1"></i></span>
+                                    <span class="fw-semibold" data-translate="sort_by">{{ __('index.sort_by') }}:</span>
+                                    <span class="text-muted" data-translate="yearly">{{ __('index.yearly') }}<i class="mdi mdi-chevron-down ms-1"></i></span>
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end">
-                                    <a class="dropdown-item" href="#">Yearly</a>
-                                    <a class="dropdown-item" href="#">Monthly</a>
-                                    <a class="dropdown-item" href="#">Weekly</a>
-                                    <a class="dropdown-item" href="#">Today</a>
+                                    <a class="dropdown-item" href="#" data-translate="yearly">{{ __('index.yearly') }}</a>
+                                    <a class="dropdown-item" href="#" data-translate="monthly">{{ __('index.monthly') }}</a>
+                                    <a class="dropdown-item" href="#" data-translate="weekly">{{ __('index.weekly') }}</a>
+                                    <a class="dropdown-item" href="#" data-translate="today">{{ __('index.today') }}</a>
                                 </div>
                             </div>
                         </div>
@@ -222,13 +218,13 @@
                             <table class="table align-middle table-nowrap mb-0">
                                 <thead>
                                     <tr>
-                                        <th>NIS</th>
-                                        <th>Nama Siswa</th>
-                                        <th>Kelas</th>
-                                        <th>Tanggal</th>
-                                        <th>Waktu</th>
-                                        <th>Keterangan</th>
-                                        <th>Status</th>
+                                        <th data-translate="nis">{{ __('index.nis') }}</th>
+                                        <th data-translate="student_name">{{ __('index.student_name') }}</th>
+                                        <th data-translate="class">{{ __('index.class') }}</th>
+                                        <th data-translate="date">{{ __('index.date') }}</th>
+                                        <th data-translate="time">{{ __('index.time') }}</th>
+                                        <th data-translate="description">{{ __('index.description') }}</th>
+                                        <th data-translate="status">{{ __('index.status') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -248,13 +244,13 @@
                                             {{ date('h:i A', strtotime($student->time)) }}
                                         </td>
                                         <td>
-                                            <i class="mdi mdi-clock me-1"></i> {{ $student->late_duration }} menit
+                                            <i class="mdi mdi-clock me-1"></i> {{ $student->late_duration }} <span data-translate="minutes">{{ __('index.minutes') }}</span>
                                         </td>
                                         <td>
                                             @if($student->late_duration <= 15)
-                                                <span class="badge rounded badge-soft-warning font-size-12">Terlambat</span>
+                                                <span class="badge rounded badge-soft-warning font-size-12" data-translate="late">{{ __('index.late') }}</span>
                                             @else
-                                                <span class="badge rounded badge-soft-danger font-size-12">Sangat Terlambat</span>
+                                                <span class="badge rounded badge-soft-danger font-size-12" data-translate="very_late">{{ __('index.very_late') }}</span>
                                             @endif
                                         </td>
                                     </tr>
@@ -262,7 +258,7 @@
                                     @else
                                     <tr>
                                         <td colspan="7" class="text-center">
-                                            <p class="text-muted mb-0">Tidak ada siswa yang terlambat hari ini</p>
+                                            <p class="text-muted mb-0" data-translate="no_late_students">{{ __('index.no_late_students') }}</p>
                                         </td>
                                     </tr>
                                     @endif
@@ -289,7 +285,6 @@
             window.lateStatistics = @json($lateStatistics);
             window.donutStatistics = @json($donutStatistics);
             
-            // Filter functionality
             document.addEventListener('DOMContentLoaded', function() {
                 const filterButtons = document.querySelectorAll('[data-period]');
                 const columnChart = ApexCharts.getChartByID('column-chart');
@@ -321,10 +316,10 @@
                                         categories: data.months
                                     },
                                     series: [{
-                                        name: 'Siswa Tepat Waktu',
+                                        name: '{{ __('index.on_time_students') }}',
                                         data: data.onTimeCount
                                     }, {
-                                        name: 'Siswa Terlambat',
+                                        name: '{{ __('index.late_students') }}',
                                         data: data.lateCount
                                     }]
                                 });
@@ -335,15 +330,32 @@
             });
         </script>
 
-        <script src="{{ URL::asset('build/js/pages/dashboard.init.js') }}"></script>
-        <!-- Fallback to resources version if build version not available -->
+        <script src="{{ URL::asset('js/dashboard.init.js') }}"></script>
+        
+        <!-- Load data from controller to JavaScript -->
         <script>
-            if (typeof ApexCharts === 'undefined') {
-                var script = document.createElement('script');
-                script.src = '{{ URL::asset("js/dashboard.init.js") }}';
-                document.head.appendChild(script);
-            }
+        console.log('Late Statistics:', {{ json_encode($lateStatistics) }});
+        console.log('Donut Statistics:', {{ json_encode($donutStatistics) }});
+        window.lateStatistics = {{ json_encode($lateStatistics) }};
+        window.donutStatistics = {{ json_encode($donutStatistics) }};
         </script>
+        
+        <!-- Load translations for JavaScript -->
+        <script>
+        window.translations = {
+            on_time_students: "{{ __('index.on_time_students') }}",
+            late_students: "{{ __('index.late_students') }}",
+            on_time: "{{ __('index.on_time') }}",
+            late: "{{ __('index.late') }}",
+            very_late: "{{ __('index.very_late') }}",
+            others: "{{ __('index.others') }}",
+            total_attendance: "{{ __('index.total_attendance') }}",
+            minutes: "{{ __('index.minutes') }}",
+            no_late_students: "{{ __('index.no_late_students') }}",
+            for_today: "{{ __('index.for_today') }}"
+        };
+        </script>
+        
         <!-- App js -->
         <script src="{{ URL::asset('build/js/app.js') }}"></script>
     @endsection

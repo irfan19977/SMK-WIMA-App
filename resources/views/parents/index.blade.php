@@ -1,461 +1,489 @@
-@extends('layouts.app')
+@extends('layouts.master')
+@section('title')
+    {{ __('index.parent_list') }}
+@endsection
+@section('css')
+    <!-- Sweet Alert-->
+    <link href="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
+@endsection
+@section('page-title')
+    {{ __('index.parent_list') }}
+@endsection
+@section('body')
 
+    <body data-sidebar="colored">
+@endsection
 @section('content')
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h4 class="card-title mb-1">{{ __('index.parent_list') }}</h4>                            </div>
+                        <div class="d-flex gap-2">
+                            <a href="{{ route('parents.create') }}" class="btn btn-primary">
+                                <i class="mdi mdi-plus"></i> {{ __('index.add_parent') }}
+                            </a>
+                            <button class="btn btn-success" onclick="exportExcel()">
+                                <i class="mdi mdi-file-excel"></i> Export Excel
+                            </button>
+                            <button class="btn btn-info" onclick="printPDF()">
+                                <i class="mdi mdi-file-pdf"></i> Cetak PDF
+                            </button>
+                        </div>
+                    </div>
 
-<div class="card">
-    <div class="card-header">
-        <h4>Daftar Wali Murid</h4>
-        <!-- Ganti bagian form search dengan ini -->
-        <div class="card-header-action">
-            <div class="input-group">
-                <a href="{{ route('parents.create') }}" class="btn btn-primary" data-toggle="tooltip"
-                    style="margin-right: 10px;" title="Tambah Data"><i class="fas fa-plus"></i></a>
-                <input type="text" class="form-control" placeholder="Cari Wali (Nama, NISN)" 
-                    name="q" id="search-input" autocomplete="off">
-                <div class="input-group-btn">
-                    <button type="button" class="btn btn-primary" id="search-button" style="margin-top: 1px;">
-                        <i class="fas fa-search"></i>
-                    </button>
-                    <button type="button" class="btn btn-primary" id="clear-search" title="Clear Search" style="display: none; margin-top: 1px;">
-                        <i class="fas fa-times"></i>
-                    </button>
+                    <!-- Search and Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="{{ __('index.search_parent_name_student_nisn') }}" id="search-input" value="{{ request('q') }}">
+                                <button class="btn btn-primary" type="button" id="search-button">
+                                    <i class="mdi mdi-magnify"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2 justify-content-end">
+                                <label class="mb-0">Show:</label>
+                                <select class="form-select w-auto" id="per-page-select">
+                                    <option value="10" {{ $parents->perPage() == 10 ? 'selected' : '' }}>10</option>
+                                    <option value="25" {{ $parents->perPage() == 25 ? 'selected' : '' }}>25</option>
+                                    <option value="50" {{ $parents->perPage() == 50 ? 'selected' : '' }}>50</option>
+                                    <option value="100" {{ $parents->perPage() == 100 ? 'selected' : '' }}>100</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <div id="loading-spinner" class="text-center py-4" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <table class="table table-striped mb-0" id="parents-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('index.no') }}</th>
+                                    <th>{{ __('index.name') }}</th>
+                                    <th>{{ __('index.parent_status') }}</th>
+                                    <th>{{ __('index.email') }}</th>
+                                    <th>{{ __('index.phone') }}</th>
+                                    <th>{{ __('index.child') }}</th>
+                                    <th>{{ __('index.account_status') }}</th>
+                                    <th>{{ __('index.actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="parents-tbody">
+                                @forelse ($parents as $item)
+                                <tr>
+                                    <th scope="row">{{ ($parents->currentPage() - 1) * $parents->perPage() + $loop->iteration }}</th>
+                                    <td>
+                                        <a href="{{ route('profile.show') }}?user_id={{ $item->user_id }}" class="text-decoration-none fw-bold text-primary">
+                                            {{ $item->name }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        @php
+                                        $statusClass = 'bg-primary';
+                                        $statusText = $item->status ?? 'ayah';
+                                        
+                                        switch($item->status) {
+                                            case 'ayah':
+                                                $statusClass = 'bg-primary';
+                                                $statusText = __('index.father');
+                                                break;
+                                            case 'ibu':
+                                                $statusClass = 'bg-pink';
+                                                $statusText = __('index.mother');
+                                                break;
+                                            case 'wali':
+                                                $statusClass = 'bg-info';
+                                                $statusText = __('index.guardian');
+                                                break;
+                                        }
+                                        @endphp
+                                        <span class="badge rounded-pill {{ $statusClass }} font-size-12">
+                                            {{ $statusText }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $item->user->email }}</td>
+                                    <td>{{ $item->user->phone ?? '-' }}</td>
+                                    <td>
+                                        @if($item->student)
+                                            <small class="text-muted">{{ $item->student->name }} ({{ $item->student->nisn ?? 'No NISN' }})</small>
+                                        @else
+                                            <small class="text-muted">-</small>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="badge rounded-pill {{ $item->user->status ? 'bg-success' : 'bg-light' }} font-size-12">
+                                            {{ $item->user->status ? __('index.active') : __('index.blocked') }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ route('parents.edit', $item->id) }}" class="btn btn-sm btn-soft-primary">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-soft-danger" onclick="confirmDelete('{{ $item->id }}', '{{ $item->name }}')">
+                                                <i class="mdi mdi-delete"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="8" class="text-center">{{ __('index.no_parent_data') }}</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    @if($parents->hasPages())
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="text-muted" id="pagination-info">
+                                {{ __('index.showing') }} {{ $parents->firstItem() }} {{ __('index.to') }} {{ $parents->lastItem() }} {{ __('index.of') }} {{ $parents->total() }} {{ __('index.data') }}
+                            </div>
+                            <div>
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination" id="pagination-links">
+                                        {{-- Previous Link --}}
+                                        @if($parents->onFirstPage())
+                                            <li class="page-item disabled">
+                                                <a class="page-link" href="#" data-page="1" tabindex="-1">Previous</a>
+                                            </li>
+                                        @else
+                                            <li class="page-item">
+                                                <a class="page-link" href="#" data-page="{{ $parents->currentPage() - 1 }}">Previous</a>
+                                            </li>
+                                        @endif
+
+                                        {{-- Page Numbers --}}
+                                        @for($i = 1; $i <= $parents->lastPage(); $i++)
+                                            @if($i == $parents->currentPage())
+                                                <li class="page-item active">
+                                                    <a class="page-link" href="#" data-page="{{ $i }}">{{ $i }} <span class="sr-only">(current)</span></a>
+                                                </li>
+                                            @else
+                                                <li class="page-item">
+                                                    <a class="page-link" href="#" data-page="{{ $i }}">{{ $i }}</a>
+                                                </li>
+                                            @endif
+                                        @endfor
+
+                                        {{-- Next Link --}}
+                                        @if($parents->hasMorePages())
+                                            <li class="page-item">
+                                                <a class="page-link" href="#" data-page="{{ $parents->currentPage() + 1 }}">Next</a>
+                                            </li>
+                                        @else
+                                            <li class="page-item disabled">
+                                                <a class="page-link" href="#" data-page="{{ $parents->lastPage() }}" tabindex="-1">Next</a>
+                                            </li>
+                                        @endif
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    @endif
+
                 </div>
             </div>
         </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-striped" id="sortable-table">
-                <thead>
-                    <tr class="text-center">
-                        <th>No.</th>
-                        <th>Nama</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Nama Anak</th>
-                        <th>NISN</th>
-                        <th>Kelas</th>
-                        <th>Status</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($parents as $parent)
-                    <tr>
-                        <td class="text-center">{{ $loop->iteration }}</td>
-                        <td><a href="#" class="text-secondery font-weight-bold">{{ $parent->name }}</a></td>
-                        <td>{{ $parent->user->email }}</td>
-                        <td>{{ $parent->user->phone }}</td>
-                        <td>{{ $parent->student->name ?? '-' }}</td>
-                        <td>{{ $parent->student->nisn ?? '-' }}</td>
-                        <td>?????</td>
-                        <td>
-                            <div class="form-group" style="margin-top: 25px">
-                                <label class="custom-switch mt-2">
-                                    <input type="checkbox" class="custom-switch-input toggle-active"
-                                        data-id="{{ $parent->user->id }}"
-                                        {{ $parent->user->status ? 'checked' : '' }}>
-                                    <span class="custom-switch-indicator"></span>
-                                    <span
-                                        class="custom-switch-description">{{ $parent->user->status ? 'Aktif' : 'Diblokir' }}</span>
-                                </label>
-                            </div>
-                        </td>
-                        <td>
-                            <a href="{{ route('parents.edit', $parent->id) }}" class="btn btn-primary btn-action mr-1"
-                                data-toggle="tooltip" title="Edit">
-                                <i class="fas fa-pencil-alt"></i>
-                            </a>
-
-                            <form id="delete-form-{{ $parent->id }}" action="{{ route('parents.destroy', $parent->id) }}"
-                                method="POST" style="display:inline;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" class="btn btn-danger btn-action" data-toggle="tooltip"
-                                    title="Delete" onclick="confirmDelete('{{ $parent->id }}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="10" class="text-center">Tidak ada data wali siswa</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    {{-- Pagination --}}
-    {{-- @if ($schedules->hasPages())
-    <div class="card-footer text-center">
-      <nav class="d-inline-block">
-        {{ $schedules->links() }}
-    </nav>
-</div>
-@endif --}}
-</div>
+    <!-- end row -->
 @endsection
-
-@push('scripts')
+@section('scripts')
+    <!-- Sweet Alerts js -->
+    <script src="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.js') }}"></script>
+    
     <script>
-        function confirmDelete(id) {
-            swal({
-            title: "Apakah Anda Yakin?",
-            text: "Data ini akan dihapus secara permanen!",
-            icon: "warning",
-            buttons: [
-                'Tidak',
-                'Ya, Hapus'
-            ],
-            dangerMode: true,
-            }).then(function(isConfirm) {
-            if (isConfirm) {
-                const form = document.getElementById(`delete-form-${id}`);
-                const url = form.action;
+        let currentPage = 1;
+        let currentSearch = '{{ request('q', '') }}';
+        let currentPerPage = {{ $parents->perPage() }};
 
-                fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    _method: 'DELETE'
-                })
-                })
-                .then(response => response.json())
-                .then(data => {
-                if (data.success) {
-                    swal({
-                    title: "Berhasil!",
-                    text: "Data berhasil dihapus.",
-                    icon: "success",
-                    timer: 3000,
-                    buttons: false
-                    }).then(() => {
-                    // Hapus baris tabel
-                    const rowToRemove = document.querySelector(`#delete-form-${id}`).closest('tr');
-                    rowToRemove.remove();
-
-                    // Perbarui nomor urut
-                    renumberTableRows();
-                    });
-                } else {
-                    swal("Gagal", "Terjadi kesalahan saat menghapus data.", "error");
-                }
-                });
-            }
-            });
-        }
-
-        function renumberTableRows() {
-            const tableBody = document.querySelector('#sortable-table tbody');
-            const rows = tableBody.querySelectorAll('tr');
-            
-            const currentPage = {{ $parents->currentPage() }};
-            const perPage = {{ $parents->perPage() }};
-            
-            rows.forEach((row, index) => {
-            const numberCell = row.querySelector('td:first-child');
-            if (numberCell) {
-                numberCell.textContent = (currentPage - 1) * perPage + index + 1;
-            }
-            });
-        }
-    </script>
-
-    <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Get the CSRF token from meta tag
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            
-            const toggleSwitches = document.querySelectorAll('.toggle-active');
-            
-            toggleSwitches.forEach(switchElement => {
-                switchElement.addEventListener('change', function() {
-                    const parentId = this.dataset.id;
-                    const isChecked = this.checked;
-                    const descriptionElement = this.closest('.custom-switch').querySelector('.custom-switch-description');
-                    
-                    // Create form data
-                    const formData = new FormData();
-                    formData.append('_token', csrfToken);
-                    
-                    // Show loading indicator
-                    descriptionElement.textContent = 'Memperbarui...';
-                    
-                    fetch(`/parents/${parentId}/toggle-active`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json'
-                        },
-                        body: formData,
-                        credentials: 'same-origin'
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            // Update UI
-                            descriptionElement.textContent = data.is_active ? 'Aktif' : 'Diblokir';
-                            
-                            swal({
-                                title: "Berhasil!",
-                                text: data.message,
-                                icon: "success",
-                                timer: 3000,
-                                buttons: false
-                            });
-                        } else {
-                            // Restore original state
-                            this.checked = !isChecked;
-                            descriptionElement.textContent = isChecked ? 'Diblokir' : 'Aktif';
-                            
-                            swal("Gagal", "Gagal memperbarui status", "error");
-                        }
-                    })
-                    .catch(error => {
-                        // Restore original state
-                        this.checked = !isChecked;
-                        descriptionElement.textContent = isChecked ? 'Diblokir' : 'Aktif';
-                        
-                        console.error('Error:', error);
-                        swal("Error", "Terjadi kesalahan pada server", "error");
-                    });
+            const searchInput = document.getElementById('search-input');
+            const searchButton = document.getElementById('search-button');
+            const perPageSelect = document.getElementById('per-page-select');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const parentsTable = document.getElementById('parents-table');
+            const parentsTbody = document.getElementById('parents-tbody');
+            const paginationLinks = document.getElementById('pagination-links');
+            const paginationInfo = document.getElementById('pagination-info');
+
+            // Set initial search value
+            if (searchInput && currentSearch) {
+                searchInput.value = currentSearch;
+            }
+
+            // Per page change
+            if (perPageSelect) {
+                perPageSelect.addEventListener('change', function() {
+                    currentPerPage = this.value;
+                    currentPage = 1;
+                    performAjaxSearch();
                 });
+            }
+
+            // Pagination click handler
+            if (paginationLinks) {
+                paginationLinks.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const pageLink = e.target.closest('a[data-page]');
+                    if (pageLink && !pageLink.parentElement.classList.contains('disabled')) {
+                        currentPage = parseInt(pageLink.dataset.page);
+                        performAjaxSearch();
+                    }
+                });
+            }
+
+            // Search functionality
+            let searchTimeout;
+            
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    currentSearch = this.value.trim();
+                    currentPage = 1;
+                    performAjaxSearch();
+                }, 500);
+            });
+
+            searchButton.addEventListener('click', function() {
+                clearTimeout(searchTimeout);
+                currentSearch = searchInput.value.trim();
+                currentPage = 1;
+                performAjaxSearch();
+            });
+
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    clearTimeout(searchTimeout);
+                    currentSearch = this.value.trim();
+                    currentPage = 1;
+                    performAjaxSearch();
+                }
             });
         });
-    </script>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.querySelector('input[name="q"]');
-        const tableBody = document.querySelector('#sortable-table tbody');
-        let searchTimeout;
-
-        // Fungsi untuk melakukan pencarian
-        function performSearch(query) {
-            // Tampilkan loading
-            tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Mencari data...</td></tr>';
+        // Global function for AJAX search
+        function performAjaxSearch() {
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const parentsTable = document.getElementById('parents-table');
+            const parentsTbody = document.getElementById('parents-tbody');
+            const paginationLinks = document.getElementById('pagination-links');
+            const paginationInfo = document.getElementById('pagination-info');
             
-            // Kirim request AJAX
-            fetch(`{{ route('parents.index') }}?q=${encodeURIComponent(query)}`, {
+            showLoading();
+            
+            const params = new URLSearchParams();
+            if (currentSearch) params.append('q', currentSearch);
+            params.append('page', currentPage);
+            params.append('per_page', currentPerPage);
+
+            fetch(`{{ route('parents.index') }}?${params.toString()}`, {
                 method: 'GET',
                 headers: {
-                    'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
                 }
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                // Update tabel dengan data hasil pencarian
-                updateTable(data.parents, data.currentPage, data.perPage);
+                hideLoading();
+                if (data.success) {
+                    updateTable(data.data);
+                    updatePagination(data.pagination);
+                } else {
+                    console.error('Search failed:', data);
+                }
             })
             .catch(error => {
+                hideLoading();
                 console.error('Error:', error);
-                tableBody.innerHTML = '<tr><td colspan="9" class="text-center text-danger">Terjadi kesalahan saat mencari data</td></tr>';
             });
-        }
 
-        // Fungsi untuk update tabel
-        function updateTable(parents, currentPage = 1, perPage = 10) {
-            if (parents.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada data wali siswa</td></tr>';
-                return;
+            function showLoading() {
+                if (loadingSpinner) loadingSpinner.style.display = 'block';
+                if (parentsTable) parentsTable.style.opacity = '0.5';
             }
 
-            let html = '';
-            parents.forEach((parent, index) => {
-                const number = (currentPage - 1) * perPage + index + 1;
-                html += `
-                    <tr>
-                        <td class="text-center">${number}</td>
-                        <td><a href="#" class="text-secondery font-weight-bold">${parent.name}</a></td>
-                        <td>${parent.user.email}</td>
-                        <td>${parent.user.phone || '-'}</td>
-                        <td>${parent.student ? parent.student.name : '-'}</td>
-                        <td>${parent.student ? parent.student.nisn : '-'}</td>
-                        <td>?????</td>
-                        <td>
-                            <div class="form-group" style="margin-top: 25px">
-                                <label class="custom-switch mt-2">
-                                    <input type="checkbox" class="custom-switch-input toggle-active"
-                                        data-id="${parent.user.id}"
-                                        ${parent.user.status ? 'checked' : ''}>
-                                    <span class="custom-switch-indicator"></span>
-                                    <span class="custom-switch-description">${parent.user.status ? 'Aktif' : 'Diblokir'}</span>
-                                </label>
-                            </div>
-                        </td>
-                        <td>
-                            <a href="/parents/${parent.id}/edit" class="btn btn-primary btn-action mr-1"
-                                data-toggle="tooltip" title="Edit">
-                                <i class="fas fa-pencil-alt"></i>
-                            </a>
-                            <form id="delete-form-${parent.id}" action="/parents/${parent.id}"
-                                method="POST" style="display:inline;">
-                                <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').getAttribute('content')}">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="button" class="btn btn-danger btn-action" data-toggle="tooltip"
-                                    title="Delete" onclick="confirmDelete('${parent.id}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            tableBody.innerHTML = html;
-            
-            // Re-initialize toggle switches untuk data baru
-            initializeToggleSwitches();
+            function hideLoading() {
+                if (loadingSpinner) loadingSpinner.style.display = 'none';
+                if (parentsTable) parentsTable.style.opacity = '1';
+            }
+
+            function updateTable(parentsData) {
+                if (!parentsTbody) return;
+                
+                if (parentsData.length === 0) {
+                    parentsTbody.innerHTML = '<tr><td colspan="8" class="text-center">Tidak ada data wali murid</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                parentsData.forEach((item, index) => {
+                    const rowNumber = (currentPage - 1) * currentPerPage + index + 1;
+                    
+                    // Determine status badge
+                    let statusClass = 'bg-primary';
+                    let statusText = item.status || 'ayah';
+                    switch(item.status) {
+                        case 'ayah':
+                            statusClass = 'bg-primary';
+                            statusText = 'Ayah';
+                            break;
+                        case 'ibu':
+                            statusClass = 'bg-pink';
+                            statusText = 'Ibu';
+                            break;
+                        case 'wali':
+                            statusClass = 'bg-info';
+                            statusText = 'Wali';
+                            break;
+                    }
+                    
+                    html += `
+                        <tr>
+                            <th scope="row">${rowNumber}</th>
+                            <td>
+                                <strong>${item.name}</strong>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill ${statusClass} font-size-12">
+                                    ${statusText}
+                                </span>
+                            </td>
+                            <td>${item.email}</td>
+                            <td>${item.phone || '-'}</td>
+                            <td>
+                                ${item.student ? 
+                                    `<small class="text-muted">${item.student.name} (${item.student.nisn || 'No NISN'})</small>` : 
+                                    '<small class="text-muted">-</small>'}
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill ${item.user_status ? 'bg-success' : 'bg-light'} font-size-12">
+                                    ${item.user_status ? 'Aktif' : 'Diblokir'}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="/parents/${item.id}/edit" class="btn btn-sm btn-soft-primary">
+                                        <i class="mdi mdi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-soft-danger" onclick="confirmDelete('${item.id}', '${item.name.replace(/'/g, "\\'")}')">
+                                        <i class="mdi mdi-delete"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                parentsTbody.innerHTML = html;
+            }
+
+            function updatePagination(pagination) {
+                if (!paginationInfo || !paginationLinks) return;
+                
+                // Update pagination info
+                const startItem = (pagination.current_page - 1) * pagination.per_page + 1;
+                const endItem = Math.min(pagination.current_page * pagination.per_page, pagination.total);
+                paginationInfo.textContent = `Menampilkan ${startItem} sampai ${endItem} dari ${pagination.total} data`;
+
+                // Update pagination links
+                let html = '';
+                
+                // Previous link
+                if (pagination.current_page === 1) {
+                    html += '<li class="page-item disabled"><a class="page-link" href="#" data-page="1" tabindex="-1">Previous</a></li>';
+                } else {
+                    html += `<li class="page-item"><a class="page-link" href="#" data-page="${pagination.current_page - 1}">Previous</a></li>`;
+                }
+
+                // Page numbers
+                for (let i = 1; i <= pagination.last_page; i++) {
+                    if (i === pagination.current_page) {
+                        html += `<li class="page-item active"><a class="page-link" href="#" data-page="${i}">${i} <span class="sr-only">(current)</span></a></li>`;
+                    } else {
+                        html += `<li class="page-item"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+                    }
+                }
+
+                // Next link
+                if (pagination.current_page === pagination.last_page) {
+                    html += `<li class="page-item disabled"><a class="page-link" href="#" data-page="${pagination.last_page}" tabindex="-1">Next</a></li>`;
+                } else {
+                    html += `<li class="page-item"><a class="page-link" href="#" data-page="${pagination.current_page + 1}">Next</a></li>`;
+                }
+
+                paginationLinks.innerHTML = html;
+            }
         }
 
-        // Event listener untuk input pencarian
-        searchInput.addEventListener('input', function() {
-            const query = this.value.trim();
-            
-            // Clear timeout sebelumnya
-            clearTimeout(searchTimeout);
-            
-            // Set timeout baru untuk menghindari terlalu banyak request
-            searchTimeout = setTimeout(() => {
-                if (query === '') {
-                    // Jika search kosong, load semua data
-                    performSearch('');
-                } else {
-                    // Lakukan pencarian
-                    performSearch(query);
-                }
-            }, 300); // Delay 300ms
-        });
+        // Export Excel
+        function exportExcel() {
+            const url = new URL(window.location.href);
+            url.searchParams.set('export', 'excel');
+            window.open(url.toString(), '_blank');
+        }
 
-        // Fungsi untuk inisialisasi toggle switches
-        function initializeToggleSwitches() {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const toggleSwitches = document.querySelectorAll('.toggle-active');
-            
-            // Remove existing event listeners to prevent duplicates
-            toggleSwitches.forEach(switchElement => {
-                const newElement = switchElement.cloneNode(true);
-                switchElement.parentNode.replaceChild(newElement, switchElement);
-            });
-            
-            // Add new event listeners
-            const newToggleSwitches = document.querySelectorAll('.toggle-active');
-            newToggleSwitches.forEach(switchElement => {
-                switchElement.addEventListener('change', function() {
-                    const parentId = this.dataset.id;
-                    const isChecked = this.checked;
-                    const descriptionElement = this.closest('.custom-switch').querySelector('.custom-switch-description');
-                    
-                    const formData = new FormData();
-                    formData.append('_token', csrfToken);
-                    
-                    descriptionElement.textContent = 'Memperbarui...';
-                    
-                    fetch(`/parents/${parentId}/toggle-active`, {
-                        method: 'POST',
+        // Print PDF
+        function printPDF() {
+            const url = new URL(window.location.href);
+            url.searchParams.set('print', 'pdf');
+            window.open(url.toString(), '_blank');
+        }
+
+        // Delete confirmation script with SweetAlert2
+        function confirmDelete(id, name) {
+            Swal.fire({
+                title: 'Apakah Anda yakin?',
+                text: "Wali murid \"" + name + "\" akan dihapus permanen!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Use AJAX for deletion
+                    fetch(`/parents/${id}`, {
+                        method: 'DELETE',
                         headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json'
-                        },
-                        body: formData,
-                        credentials: 'same-origin'
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
                         }
-                        return response.json();
                     })
+                    .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            descriptionElement.textContent = data.is_active ? 'Aktif' : 'Diblokir';
-                            
-                            swal({
-                                title: "Berhasil!",
-                                text: data.message,
-                                icon: "success",
-                                timer: 3000,
-                                buttons: false
-                            });
+                            Swal.fire('Dihapus!', data.message, 'success');
+                            // Refresh the table
+                            performAjaxSearch();
                         } else {
-                            this.checked = !isChecked;
-                            descriptionElement.textContent = isChecked ? 'Diblokir' : 'Aktif';
-                            
-                            swal("Gagal", "Gagal memperbarui status", "error");
+                            Swal.fire('Error!', data.message || 'Terjadi kesalahan', 'error');
                         }
                     })
                     .catch(error => {
-                        this.checked = !isChecked;
-                        descriptionElement.textContent = isChecked ? 'Diblokir' : 'Aktif';
-                        
                         console.error('Error:', error);
-                        swal("Error", "Terjadi kesalahan pada server", "error");
+                        Swal.fire('Error!', 'Terjadi kesalahan saat menghapus wali murid', 'error');
                     });
-                });
+                }
             });
         }
-    });
-</script>
-
-// Script untuk Clear Search Button
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const clearButton = document.getElementById('clear-search');
-        const searchButton = document.getElementById('search-button');
-        const searchInput = document.getElementById('search-input');
-        
-        // Event listener untuk tombol clear
-        clearButton.addEventListener('click', function() {
-            searchInput.value = '';
-            searchInput.focus();
-            
-            // Hide clear button, show search button
-            clearButton.style.display = 'none';
-            searchButton.style.display = 'block';
-            
-            // Trigger input event untuk menjalankan pencarian kosong
-            const event = new Event('input', { bubbles: true });
-            searchInput.dispatchEvent(event);
-        });
-        
-        // Show/hide buttons based on input
-        searchInput.addEventListener('input', function() {
-            if (this.value.trim() !== '') {
-                clearButton.style.display = 'block';
-                searchButton.style.display = 'none';
-            } else {
-                clearButton.style.display = 'none';
-                searchButton.style.display = 'block';
-            }
-        });
-        
-        // Optional: Event listener untuk tombol search (jika ingin bisa diklik)
-        searchButton.addEventListener('click', function() {
-            const event = new Event('input', { bubbles: true });
-            searchInput.dispatchEvent(event);
-        });
-        
-        // Initialize button visibility
-        clearButton.style.display = 'none';
-        searchButton.style.display = 'block';
-    });
-</script>
-@endpush
+    </script>
+    
+    <!-- App js -->
+    <script src="{{ URL::asset('build/js/app.js') }}"></script>
+@endsection

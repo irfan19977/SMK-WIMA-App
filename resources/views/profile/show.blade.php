@@ -1,13 +1,13 @@
 @extends('layouts.master')
 @section('title')
-    {{ auth()->user()->id === $user->id ? 'Profile Saya' : 'Profile ' . $user->name }}
+    {{ auth()->user()->id === $user->id ? __('index.my_profile') : __('index.profile') . ' ' . $user->name }}
 @endsection
 @section('css')
     <!-- Sweet Alert-->
     <link href="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
 @endsection
 @section('page-title')
-    {{ auth()->user()->id === $user->id ? 'Profile Saya' : 'Profile ' . $user->name }}
+    {{ auth()->user()->id === $user->id ? __('index.my_profile') : __('index.profile') . ' ' . $user->name }}
 @endsection
 @section('body')
 
@@ -31,16 +31,19 @@
                     <p class="text-muted">{{ $user->email }}</p>
                     @php
                         $profileData = $user->getProfileData();
+                        
                         // Determine status display
                         if($user->hasRole('student') || $user->hasRole('Student')) {
+                            // For students, show status from student table
                             if($profileData && isset($profileData->status)) {
-                                $statusDisplay = $profileData->status;
-                                $statusBadgeClass = $statusDisplay === 'calon siswa' ? 'warning' : ($statusDisplay === 'siswa' ? 'success' : 'secondary');
+                                $statusDisplay = ucfirst($profileData->status);
+                                $statusBadgeClass = $profileData->status === 'calon siswa' ? 'warning' : ($profileData->status === 'siswa' ? 'success' : 'secondary');
                             } else {
                                 $statusDisplay = 'Student';
                                 $statusBadgeClass = 'primary';
                             }
                         } else {
+                            // For other roles, show role name
                             $statusDisplay = ucfirst($user->roles->first()->name ?? 'User');
                             $statusBadgeClass = $user->hasRole('admin') ? 'danger' : ($user->hasRole('teacher') ? 'success' : 'primary');
                         }
@@ -53,21 +56,21 @@
 
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">Informasi Akun</h5>
+                    <h5 class="card-title mb-3">{{ __('index.account_information') }}</h5>
                     <div class="mb-3">
-                        <label class="form-label text-muted">Email</label>
+                        <label class="form-label text-muted">{{ __('index.email') }}</label>
                         <p class="mb-0">{{ $user->email }}</p>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-muted">Nomor HP</label>
+                        <label class="form-label text-muted">{{ __('index.phone_number') }}</label>
                         <p class="mb-0">{{ $user->phone ?? '-' }}</p>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-muted">Bergabung Sejak</label>
+                        <label class="form-label text-muted">{{ __('index.member_since') }}</label>
                         <p class="mb-0">{{ $user->created_at->format('d M Y') }}</p>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-muted">Terakhir Update</label>
+                        <label class="form-label text-muted">{{ __('index.last_updated') }}</label>
                         <p class="mb-0">{{ $user->updated_at->format('d M Y H:i') }}</p>
                     </div>
                 </div>
@@ -79,7 +82,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h5 class="card-title mb-0">
-                            {{ auth()->user()->id === $user->id ? 'Edit Profile' : 'Detail Profile' }}
+                            {{ auth()->user()->id === $user->id ? __('index.edit_profile') : __('index.profile_details') }}
                         </h5>
                         <div class="d-flex gap-2">
                             @if(auth()->user()->id !== $user->id)
@@ -89,18 +92,18 @@
                                             data-name="{{ $user->name }}" 
                                             data-jurusan-utama="{{ $profileData->jurusan_utama ?? '' }}" 
                                             data-jurusan-cadangan="{{ $profileData->jurusan_cadangan ?? '' }}">
-                                        <i class="mdi mdi-check"></i> Terima
+                                        <i class="mdi mdi-check"></i> {{ __('index.accept') }}
                                     </button>
                                     <button type="button" class="btn btn-danger btn-reject" 
                                             data-id="{{ $profileData->id ?? $user->id }}" 
                                             data-name="{{ $user->name }}">
-                                        <i class="mdi mdi-close"></i> Tolak
+                                        <i class="mdi mdi-close"></i> {{ __('index.reject') }}
                                     </button>
                                 @endif
                             @endif
                             @if(auth()->user()->id === $user->id)
                                 <button type="button" class="btn btn-outline-primary" id="toggleEditForm">
-                                    <i class="mdi mdi-pencil"></i> Ubah Data Diri
+                                    <i class="mdi mdi-pencil"></i> {{ __('index.edit_personal_data') }}
                                 </button>
                             @endif
                         </div>
@@ -119,26 +122,26 @@
                             <table class="table table-bordered">
                                 <tbody>
                                     <tr>
-                                        <th width="30%">Nama Lengkap</th>
+                                        <th width="30%">{{ __('index.full_name') }}</th>
                                         <td>{{ $user->name }}</td>
                                     </tr>
                                     <tr>
-                                        <th>Email</th>
+                                        <th>{{ __('index.email') }}</th>
                                         <td>{{ $user->email }}</td>
                                     </tr>
                                     <tr>
-                                        <th>Nomor HP</th>
+                                        <th>{{ __('index.phone_number') }}</th>
                                         <td>{{ $user->phone ?? '-' }}</td>
                                     </tr>
                                     
                                     @if($user->hasRole('student') || $user->hasRole('Student'))
                                         @if($profileData)
                                             <tr>
-                                                <th>No Absen</th>
+                                                <th>{{ __('index.absence_number') }}</th>
                                                 <td>{{ $profileData->no_absen ?? '-' }}</td>
                                             </tr>
                                             <tr>
-                                                <th>No Kartu</th>
+                                                <th>{{ __('index.card_number') }}</th>
                                                 <td>{{ $profileData->no_card ?? '-' }}</td>
                                             </tr>
                                             <tr>
@@ -150,43 +153,55 @@
                                                 <td>{{ $profileData->nik ?? '-' }}</td>
                                             </tr>
                                             <tr>
-                                                <th>Jenis Kelamin</th>
+                                                <th>{{ __('index.gender') }}</th>
                                                 <td>{{ $profileData->gender ? ucfirst($profileData->gender) : '-' }}</td>
                                             </tr>
                                             <tr>
-                                                <th>Tempat Lahir</th>
+                                                <th>{{ __('index.birth_place') }}</th>
                                                 <td>{{ $profileData->birth_place ?? '-' }}</td>
                                             </tr>
                                             <tr>
-                                                <th>Tanggal Lahir</th>
+                                                <th>{{ __('index.birth_date') }}</th>
                                                 <td>{{ $profileData->birth_date ? \Carbon\Carbon::parse($profileData->birth_date)->format('d M Y') : '-' }}</td>
                                             </tr>
                                             <tr>
-                                                <th>Agama</th>
+                                                <th>{{ __('index.religion') }}</th>
                                                 <td>{{ $profileData->religion ?? '-' }}</td>
                                             </tr>
                                             <tr>
-                                                <th>Jurusan Utama</th>
+                                                <th>{{ __('index.primary_major') }}</th>
                                                 <td>{{ $profileData->jurusan_utama ?? '-' }}</td>
                                             </tr>
                                             <tr>
-                                                <th>Jurusan Cadangan</th>
+                                                <th>{{ __('index.secondary_major') }}</th>
                                                 <td>{{ $profileData->jurusan_cadangan ?? '-' }}</td>
                                             </tr>
                                             <tr>
-                                                <th>Tahun Akademik</th>
+                                                <th>{{ __('index.academic_year') }}</th>
                                                 <td>{{ $profileData->academic_year ?? '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>{{ __('index.status_details') }}</th>
+                                                <td>
+                                                    @if($profileData && isset($profileData->status))
+                                                        <span class="badge bg-{{ $profileData->status === 'calon siswa' ? 'warning' : ($profileData->status === 'siswa' ? 'success' : 'secondary') }}">
+                                                            {{ $profileData->status }}
+                                                        </span>
+                                                    @else
+                                                        <span class="badge bg-secondary">{{ __('index.status_unknown') }}</span>
+                                                    @endif
+                                                </td>
                                             </tr>
                                         @else
                                             <tr>
-                                                <th>Status</th>
-                                                <td>Data siswa tidak ditemukan</td>
+                                                <th>{{ __('index.status') }}</th>
+                                                <td>{{ __('index.student_data_not_found') }}</td>
                                             </tr>
                                         @endif
                                     @endif
                                     
                                     <tr>
-                                        <th>Alamat</th>
+                                        <th>{{ __('index.address') }}</th>
                                         <td>{{ $user->address ?? ($profileData->address ?? '-') }}</td>
                                     </tr>
                                 </tbody>
@@ -203,7 +218,7 @@
 
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="name" class="form-label">Nama Lengkap</label>
+                                        <label for="name" class="form-label">{{ __('index.full_name') }}</label>
                                         <input type="text" class="form-control @error('name') is-invalid @enderror" 
                                                id="name" name="name" value="{{ $user->name }}" required>
                                         @error('name')
@@ -211,7 +226,7 @@
                                         @enderror
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="email" class="form-label">Email</label>
+                                        <label for="email" class="form-label">{{ __('index.email') }}</label>
                                         <input type="email" class="form-control @error('email') is-invalid @enderror" 
                                                id="email" name="email" value="{{ $user->email }}" required>
                                         @error('email')
@@ -224,7 +239,7 @@
                                     @if($profileData)
                                         <div class="row">
                                             <div class="col-md-4 mb-3">
-                                                <label for="no_absen" class="form-label">No Absen</label>
+                                                <label for="no_absen" class="form-label">{{ __('index.absence_number') }}</label>
                                                 <input type="text" class="form-control @error('no_absen') is-invalid @enderror" 
                                                        id="no_absen" name="no_absen" value="{{ old('no_absen', $profileData->no_absen ?? '') }}">
                                                 @error('no_absen')
@@ -232,7 +247,7 @@
                                                 @enderror
                                             </div>
                                             <div class="col-md-4 mb-3">
-                                                <label for="no_card" class="form-label">No Kartu</label>
+                                                <label for="no_card" class="form-label">{{ __('index.card_number') }}</label>
                                                 <input type="text" class="form-control @error('no_card') is-invalid @enderror" 
                                                        id="no_card" name="no_card" value="{{ old('no_card', $profileData->no_card ?? '') }}">
                                                 @error('no_card')
@@ -259,19 +274,19 @@
                                                 @enderror
                                             </div>
                                             <div class="col-md-4 mb-3">
-                                                <label for="gender" class="form-label">Jenis Kelamin</label>
+                                                <label for="gender" class="form-label">{{ __('index.gender') }}</label>
                                                 <select class="form-control @error('gender') is-invalid @enderror" 
                                                         id="gender" name="gender">
-                                                    <option value="">Pilih Jenis Kelamin</option>
-                                                    <option value="laki-laki" {{ old('gender', $profileData->gender ?? '') == 'laki-laki' ? 'selected' : '' }}>Laki-laki</option>
-                                                    <option value="perempuan" {{ old('gender', $profileData->gender ?? '') == 'perempuan' ? 'selected' : '' }}>Perempuan</option>
+                                                    <option value="">{{ __('index.select_gender') }}</option>
+                                                    <option value="laki-laki" {{ old('gender', $profileData->gender ?? '') == 'laki-laki' ? 'selected' : '' }}>{{ __('index.male') }}</option>
+                                                    <option value="perempuan" {{ old('gender', $profileData->gender ?? '') == 'perempuan' ? 'selected' : '' }}>{{ __('index.female') }}</option>
                                                 </select>
                                                 @error('gender')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                             </div>
                                             <div class="col-md-4 mb-3">
-                                                <label for="religion" class="form-label">Agama</label>
+                                                <label for="religion" class="form-label">{{ __('index.religion') }}</label>
                                                 <input type="text" class="form-control @error('religion') is-invalid @enderror" 
                                                        id="religion" name="religion" value="{{ old('religion', $profileData->religion ?? '') }}">
                                                 @error('religion')
@@ -282,7 +297,7 @@
 
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
-                                                <label for="birth_place" class="form-label">Tempat Lahir</label>
+                                                <label for="birth_place" class="form-label">{{ __('index.birth_place') }}</label>
                                                 <input type="text" class="form-control @error('birth_place') is-invalid @enderror" 
                                                        id="birth_place" name="birth_place" value="{{ old('birth_place', $profileData->birth_place ?? '') }}">
                                                 @error('birth_place')
@@ -290,7 +305,7 @@
                                                 @enderror
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label for="birth_date" class="form-label">Tanggal Lahir</label>
+                                                <label for="birth_date" class="form-label">{{ __('index.birth_date') }}</label>
                                                 <input type="date" class="form-control @error('birth_date') is-invalid @enderror" 
                                                        id="birth_date" name="birth_date" value="{{ old('birth_date', $profileData->birth_date ?? '') }}">
                                                 @error('birth_date')
@@ -301,7 +316,7 @@
 
                                         <div class="row">
                                             <div class="col-md-4 mb-3">
-                                                <label for="jurusan_utama" class="form-label">Jurusan Utama</label>
+                                                <label for="jurusan_utama" class="form-label">{{ __('index.primary_major') }}</label>
                                                 <input type="text" class="form-control @error('jurusan_utama') is-invalid @enderror" 
                                                        id="jurusan_utama" name="jurusan_utama" value="{{ old('jurusan_utama', $profileData->jurusan_utama ?? '') }}">
                                                 @error('jurusan_utama')
@@ -309,7 +324,7 @@
                                                 @enderror
                                             </div>
                                             <div class="col-md-4 mb-3">
-                                                <label for="jurusan_cadangan" class="form-label">Jurusan Cadangan</label>
+                                                <label for="jurusan_cadangan" class="form-label">{{ __('index.secondary_major') }}</label>
                                                 <input type="text" class="form-control @error('jurusan_cadangan') is-invalid @enderror" 
                                                        id="jurusan_cadangan" name="jurusan_cadangan" value="{{ old('jurusan_cadangan', $profileData->jurusan_cadangan ?? '') }}">
                                                 @error('jurusan_cadangan')
@@ -317,7 +332,7 @@
                                                 @enderror
                                             </div>
                                             <div class="col-md-4 mb-3">
-                                                <label for="academic_year" class="form-label">Tahun Akademik</label>
+                                                <label for="academic_year" class="form-label">{{ __('index.academic_year') }}</label>
                                                 <input type="text" class="form-control @error('academic_year') is-invalid @enderror" 
                                                        id="academic_year" name="academic_year" value="{{ old('academic_year', $profileData->academic_year ?? '') }}">
                                                 @error('academic_year')
@@ -330,7 +345,7 @@
 
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="phone" class="form-label">Nomor HP</label>
+                                        <label for="phone" class="form-label">{{ __('index.phone_number') }}</label>
                                         <input type="tel" class="form-control @error('phone') is-invalid @enderror" 
                                                id="phone" name="phone" value="{{ $user->phone }}">
                                         @error('phone')
@@ -338,7 +353,7 @@
                                         @enderror
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="avatar" class="form-label">Avatar</label>
+                                        <label for="avatar" class="form-label">{{ __('index.avatar') }}</label>
                                         <input type="file" class="form-control @error('avatar') is-invalid @enderror" 
                                                id="avatar" name="avatar" accept="image/*">
                                         @error('avatar')
@@ -348,7 +363,7 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="address" class="form-label">Alamat</label>
+                                    <label for="address" class="form-label">{{ __('index.address') }}</label>
                                     <textarea class="form-control @error('address') is-invalid @enderror" 
                                               id="address" name="address" rows="3">{{ old('address', $user->address ?? ($user->getProfileData()->address ?? '')) }}</textarea>
                                     @error('address')
@@ -358,13 +373,13 @@
 
                                 <div class="d-flex justify-content-between">
                                     <button type="button" class="btn btn-secondary" id="cancelEdit">
-                                        <i class="mdi mdi-close"></i> Batal
+                                        <i class="mdi mdi-close"></i> {{ __('index.cancel') }}
                                     </button>
                                     <button type="submit" class="btn btn-primary">
-                                        <i class="mdi mdi-content-save"></i> Simpan Perubahan
+                                        <i class="mdi mdi-content-save"></i> {{ __('index.save_changes') }}
                                     </button>
                                     <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
-                                        <i class="mdi mdi-lock"></i> Ubah Password
+                                        <i class="mdi mdi-lock"></i> {{ __('index.change_password') }}
                                     </button>
                                 </div>
                             </form>
@@ -376,13 +391,13 @@
             @if(auth()->user()->id === $user->id)
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title mb-4">Keamanan</h5>
+                        <h5 class="card-title mb-4">{{ __('index.security') }}</h5>
                         
                         <div class="mb-4">
-                            <h6 class="mb-3">Password</h6>
-                            <p class="text-muted mb-3">Ubah password untuk keamanan akun Anda</p>
+                            <h6 class="mb-3">{{ __('index.password') }}</h6>
+                            <p class="text-muted mb-3">{{ __('index.change_password_for_account_security') }}</p>
                             <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
-                                <i class="mdi mdi-lock"></i> Ubah Password
+                                <i class="mdi mdi-lock"></i> {{ __('index.change_password') }}
                             </button>
                         </div>
                     </div>
@@ -398,7 +413,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Dokumen Lampiran</h5>
+                        <h5 class="card-title mb-0">{{ __('index.supporting_documents') }}</h5>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -427,10 +442,10 @@
                                                 @elseif($ext === 'pdf')
                                                     <div class="text-center p-3 border rounded bg-light preview-file" data-src="{{ asset('storage/' . $doc['path']) }}" data-title="{{ $doc['label'] }}" data-type="pdf" style="cursor: pointer;">
                                                         <i class="mdi mdi-file-pdf fa-3x text-danger mb-2"></i>
-                                                        <div class="small">Klik untuk preview PDF</div>
+                                                        <div class="small">{{ __('index.click_to_preview_pdf') }}</div>
                                                     </div>
                                                 @else
-                                                    <div class="text-muted">Dokumen tersedia ({{ strtoupper($ext) }})</div>
+                                                    <div class="text-muted">{{ __('index.document_available') }} ({{ strtoupper($ext) }})</div>
                                                 @endif
                                             @else
                                                 <div class="text-muted">Tidak ada file</div>
@@ -451,16 +466,16 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Foto Face Recognition</h5>
+                        <h5 class="card-title mb-0">{{ __('index.face_recognition_photo') }}</h5>
                     </div>
                     <div class="card-body text-center">
-                        <img src="{{ asset('storage/' . $profileData->face_photo) }}" alt="Foto Face Recognition"
+                        <img src="{{ asset('storage/' . $profileData->face_photo) }}" alt="{{ __('index.face_recognition_photo') }}"
                              class="img-fluid rounded preview-file"
                              data-src="{{ asset('storage/' . $profileData->face_photo) }}"
-                             data-title="Foto Face Recognition - {{ $user->name }}"
+                             data-title="{{ __('index.face_recognition_photo') }} - {{ $user->name }}"
                              data-type="image"
                              style="max-width: 300px; cursor: pointer;">
-                        <p class="mt-2 text-muted">Foto yang digunakan untuk sistem face recognition</p>
+                        <p class="mt-2 text-muted">{{ __('index.photo_used_for_face_recognition_system') }}</p>
                     </div>
                 </div>
             </div>
@@ -475,7 +490,7 @@
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Ubah Password</h5>
+                                <h5 class="modal-title">{{ __('index.change_password') }}</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <form method="POST" action="{{ route('profile.update') }}">
@@ -483,7 +498,7 @@
                     @method('PATCH')
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="current_password" class="form-label">Password Saat Ini</label>
+                            <label for="current_password" class="form-label">{{ __('index.current_password') }}</label>
                             <input type="password" class="form-control @error('current_password') is-invalid @enderror" 
                                    id="current_password" name="current_password" required>
                             @error('current_password')
@@ -491,7 +506,7 @@
                             @enderror
                         </div>
                         <div class="mb-3">
-                            <label for="password" class="form-label">Password Baru</label>
+                            <label for="password" class="form-label">{{ __('index.new_password') }}</label>
                             <input type="password" class="form-control @error('password') is-invalid @enderror" 
                                    id="password" name="password" required>
                             @error('password')
@@ -499,7 +514,7 @@
                             @enderror
                         </div>
                         <div class="mb-3">
-                            <label for="password_confirmation" class="form-label">Konfirmasi Password Baru</label>
+                            <label for="password_confirmation" class="form-label">{{ __('index.confirm_new_password') }}</label>
                             <input type="password" class="form-control @error('password_confirmation') is-invalid @enderror" 
                                    id="password_confirmation" name="password_confirmation" required>
                             @error('password_confirmation')
@@ -508,8 +523,8 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary">Ubah Password</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('index.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ __('index.change_password') }}</button>
                     </div>
                             </form>
                         </div>
@@ -589,7 +604,7 @@
             const downloadBtn = document.getElementById('imagePreviewDownload');
 
             function openModal(src, title, type = 'image') {
-                titleEl.textContent = title || 'Preview File';
+                titleEl.textContent = title || '{{ __('index.preview_file') }}';
 
                 if (type === 'pdf') {
                     // Show PDF in iframe
@@ -627,20 +642,20 @@
                         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="imagePreviewTitle">Preview File</h5>
+                                    <h5 class="modal-title" id="imagePreviewTitle">{{ __('index.preview_file') }}</h5>
                                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                         <span aria-hidden="true">&times;</span>
                                     </button>
                                 </div>
                                 <div class="modal-body text-center">
-                                    <img id="imagePreviewElement" src="" alt="Preview" class="img-fluid rounded" style="max-height: 70vh; display: none;">
-                                    <iframe id="pdfPreviewElement" src="" style="width: 100%; height: 70vh; border: 1px solid #ddd; display: none;" title="PDF Preview"></iframe>
+                                    <img id="imagePreviewElement" src="" alt="{{ __('index.preview') }}" class="img-fluid rounded" style="max-height: 70vh; display: none;">
+                                    <iframe id="pdfPreviewElement" src="" style="width: 100%; height: 70vh; border: 1px solid #ddd; display: none;" title="{{ __('index.pdf_preview') }}"></iframe>
                                 </div>
                                 <div class="modal-footer">
                                     <a id="imagePreviewDownload" href="#" class="btn btn-primary" download>
-                                        <i class="mdi mdi-download"></i> Unduh
+                                        <i class="mdi mdi-download"></i> {{ __('index.download') }}
                                     </a>
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('index.close') }}</button>
                                 </div>
                             </div>
                         </div>
@@ -678,9 +693,9 @@
                     console.log('Showing Swal with options:', optionsHtml);
 
                     const { value: jurusan } = await Swal.fire({
-                        title: 'Terima Pendaftar',
+                        title: '{{ __('index.accept_applicant') }}',
                         html: `
-                            <p>Terima pendaftar <strong>${name}</strong> ke jurusan:</p>
+                            <p>{{ __('index.accept_applicant_to_major') }} <strong>${name}</strong> {{ __('index.to_major') }}:</p>
                             <select id="jurusan-select" class="swal2-select">
                                 ${optionsHtml}
                             </select>
@@ -689,8 +704,8 @@
                         showCancelButton: true,
                         confirmButtonColor: '#3085d6',
                         cancelButtonColor: '#d33',
-                        confirmButtonText: 'Ya, terima!',
-                        cancelButtonText: 'Batal',
+                        confirmButtonText: '{{ __('index.yes_accept') }}',
+                        cancelButtonText: '{{ __('index.cancel') }}',
                         preConfirm: () => {
                             const select = document.getElementById('jurusan-select');
                             return select ? select.value : null;
@@ -713,12 +728,12 @@
 
                             console.log('Response status:', res.status);
 
-                            if (!res.ok) throw new Error('Gagal menerima pendaftar');
+                            if (!res.ok) throw new Error('{{ __('index.failed_to_accept_applicant') }}');
                             
                             Swal.fire({
                                 icon: 'success',
-                                title: 'Berhasil',
-                                text: 'Pendaftar berhasil diterima',
+                                title: '{{ __('index.success') }}',
+                                text: '{{ __('index.applicant_accepted_successfully') }}',
                                 timer: 1500,
                                 showConfirmButton: false
                             }).then(() => {
@@ -729,8 +744,8 @@
                             console.error('Error:', e);
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Error',
-                                text: e.message || 'Terjadi kesalahan'
+                                title: '{{ __('index.error') }}',
+                                text: e.message || '{{ __('index.error_occurred') }}'
                             });
                         }
                     }
@@ -752,14 +767,14 @@
                     }
 
                     const result = await Swal.fire({
-                        title: 'Apakah Anda yakin?',
-                        text: `Pendaftar "${name}" akan ditolak dan datanya dihapus permanen!`,
+                        title: '{{ __('index.are_you_sure') }}',
+                        text: `{{ __('index.applicant_will_be_rejected_and_data_deleted_permanently') }} "${name}"!`,
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#3085d6',
                         cancelButtonColor: '#d33',
-                        confirmButtonText: 'Ya, tolak!',
-                        cancelButtonText: 'Batal'
+                        confirmButtonText: '{{ __('index.yes_reject') }}',
+                        cancelButtonText: '{{ __('index.cancel') }}'
                     });
 
                     console.log('Swal result:', result);
@@ -776,12 +791,12 @@
 
                             console.log('Response status:', res.status);
 
-                            if (!res.ok) throw new Error('Gagal menolak pendaftar');
+                            if (!res.ok) throw new Error('{{ __('index.failed_to_reject_applicant') }}');
                             
                             Swal.fire({
                                 icon: 'success',
-                                title: 'Berhasil',
-                                text: 'Pendaftar berhasil ditolak',
+                                title: '{{ __('index.success') }}',
+                                text: '{{ __('index.applicant_rejected_successfully') }}',
                                 timer: 1500,
                                 showConfirmButton: false
                             }).then(() => {
@@ -792,8 +807,8 @@
                             console.error('Error:', e);
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Error',
-                                text: e.message || 'Terjadi kesalahan'
+                                title: '{{ __('index.error') }}',
+                                text: e.message || '{{ __('index.error_occurred') }}'
                             });
                         }
                     }

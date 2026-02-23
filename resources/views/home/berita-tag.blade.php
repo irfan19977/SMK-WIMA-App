@@ -5,7 +5,7 @@
         <div class="container">
             <div class="row mb-4">
                 <div class="col-md-12">
-                    <h2 class="mb-3">Berita dengan tag: <span class="badge badge-primary">{{ $tag }}</span></h2>
+                    <h2 class="mb-3">{{ __('home.news_tag_title', ['tag' => $tag]) }}</h2>
                 </div>
             </div>
 
@@ -17,7 +17,7 @@
                             </a>
                             <div class="text p-4 d-block" style="flex: 1; display: flex; flex-direction: column;">
                                 <div class="meta mb-3">
-                                    <div><a href="#">{{ optional($news->published_at)->translatedFormat('d F Y') }}</a></div>
+                                    <div><a href="#">{{ __('home.news_views') }}</a></div>
                                     <div><a href="#">{{ optional($news->user)->name }}</a></div>
                                     <div><a href="#" class="meta-chat"><span class="icon-eye"></span>{{ $news->view_count }}</a></div>
                                 </div>
@@ -32,7 +32,7 @@
                     </div>
                 @empty
                     <div class="col-md-12">
-                        <p>Belum ada berita dengan tag ini.</p>
+                        <p>{{ __('home.news_no_tag_articles') }}</p>
                     </div>
                 @endforelse
             </div>

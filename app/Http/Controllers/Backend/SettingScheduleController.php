@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\SettingSchedule;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class SettingScheduleController extends Controller
@@ -14,6 +16,14 @@ class SettingScheduleController extends Controller
     
     public function index(Request $request)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         $this->authorize('settings.index');
 
         $dayOrder = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
@@ -24,7 +34,8 @@ class SettingScheduleController extends Controller
             $query->where('day', 'like', '%' . $request->q . '%');
         }
 
-        $settings = $query->orderByRaw("FIELD(day, '" . implode("','", $dayOrder) . "')")->get();
+        $settings = $query->orderByRaw("FIELD(day, '" . implode("','", $dayOrder) . "')")
+            ->paginate(request('per_page', 10));
 
         // Jika request AJAX, return JSON
         if ($request->ajax() || $request->expectsJson()) {
@@ -43,7 +54,24 @@ class SettingScheduleController extends Controller
      */
     public function create()
     {
-        //
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
+        // Return form view for AJAX request
+        if (request()->ajax() || request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'title' => __('index.add_start_end_time'),
+                'html' => view('SettingSchedule.form')->render()
+            ]);
+        }
+        
+        return view('SettingSchedule.form');
     }
 
     /**
@@ -55,6 +83,7 @@ class SettingScheduleController extends Controller
             'day' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu|unique:setting_schedule,day',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
+            'color' => 'nullable|string|max:7'
         ], [
             'day.required' => 'Hari harus dipilih.',
             'day.in' => 'Hari yang dipilih tidak valid.',
@@ -73,23 +102,21 @@ class SettingScheduleController extends Controller
             ], 422);
         }
 
-        try {
             SettingSchedule::create([
                 'day' => $request->day,
                 'start_time' => $request->start_time . ':00', // Tambahkan detik
                 'end_time' => $request->end_time . ':00', // Tambahkan detik
             ]);
 
+            if ($request->ajax() || $request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Jadwal berhasil ditambahkan.'
+                'message' => 'Data Berhasil ditambahkan'
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage()
-            ], 500);
         }
+
+        return redirect()->route('setting-schedule.index')
+            ->with('success', 'Data Berhasil ditambahkan');
     }
 
     /**
@@ -97,12 +124,29 @@ class SettingScheduleController extends Controller
      */
     public function edit(string $id)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         try {
             $schedule = SettingSchedule::findOrFail($id);
             
+            // Return form view for AJAX request
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'title' => __('index.edit_start_end_time_controller'),
+                    'html' => view('SettingSchedule.form', ['schedule' => $schedule])->render()
+                ]);
+            }
+            
             return response()->json([
                 'success' => true,
-                'title' => 'Edit Jam Masuk/Pulang',
+                'title' => __('index.edit_start_end_time_controller'),
                 'schedule' => [
                     'day' => $schedule->day,
                     'start_time' => substr($schedule->start_time, 0, 5), // Ambil HH:MM saja
@@ -141,41 +185,38 @@ class SettingScheduleController extends Controller
             ], 422);
         }
 
-        try {
-            $schedule = SettingSchedule::findOrFail($id);
-            $schedule->update([
-                'day' => $request->day,
-                'start_time' => $request->start_time . ':00', // Tambahkan detik
-                'end_time' => $request->end_time . ':00', // Tambahkan detik
-            ]);
+        $schedule = SettingSchedule::findOrFail($id);
+        $schedule->update([
+            'day' => $request->day,
+            'start_time' => $request->start_time . ':00', // Tambahkan detik
+            'end_time' => $request->end_time . ':00', // Tambahkan detik
+        ]);
 
+        if ($request->ajax() || $request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Jadwal berhasil diperbarui.'
+                'message' => 'Data Berhasil Diperbarui'
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat memperbarui data: ' . $e->getMessage()
-            ], 500);
         }
+
+        return redirect()->route('setting-schedule.index')
+            ->with('success', 'Data Berhasil Diperbarui');
+
     }
 
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-        try {
-            $schedule = SettingSchedule::findOrFail($id);
-            $schedule->delete();
+        $schedule = SettingSchedule::findOrFail($id);
+        $schedule->delete();
 
+        if ($request->ajax() || $request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Jadwal berhasil dihapus.'
+                'message' => 'Data Berhasil Dihapus'
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat menghapus data: ' . $e->getMessage()
-            ], 500);
         }
+
+        return redirect()->route('setting-schedule.index')
+            ->with('success', 'Data Berhasil Dihapus');
     }
 }

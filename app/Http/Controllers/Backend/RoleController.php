@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -14,6 +16,14 @@ class RoleController extends Controller
     
     public function index()
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         $this->authorize('roles.index');
 
         $roles = Role::latest()->when(request()->q, function($roles) {
@@ -28,9 +38,16 @@ class RoleController extends Controller
      */
     public function create()
     {
-       
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         $permissions = Permission::latest()->get();
-        return view('roles.create', compact('permissions'));
+        return view('roles.addEdit', compact('permissions'));
     }
 
     /**
@@ -51,10 +68,10 @@ class RoleController extends Controller
 
             if($role){
                 //redirect dengan pesan sukses
-                return redirect()->route('roles.index')->with(['success' => 'Data Berhasil Disimpan!']);
+                return redirect()->route('roles.index')->with(['success' => __('index.role_saved_successfully')]);
             }else{
                 //redirect dengan pesan error
-                return redirect()->route('roles.index')->with(['error' => 'Data Gagal Disimpan!']);
+                return redirect()->route('roles.index')->with(['error' => __('index.role_save_failed')]);
             }
     }
 
@@ -72,10 +89,17 @@ class RoleController extends Controller
      */
     public function edit($id)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
         
         $role = Role::findOrFail($id);
         $permissions = Permission::all();
-        return view('roles.edit', compact('role', 'permissions'));
+        return view('roles.addEdit', compact('role', 'permissions'));
     }
 
     // Function to update the specified role in storage
@@ -92,7 +116,7 @@ class RoleController extends Controller
 
         $role->syncPermissions($request->input('permissions'));
 
-        return redirect()->route('roles.index')->with('success', 'Role updated successfully.');
+        return redirect()->route('roles.index')->with('success', __('index.role_updated_successfully'));
     }
 
     // Function to remove the specified role from storage
@@ -103,9 +127,9 @@ class RoleController extends Controller
 
 
         if($roles){
-            return response()->json(['success' => true, 'message' => 'Data berhasil dihapus.']);
+            return response()->json(['success' => true, 'message' => __('index.role_deleted_successfully')]);
         }else{
-            return response()->json(['success' => false, 'message' => 'Data gagal dihapus.']);
+            return response()->json(['success' => false, 'message' => __('index.role_delete_failed')]);
         }
     }
 }

@@ -29,4 +29,28 @@ class Subject extends Model
     {
         return $this->hasMany(Schedule::class);
     }
+
+    /**
+     * Get the user who created the subject
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the user who updated the subject
+     */
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Get the user who deleted the subject
+     */
+    public function deleter()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
 }

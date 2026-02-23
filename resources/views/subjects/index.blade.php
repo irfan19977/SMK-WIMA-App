@@ -1,465 +1,625 @@
-@extends('layouts.app')
-
-@section('content')
-
-<div class="card">
-    <div class="card-header">
-        <h4>Daftar Mata Pelajaran</h4>
-        <div class="card-header-action">
-            <div class="input-group">
-                <button class="btn btn-primary" id="btn-create" data-toggle="tooltip"
-                    style="margin-right: 10px;" title="Tambah Data">
-                    <i class="fas fa-plus"></i>
-                </button>
-                <input type="text" class="form-control" placeholder="Cari Mapel (Nama, Code)" 
-                    name="q" id="search-input" autocomplete="off">
-                <div class="input-group-btn">
-                    <button type="button" class="btn btn-primary" id="search-button" style="margin-top: 1px;">
-                        <i class="fas fa-search"></i>
-                    </button>
-                    <button type="button" class="btn btn-primary" id="clear-search" title="Clear Search" style="display: none; margin-top: 1px;">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-striped" id="sortable-table">
-                <thead>
-                    <tr class="text-center">
-                        <th>No.</th>
-                        <th>Nama</th>
-                        <th>Code</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($subjects as $subject)
-                    <tr class="text-center">
-                        <td class="text-center">{{ ($subjects->currentPage() - 1) * $subjects->perPage() + $loop->iteration }}</td>
-                        <td>{{ $subject->name }}</td>
-                        <td>{{ $subject->code }}</td>
-                        <td>
-                            <button class="btn btn-primary btn-action mr-1 btn-edit"
-                                data-id="{{ $subject->id }}" data-toggle="tooltip" title="Edit">
-                                <i class="fas fa-pencil-alt"></i>
-                            </button>
-
-                            <form id="delete-form-{{ $subject->id }}" action="{{ route('subjects.destroy', $subject->id) }}"
-                                method="POST" style="display:inline;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" class="btn btn-danger btn-action" data-toggle="tooltip"
-                                    title="Delete" onclick="confirmDelete('{{ $subject->id }}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="4" class="text-center">Tidak ada data mata pelajaran</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- Modal untuk Create/Edit -->
-<div class="modal fade" id="subjectModal" tabindex="-1" role="dialog" aria-labelledby="subjectModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="subjectModalLabel">Tambah Mata Pelajaran</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form id="subjectForm">
-                @csrf
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="name">Nama Mata Pelajaran <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="name" name="name" required>
-                        <div class="invalid-feedback d-none" id="name-error"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="code">Kode Mata Pelajaran</label>
-                        <input type="text" class="form-control" id="code" name="code" placeholder="Kosongkan untuk generate otomatis">
-                        <div class="invalid-feedback d-none" id="code-error"></div>
-                        <small class="form-text text-muted">Jika dikosongkan, kode akan di-generate otomatis</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary" id="submitBtn">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
+@extends('layouts.master')
+@section('title')
+    {{ __('index.subjects_title') }}
 @endsection
+@section('css')
+    <!-- Sweet Alert-->
+    <link href="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
+@endsection
+@section('page-title')
+    {{ __('index.subjects_title') }}
+@endsection
+@section('body')
 
-@push('scripts')
-    <script>
-        let isEditMode = false;
-        let editId = null;
-
-        function confirmDelete(id) {
-            swal({
-                title: "Apakah Anda Yakin?",
-                text: "Data ini akan dihapus secara permanen!",
-                icon: "warning",
-                buttons: [
-                    'Tidak',
-                    'Ya, Hapus'
-                ],
-                dangerMode: true,
-            }).then(function(isConfirm) {
-                if (isConfirm) {
-                    const form = document.getElementById(`delete-form-${id}`);
-                    const url = form.action;
-
-                    // Opsi 1: Menggunakan FormData (Recommended)
-                    const formData = new FormData();
-                    formData.append('_method', 'DELETE');
-                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: formData
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            swal({
-                                title: "Berhasil!",
-                                text: "Data berhasil dihapus.",
-                                icon: "success",
-                                timer: 3000,
-                                buttons: false
-                            }).then(() => {
-                                // Reload table data
-                                performSearch(document.getElementById('search-input').value);
-                            });
-                        } else {
-                            swal("Gagal", data.message || "Terjadi kesalahan saat menghapus data.", "error");
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        swal("Gagal", "Terjadi kesalahan saat menghapus data.", "error");
-                    });
-                }
-            });
-        }
-
-        function renumberTableRows() {
-            const tableBody = document.querySelector('#sortable-table tbody');
-            const rows = tableBody.querySelectorAll('tr');
-            
-            const currentPage = {{ $subjects->currentPage() }};
-            const perPage = {{ $subjects->perPage() }};
-            
-            rows.forEach((row, index) => {
-                const numberCell = row.querySelector('td:first-child');
-                if (numberCell) {
-                    numberCell.textContent = (currentPage - 1) * perPage + index + 1;
-                }
-            });
-        }
-
-        // Search functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.querySelector('input[name="q"]');
-            const tableBody = document.querySelector('#sortable-table tbody');
-            let searchTimeout;
-
-            // Fungsi untuk melakukan pencarian
-            function performSearch(query) {
-                // Tampilkan loading
-                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Mencari data...</td></tr>';
-                
-                // Kirim request AJAX
-                fetch(`{{ route('subjects.index') }}?q=${encodeURIComponent(query)}`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // Update tabel dengan data hasil pencarian
-                    updateTable(data.subjects, data.currentPage, data.perPage);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Terjadi kesalahan saat mencari data</td></tr>';
-                });
-            }
-
-            // Fungsi untuk update tabel
-            function updateTable(subjects, currentPage = 1, perPage = 10) {
-                if (subjects.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Tidak ada data mata pelajaran</td></tr>';
-                    return;
-                }
-
-                let html = '';
-                subjects.forEach((subject, index) => {
-                    const number = (currentPage - 1) * perPage + index + 1;
-                    html += `
-                        <tr class="text-center">
-                            <td>${number}</td>
-                            <td>${subject.name}</td>
-                            <td>${subject.code}</td>
-                            <td>
-                                <button class="btn btn-primary btn-action mr-1 btn-edit"
-                                    data-id="${subject.id}" data-toggle="tooltip" title="Edit">
-                                    <i class="fas fa-pencil-alt"></i>
+    <body data-sidebar="colored">
+@endsection
+@section('content')
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h4 class="card-title mb-1">{{ __('index.subject_list') }}</h4>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-primary" onclick="openSubjectModal()">
+                                    <i class="mdi mdi-plus"></i> {{ __('index.add_subject') }}
                                 </button>
-                                <form id="delete-form-${subject.id}" action="/subjects/${subject.id}"
-                                    method="POST" style="display:inline;">
-                                    <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').getAttribute('content')}">
-                                    <input type="hidden" name="_method" value="DELETE">
-                                    <button type="button" class="btn btn-danger btn-action" data-toggle="tooltip"
-                                        title="Delete" onclick="confirmDelete('${subject.id}')">
-                                        <i class="fas fa-trash"></i>
+                                <button class="btn btn-success" onclick="exportExcel()">
+                                    <i class="mdi mdi-file-excel"></i> {{ __('index.export_excel') }}
+                                </button>
+                                <button class="btn btn-info" onclick="printPDF()">
+                                    <i class="mdi mdi-file-pdf"></i> {{ __('index.print_pdf') }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Search -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="{{ __('index.search_subject_placeholder') }}" id="search-input" value="{{ request('q') }}">
+                                    <button class="btn btn-primary" type="button" id="search-button">
+                                        <i class="mdi mdi-magnify"></i>
                                     </button>
-                                </form>
-                            </td>
-                        </tr>
-                    `;
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center gap-2 justify-content-end">
+                                    <label class="mb-0">{{ __('index.show') }}:</label>
+                                    <select class="form-select w-auto" id="per-page-select">
+                                        <option value="10" {{ $subjects->perPage() == 10 ? 'selected' : '' }}>10</option>
+                                        <option value="25" {{ $subjects->perPage() == 25 ? 'selected' : '' }}>25</option>
+                                        <option value="50" {{ $subjects->perPage() == 50 ? 'selected' : '' }}>50</option>
+                                        <option value="100" {{ $subjects->perPage() == 100 ? 'selected' : '' }}>100</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <div id="loading-spinner" class="text-center py-4" style="display: none;">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">{{ __('index.loading') }}...</span>
+                                </div>
+                            </div>
+                            <table class="table table-striped mb-0" id="subjects-table">
+                                <thead>
+                                    <tr>
+                                        <th>{{ __('index.no') }}.</th>
+                                        <th>{{ __('index.code') }}</th>
+                                        <th>{{ __('index.subject_name') }}</th>
+                                        <th>{{ __('index.created_by') }}</th>
+                                        <th>{{ __('index.created_at') }}</th>
+                                        <th>{{ __('index.status') }}</th>
+                                        <th>{{ __('index.actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="subjects-tbody">
+                                    @forelse($subjects as $index => $subject)
+                                        <tr>
+                                            <td>{{ ($subjects->currentPage() - 1) * $subjects->perPage() + $index + 1 }}</td>
+                                            <td>
+                                                <span class="badge bg-light text-dark">{{ $subject->code }}</span>
+                                            </td>
+                                            <td>
+                                                <strong>{{ $subject->name }}</strong>
+                                            </td>
+                                            <td>
+                                                @if($subject->creator)
+                                                    {{ $subject->creator->name }}
+                                                @else
+                                                    <span class="text-muted">-</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">{{ $subject->created_at->format('d M Y H:i') }}</small>
+                                            </td>
+                                            <td>
+                                                @if($subject->deleted_at)
+                                                    <span class="badge bg-danger">{{ __('index.deleted') }}</span>
+                                                @else
+                                                    <span class="badge bg-success">{{ __('index.active') }}</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-2">
+                                                    @if(!$subject->deleted_at)
+                                                        <button type="button" class="btn btn-sm btn-soft-primary" onclick="editSubject('{{ $subject->id }}')" title="{{ __('index.edit') }}">
+                                                            <i class="mdi mdi-pencil"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-soft-danger" onclick="deleteSubject('{{ $subject->id }}', '{{ $subject->name }}')" title="{{ __('index.delete') }}">
+                                                            <i class="mdi mdi-delete"></i>
+                                                        </button>
+                                                    @else
+                                                        <button type="button" class="btn btn-sm btn-soft-success" onclick="restoreSubject('{{ $subject->id }}', '{{ $subject->name }}')" title="{{ __('index.restore') }}">
+                                                            <i class="mdi mdi-restore"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-soft-danger" onclick="forceDeleteSubject('{{ $subject->id }}', '{{ $subject->name }}')" title="{{ __('index.delete_permanently') }}">
+                                                            <i class="mdi mdi-delete-forever"></i>
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                       <tr>
+                                            <td colspan="8" class="text-center">{{ __('index.no_data_available') }}</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        @if($subjects->hasPages())
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <div class="text-muted" id="pagination-info">
+                                    {{ __('index.showing') }} {{ $subjects->firstItem() }} {{ __('index.to') }} {{ $subjects->lastItem() }} {{ __('index.of') }} {{ $subjects->total() }} {{ __('index.data') }}
+                                </div>
+                                <div>
+                                    <nav aria-label="Page navigation">
+                                        <ul class="pagination" id="pagination-links">
+                                            {{-- Previous Link --}}
+                                            @if($subjects->onFirstPage())
+                                                <li class="page-item disabled">
+                                                    <a class="page-link" href="#" data-page="1" tabindex="-1">{{ __('index.previous') }}</a>
+                                                </li>
+                                            @else
+                                                <li class="page-item">
+                                                    <a class="page-link" href="#" data-page="{{ $subjects->currentPage() - 1 }}">{{ __('index.previous') }}</a>
+                                                </li>
+                                            @endif
+
+                                            {{-- Page Numbers --}}
+                                            @for($i = 1; $i <= $subjects->lastPage(); $i++)
+                                                @if($i == $subjects->currentPage())
+                                                    <li class="page-item active">
+                                                        <a class="page-link" href="#" data-page="{{ $i }}">{{ $i }} <span class="sr-only">({{ __('index.current') }})</span></a>
+                                                    </li>
+                                                @else
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="#" data-page="{{ $i }}">{{ $i }}</a>
+                                                    </li>
+                                                @endif
+                                            @endfor
+
+                                            {{-- Next Link --}}
+                                            @if($subjects->hasMorePages())
+                                                <li class="page-item">
+                                                    <a class="page-link" href="#" data-page="{{ $subjects->currentPage() + 1 }}">{{ __('index.next') }}</a>
+                                                </li>
+                                            @else
+                                                <li class="page-item disabled">
+                                                    <a class="page-link" href="#" data-page="{{ $subjects->lastPage() }}" tabindex="-1">{{ __('index.next') }}</a>
+                                                </li>
+                                            @endif
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        @endif
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- end row -->
+
+        <!-- Subject Modal -->
+        <div class="modal fade" id="subject-modal" tabindex="-1" aria-labelledby="subject-modal-label" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="subject-modal-label">Modal title</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Form will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+@endsection
+@section('scripts')
+        <!-- Sweet Alerts js -->
+        <script src="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.js') }}"></script>
+        
+        <script>
+            let currentPage = 1;
+            let currentSearch = '{{ request('q', '') }}';
+            let currentPerPage = {{ $subjects->perPage() }};
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const searchInput = document.getElementById('search-input');
+                const searchButton = document.getElementById('search-button');
+                const perPageSelect = document.getElementById('per-page-select');
+                const loadingSpinner = document.getElementById('loading-spinner');
+                const subjectsTable = document.getElementById('subjects-table');
+                const subjectsTbody = document.getElementById('subjects-tbody');
+                const paginationLinks = document.getElementById('pagination-links');
+                const paginationInfo = document.getElementById('pagination-info');
+
+                // Set initial search value
+                if (searchInput && currentSearch) {
+                    searchInput.value = currentSearch;
+                }
+
+                // Per page change
+                if (perPageSelect) {
+                    perPageSelect.addEventListener('change', function() {
+                        currentPerPage = this.value;
+                        currentPage = 1;
+                        performAjaxSearch();
+                    });
+                }
+
+                // Pagination click handler
+                if (paginationLinks) {
+                    paginationLinks.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const pageLink = e.target.closest('a[data-page]');
+                        if (pageLink && !pageLink.parentElement.classList.contains('disabled')) {
+                            currentPage = parseInt(pageLink.dataset.page);
+                            performAjaxSearch();
+                        }
+                    });
+                }
+
+                // Search functionality
+                let searchTimeout;
+                
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        currentSearch = this.value.trim();
+                        currentPage = 1;
+                        performAjaxSearch();
+                    }, 500);
                 });
+
+                searchButton.addEventListener('click', function() {
+                    clearTimeout(searchTimeout);
+                    currentSearch = searchInput.value.trim();
+                    currentPage = 1;
+                    performAjaxSearch();
+                });
+
+                searchInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        clearTimeout(searchTimeout);
+                        currentSearch = this.value.trim();
+                        currentPage = 1;
+                        performAjaxSearch();
+                    }
+                });
+
+                // Bind action buttons
+                bindActionButtons();
+            });
+
+            // Global function for AJAX search
+            function performAjaxSearch() {
+                const loadingSpinner = document.getElementById('loading-spinner');
+                const subjectsTable = document.getElementById('subjects-table');
+                const subjectsTbody = document.getElementById('subjects-tbody');
+                const paginationLinks = document.getElementById('pagination-links');
+                const paginationInfo = document.getElementById('pagination-info');
                 
-                tableBody.innerHTML = html;
+                showLoading();
                 
-                // Re-initialize edit buttons
-                initializeEditButtons();
+                const params = new URLSearchParams();
+                if (currentSearch) params.append('q', currentSearch);
+                params.append('page', currentPage);
+                params.append('per_page', currentPerPage);
+
+                fetch(`{{ route('subjects.index') }}?${params.toString()}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    if (data.success) {
+                        updateTable(data.subjects);
+                        updatePagination(data.pagination);
+                    } else {
+                        console.error('Search failed:', data);
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Error:', error);
+                });
+
+                function showLoading() {
+                    if (loadingSpinner) loadingSpinner.style.display = 'block';
+                    if (subjectsTable) subjectsTable.style.opacity = '0.5';
+                }
+
+                function hideLoading() {
+                    if (loadingSpinner) loadingSpinner.style.display = 'none';
+                    if (subjectsTable) subjectsTable.style.opacity = '1';
+                }
+
+                function updateTable(subjectsData) {
+                    if (!subjectsTbody) return;
+                    
+                    if (subjectsData.length === 0) {
+                        subjectsTbody.innerHTML = `
+                            <tr>
+                                <td colspan="8" class="text-center">{{ __("index.no_data_available") }}</td>
+                            </tr>
+                        `;
+                        return;
+                    }
+
+                    let html = '';
+                    subjectsData.forEach((subject, index) => {
+                        const rowNumber = (currentPage - 1) * currentPerPage + index + 1;
+                        html += `
+                            <tr>
+                                <td>${rowNumber}</td>
+                                <td>
+                                    <span class="badge bg-light text-dark">${subject.code}</span>
+                                </td>
+                                <td>
+                                    <strong>${subject.name}</strong>
+                                </td>
+                                <td>
+                                    ${subject.creator ? subject.creator.name : '<span class="text-muted">-</span>'}
+                                </td>
+                                <td>
+                                    <small class="text-muted">${new Date(subject.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</small>
+                                </td>
+                                <td>
+                                    ${subject.deleted_at ? 
+                                        '<span class="badge bg-danger">Dihapus</span>' : 
+                                        '<span class="badge bg-success">Aktif</span>'}
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        ${!subject.deleted_at ? `
+                                            <button type="button" class="btn btn-sm btn-soft-primary" onclick="editSubject('${subject.id}')" title="Edit">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-soft-danger" onclick="deleteSubject('${subject.id}', '${subject.name.replace(/'/g, "\\'")}')" title="Hapus">
+                                                <i class="mdi mdi-delete"></i>
+                                            </button>
+                                        ` : `
+                                            <button type="button" class="btn btn-sm btn-soft-success" onclick="restoreSubject('${subject.id}', '${subject.name.replace(/'/g, "\\'")}')" title="Restore">
+                                                <i class="mdi mdi-restore"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-soft-danger" onclick="forceDeleteSubject('${subject.id}', '${subject.name.replace(/'/g, "\\'")}')" title="Hapus Permanen">
+                                                <i class="mdi mdi-delete-forever"></i>
+                                            </button>
+                                        `}
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    subjectsTbody.innerHTML = html;
+                }
+
+                function updatePagination(pagination) {
+                    if (!paginationInfo || !paginationLinks) return;
+                    
+                    // Update pagination info
+                    const startItem = (pagination.current_page - 1) * pagination.per_page + 1;
+                    const endItem = Math.min(pagination.current_page * pagination.per_page, pagination.total);
+                    paginationInfo.textContent = `{{ __("index.showing") }} ${startItem} {{ __("index.to") }} ${endItem} {{ __("index.of") }} ${pagination.total} {{ __("index.data") }}`;
+
+                    // Update pagination links
+                    let html = '';
+                    
+                    // Previous link
+                    if (pagination.current_page === 1) {
+                        html += '<li class="page-item disabled"><a class="page-link" href="#" data-page="1" tabindex="-1">{{ __("index.previous") }}</a></li>';
+                    } else {
+                        html += `<li class="page-item"><a class="page-link" href="#" data-page="${pagination.current_page - 1}">{{ __("index.previous") }}</a></li>`;
+                    }
+
+                    // Page numbers
+                    for (let i = 1; i <= pagination.last_page; i++) {
+                        if (i === pagination.current_page) {
+                            html += `<li class="page-item active"><a class="page-link" href="#" data-page="${i}">${i} <span class="sr-only">({{ __("index.current") }})</span></a></li>`;
+                        } else {
+                            html += `<li class="page-item"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+                        }
+                    }
+
+                    // Next link
+                    if (pagination.current_page === pagination.last_page) {
+                        html += `<li class="page-item disabled"><a class="page-link" href="#" data-page="${pagination.last_page}" tabindex="-1">{{ __("index.next") }}</a></li>`;
+                    } else {
+                        html += `<li class="page-item"><a class="page-link" href="#" data-page="${pagination.current_page + 1}">{{ __("index.next") }}</a></li>`;
+                    }
+
+                    paginationLinks.innerHTML = html;
+                }
             }
 
-            // Event listener untuk input pencarian
-            searchInput.addEventListener('input', function() {
-                const query = this.value.trim();
-                
-                // Clear timeout sebelumnya
-                clearTimeout(searchTimeout);
-                
-                // Set timeout baru untuk menghindari terlalu banyak request
-                searchTimeout = setTimeout(() => {
-                    performSearch(query);
-                }, 300); // Delay 300ms
-            });
+            function bindActionButtons() {
+                // Buttons are already bound via onclick attributes
+            }
 
-            // Make performSearch available globally
-            window.performSearch = performSearch;
-        });
+            // Delete Subject
+            function deleteSubject(id, name) {
+                Swal.fire({
+                    title: '{{ __("index.are_you_sure") }}',
+                    text: "{{ __("index.subject_will_be_deleted_part1") }}" + name + "{{ __("index.subject_will_be_deleted_part2") }}",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: '{{ __("index.yes_delete") }}',
+                    cancelButtonText: '{{ __("index.cancel") }}'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Use AJAX for deletion
+                        fetch(`/subjects/${id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}',
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire('{{ __("index.deleted") }}!', data.message, 'success');
+                                // Refresh the table
+                                performAjaxSearch();
+                            } else {
+                                Swal.fire('{{ __("index.error") }}!', data.message || '{{ __("index.error_occurred") }}', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire('{{ __("index.error") }}!', '{{ __("index.error_deleting_subject") }}', 'error');
+                        });
+                    }
+                });
+            }
 
-        // Clear search functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const clearButton = document.getElementById('clear-search');
-            const searchButton = document.getElementById('search-button');
-            const searchInput = document.getElementById('search-input');
-            
-            // Event listener untuk tombol clear
-            clearButton.addEventListener('click', function() {
-                searchInput.value = '';
-                searchInput.focus();
-                
-                // Hide clear button, show search button
-                clearButton.style.display = 'none';
-                searchButton.style.display = 'block';
-                
-                // Trigger search
-                window.performSearch('');
-            });
-            
-            // Show/hide buttons based on input
-            searchInput.addEventListener('input', function() {
-                if (this.value.trim() !== '') {
-                    clearButton.style.display = 'block';
-                    searchButton.style.display = 'none';
-                } else {
-                    clearButton.style.display = 'none';
-                    searchButton.style.display = 'block';
-                }
-            });
-            
-            // Event listener untuk tombol search
-            searchButton.addEventListener('click', function() {
-                window.performSearch(searchInput.value);
-            });
-            
-            // Initialize button visibility
-            clearButton.style.display = 'none';
-            searchButton.style.display = 'block';
-        });
+            // Restore Subject
+            function restoreSubject(id, name) {
+                Swal.fire({
+                    title: '{{ __("index.are_you_sure") }}',
+                    text: "{{ __("index.subject_will_be_restored_part1") }}" + name + "{{ __("index.subject_will_be_restored_part2") }}",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '{{ __("index.yes_restore") }}',
+                    cancelButtonText: '{{ __("index.cancel") }}'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Use AJAX for restore
+                        fetch(`/subjects/${id}/restore`, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}',
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire('{{ __("index.restored") }}!', data.message, 'success');
+                                // Refresh the table
+                                performAjaxSearch();
+                            } else {
+                                Swal.fire('{{ __("index.error") }}!', data.message || '{{ __("index.error_occurred") }}', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire('{{ __("index.error") }}!', '{{ __("index.error_restoring_subject") }}', 'error');
+                        });
+                    }
+                });
+            }
 
-        // Modal functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const modal = $('#subjectModal');
-            const form = document.getElementById('subjectForm');
-            const modalTitle = document.getElementById('subjectModalLabel');
-            const submitBtn = document.getElementById('submitBtn');
+            // Force Delete Subject
+            function forceDeleteSubject(id, name) {
+                Swal.fire({
+                    title: '{{ __("index.are_you_sure") }}',
+                    text: "{{ __("index.subject_will_be_deleted_permanently_part1") }}" + name + "{{ __("index.subject_will_be_deleted_permanently_part2") }}",
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: '{{ __("index.yes_delete_permanently") }}',
+                    cancelButtonText: '{{ __("index.cancel") }}'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Use AJAX for force delete
+                        fetch(`/subjects/${id}/force-delete`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}',
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire('{{ __("index.deleted_permanently") }}!', data.message, 'success');
+                                // Refresh the table
+                                performAjaxSearch();
+                            } else {
+                                Swal.fire('{{ __("index.error") }}!', data.message || '{{ __("index.error_occurred") }}', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire('{{ __("index.error") }}!', '{{ __("index.error_force_deleting_subject") }}', 'error');
+                        });
+                    }
+                });
+            }
 
-            // Create button event
-            document.getElementById('btn-create').addEventListener('click', function() {
-                resetForm();
-                isEditMode = false;
-                editId = null;
-                modalTitle.textContent = 'Tambah Mata Pelajaran';
-                submitBtn.textContent = 'Simpan';
-                modal.modal('show');
-            });
+            // Export Excel
+            function exportExcel() {
+                const url = new URL(window.location.href);
+                url.searchParams.set('export', 'excel');
+                window.open(url.toString(), '_blank');
+            }
 
-            // Edit button events (delegated)
-            function initializeEditButtons() {
-                document.querySelectorAll('.btn-edit').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const id = this.getAttribute('data-id');
-                        loadEditData(id);
+            // Print PDF
+            function printPDF() {
+                const url = new URL(window.location.href);
+                url.searchParams.set('print', 'pdf');
+                window.open(url.toString(), '_blank');
+            }
+
+            // Modal functions
+            function openSubjectModal() {
+                fetch('{{ route("subjects.create") }}', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('subject-modal-label').textContent = data.title;
+                        document.querySelector('#subject-modal .modal-body').innerHTML = data.html;
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('subject-modal'));
+                        modal.show();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: '{{ __("index.error") }}',
+                        text: '{{ __("index.failed_to_load_form") }}'
                     });
                 });
             }
 
-            // Initialize edit buttons on page load
-            initializeEditButtons();
-
-            // Load edit data
-            function loadEditData(id) {
+            function editSubject(id) {
                 fetch(`/subjects/${id}/edit`, {
-                    method: 'GET',
                     headers: {
-                        'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        resetForm();
-                        isEditMode = true;
-                        editId = id;
-                        modalTitle.textContent = data.title;
-                        submitBtn.textContent = 'Update';
-                        
-                        // Fill form with data
-                        document.getElementById('name').value = data.subject.name;
-                        document.getElementById('code').value = data.subject.code;
-                        
-                        modal.modal('show');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    swal("Error", "Gagal memuat data", "error");
-                });
-            }
-
-            // Form submission
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(form);
-                const url = isEditMode ? `/subjects/${editId}` : '/subjects';
-                const method = 'POST';
-                
-                if (isEditMode) {
-                    formData.append('_method', 'PUT');
-                }
-
-                // Disable submit button
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Menyimpan...';
-
-                fetch(url, {
-                    method: method,
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                         'Accept': 'application/json'
-                    },
-                    body: formData
+                    }
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        modal.modal('hide');
-                        swal({
-                        title: "Berhasil!",
-                        text: isEditMode ? "Data berhasil diperbarui." : "Data berhasil ditambahkan.",
-                        icon: "success",
-                        timer: 3000,
-                        buttons: false
-                        }).then(() => {
-                        // Reload table data
-                        window.performSearch(document.getElementById('search-input').value);
-                        });
-                    } else {
-                        // Handle validation errors
-                        if (data.errors) {
-                            Object.keys(data.errors).forEach(key => {
-                                const errorElement = document.getElementById(key + '-error');
-                                const inputElement = document.getElementById(key);
-                                if (errorElement && inputElement) {
-                                    errorElement.textContent = data.errors[key][0];
-                                    errorElement.classList.remove('d-none');
-                                    inputElement.classList.add('is-invalid');
-                                }
-                            });
-                        } else {
-                            swal("Gagal", data.message || "Terjadi kesalahan", "error");
-                        }
+                        document.getElementById('subject-modal-label').textContent = data.title;
+                        document.querySelector('#subject-modal .modal-body').innerHTML = data.html;
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('subject-modal'));
+                        modal.show();
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    swal("Error", "Terjadi kesalahan pada server", "error");
-                })
-                .finally(() => {
-                    // Re-enable submit button
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = isEditMode ? 'Update' : 'Simpan';
-                });
-            });
-
-            // Reset form function
-            function resetForm() {
-                form.reset();
-                // Clear validation errors
-                document.querySelectorAll('.invalid-feedback').forEach(el => {
-                    el.classList.add('d-none');
-                    el.textContent = '';
-                });
-                document.querySelectorAll('.is-invalid').forEach(el => {
-                    el.classList.remove('is-invalid');
+                    Swal.fire({
+                        icon: 'error',
+                        title: '{{ __("index.error") }}',
+                        text: '{{ __("index.failed_to_load_form") }}'
+                    });
                 });
             }
-
-            // Make initializeEditButtons available globally
-            window.initializeEditButtons = initializeEditButtons;
-        });
-    </script>
-@endpush
+        </script>
+@endsection

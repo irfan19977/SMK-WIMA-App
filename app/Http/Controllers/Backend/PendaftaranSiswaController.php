@@ -12,13 +12,24 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
 
-class PendaftaranSiswaController extends Controller
-{
+class PendaftaranSiswaController extends Controller{
     use AuthorizesRequests;
     public function index(Request $request)
     {
+        
         $this->authorize('pendaftaran-siswa.index');
+        
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         // Ambil semua siswa (calon maupun sudah diterima) untuk tahun akademik terpilih, kecuali yang ditolak
         $studentsQuery = Student::with('user')->orderBy('created_at', 'DESC')
             ->where('status', '!=', 'ditolak');
@@ -48,7 +59,7 @@ class PendaftaranSiswaController extends Controller
             });
         }
 
-        $students = $studentsQuery->get();
+        $students = $studentsQuery->paginate($request->get('per_page', 10));
 
         // Jika request dari AJAX (partial refresh), kembalikan partial tabel saja
         if ($request->ajax() || $request->boolean('partial')) {

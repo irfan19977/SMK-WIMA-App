@@ -9,6 +9,7 @@ use App\Models\Student;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -21,6 +22,14 @@ class AttendanceController extends Controller
      */
     public function index(Request $request)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         $this->authorize('attendances.index');
         
         $query = $request->get('q');
@@ -34,6 +43,7 @@ class AttendanceController extends Controller
                 'a1.class_id', 
                 'a1.date',
                 's.name as student_name',
+                's.user_id',
                 'c.name as class_name',
                 // Data check in
                 'a1.check_in',
@@ -86,7 +96,7 @@ class AttendanceController extends Controller
         $attendances = isset($attendances) ? $attendances : $attendancesQuery
             ->orderBy('a1.date', 'desc')
             ->orderBy('a1.check_in', 'asc')
-            ->get();
+            ->paginate(request('per_page', 10));
         
         if ($request->ajax()) {
             return response()->json([
@@ -100,14 +110,79 @@ class AttendanceController extends Controller
 
     public function create()
     {
-        $students = Student::all();
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
+        $students = Student::with('classes')->get();
         $classes = Classes::all();
+        
+        $view = view('attendances._form', [
+            'action' => route('attendances.store'),
+            'method' => 'POST',
+            'title' => __('index.add_attendance'),
+            'students' => $students,
+            'classes' => $classes,
+            'attendance' => null
+        ])->render();
         
         return response()->json([
             'success' => true,
-            'title' => 'Tambah Data Absensi',
+            'title' => __('index.add_attendance'),
+            'html' => $view,
             'students' => $students,
             'classes' => $classes
+        ]);
+    }
+
+    // Method untuk mencari attendance yang sudah ada berdasarkan NISN dan tanggal
+    public function findExistingAttendance(Request $request)
+    {
+        $request->validate([
+            'nisn' => 'required|string',
+            'date' => 'required|date'
+        ]);
+
+        $student = Student::where('nisn', $request->nisn)->first();
+        if (!$student) {
+            return response()->json([
+                'success' => false,
+                'message' => 'NISN tidak ditemukan'
+            ]);
+        }
+
+        // Cari attendance yang sudah ada untuk hari ini
+        $existingAttendance = Attendance::where([
+            'student_id' => $student->id,
+            'date' => $request->date
+        ])->first();
+
+        if ($existingAttendance) {
+            return response()->json([
+                'success' => true,
+                'found' => true,
+                'attendance' => [
+                    'id' => $existingAttendance->id,
+                    'student_id' => $existingAttendance->student_id,
+                    'class_id' => $existingAttendance->class_id,
+                    'date' => $existingAttendance->date,
+                    'check_in' => $existingAttendance->check_in,
+                    'check_in_status' => $existingAttendance->check_in_status,
+                    'check_out' => $existingAttendance->check_out,
+                    'check_out_status' => $existingAttendance->check_out_status,
+                    'student_name' => $student->name,
+                    'class_name' => $student->classes->first()->name ?? ''
+                ]
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'found' => false
         ]);
     }
 
@@ -336,13 +411,21 @@ class AttendanceController extends Controller
 
     public function edit($id)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         // Ambil data berdasarkan attendance ID
         $attendance = Attendance::find($id);
         
         if (!$attendance) {
             return response()->json([
                 'success' => false,
-                'message' => 'Data tidak ditemukan'
+                'message' => __('index.data_not_found')
             ]);
         }
 
@@ -356,21 +439,36 @@ class AttendanceController extends Controller
         $checkIn = $allAttendances->where('check_in', '!=', null)->first();
         $checkOut = $allAttendances->where('check_out', '!=', null)->first();
 
-        $students = Student::all();
+        $students = Student::with('classes')->get();
         $classes = Classes::all();
+        
+        // Get student info for NISN
+        $student = Student::find($attendance->student_id);
 
+        $attendanceData = (object)[
+            'student_id' => $attendance->student_id,
+            'class_id' => $attendance->class_id,
+            'date' => $attendance->date,
+            'check_in' => $checkIn->check_in ?? null,
+            'check_in_status' => $checkIn->check_in_status ?? 'tepat',
+            'check_out' => $checkOut->check_out ?? null,
+            'check_out_status' => $checkOut->check_out_status ?? 'tepat',
+            'student' => $student // Add student for NISN access
+        ];
+
+        $view = view('attendances._form', [
+            'action' => route('attendances.update', $attendance->id),
+            'method' => 'PUT',
+            'title' => __('index.edit_attendance'),
+            'students' => $students,
+            'classes' => $classes,
+            'attendance' => $attendanceData
+        ])->render();
+        
         return response()->json([
             'success' => true,
-            'title' => 'Edit Data Absensi',
-            'attendance' => [
-                'student_id' => $attendance->student_id,
-                'class_id' => $attendance->class_id,
-                'date' => $attendance->date,
-                'check_in' => $checkIn->check_in ?? null,
-                'check_in_status' => $checkIn->check_in_status ?? 'tepat',
-                'check_out' => $checkOut->check_out ?? null,
-                'check_out_status' => $checkOut->check_out_status ?? 'tepat'
-            ],
+            'title' => __('index.edit_attendance'),
+            'html' => $view,
             'students' => $students,
             'classes' => $classes
         ]);

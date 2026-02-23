@@ -7,6 +7,7 @@ use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -22,6 +23,14 @@ class StudentController extends Controller
      */
     public function index(Request $request)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         $this->authorize('students.index');
         $query = Student::with('user')->where('status', 'siswa');
         
@@ -36,6 +45,11 @@ class StudentController extends Controller
         
         $students = $query->paginate(10);
         
+        // Jika request dari AJAX (partial refresh), kembalikan partial tabel saja
+        if ($request->boolean('partial')) {
+            return view('students._table', compact('students'));
+        }
+
         // Jika request AJAX, return JSON
         if ($request->ajax() || $request->expectsJson()) {
             return response()->json([
@@ -61,7 +75,30 @@ class StudentController extends Controller
      */
     public function create()
     {
-        return view('students.create');
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
+        if (request()->ajax()) {
+            $view = view('students._form', [
+                'student' => null,
+                'action' => route('students.store'),
+                'method' => 'POST',
+                'title' => __('index.add_student')
+            ])->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $view,
+                'title' => __('index.add_student')
+            ]);
+        }
+        
+        return view('students.addEdit');
     }
 
     /**
@@ -81,7 +118,7 @@ class StudentController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'nullable|min:8|confirmed',
-                'phone' => 'nullable|numeric',
+                'phone' => 'nullable|string|max:20',
                 'gender' => 'required|in:laki-laki,perempuan',
                 'birth_date' => 'required|date',
                 'birth_place' => 'required|string|max:255',
@@ -123,8 +160,12 @@ class StudentController extends Controller
                 'status' => $request->has('status') ? $request->status : true,
             ];
 
-            // Only set password if provided
-            if (!empty($validated['password'])) {
+            // Generate password if not provided
+            $defaultPassword = null;
+            if (empty($validated['password'])) {
+                $defaultPassword = 'password123';
+                $userData['password'] = Hash::make($defaultPassword);
+            } else {
                 $userData['password'] = Hash::make($validated['password']);
             }
 
@@ -159,16 +200,24 @@ class StudentController extends Controller
 
             // Return JSON response for AJAX requests
             if ($request->ajax() || $request->expectsJson()) {
+                $message = 'Data siswa berhasil ditambahkan.';
+                if ($defaultPassword) {
+                    $message .= " Password default: {$defaultPassword}";
+                }
                 return response()->json([
                     'success' => true,
-                    'message' => 'Data siswa berhasil ditambahkan.',
+                    'message' => $message,
                     'student' => $student->load('user')
                 ]);
             }
 
             // Redirect ke halaman yang benar
-            return redirect()->back()
-                ->with('success', 'Pendaftaran berhasil! Silakan login dengan akun yang telah dibuat.');
+            $successMessage = 'Data siswa berhasil ditambahkan.';
+            if ($defaultPassword) {
+                $successMessage .= " Password default: {$defaultPassword}";
+            }
+            return redirect()->route('students.index')
+                ->with('success', $successMessage);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
@@ -182,9 +231,9 @@ class StudentController extends Controller
                 ], 422);
             }
 
-            return redirect()->back()
-                ->withErrors($e->errors())
-                ->withInput();
+            return redirect()->route('students.create')
+                ->withInput()
+                ->with('error', 'Validation error. Please check your input.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -199,7 +248,7 @@ class StudentController extends Controller
                 ], 500);
             }
 
-            return redirect()->back()
+            return redirect()->route('students.create')
                 ->withInput()
                 ->with('error', 'Gagal mendaftar: ' . $e->getMessage());
         }
@@ -224,6 +273,14 @@ class StudentController extends Controller
      */
     public function edit(string $id)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         $student = Student::with('user')->findOrFail($id);
 
         // Pastikan hanya siswa dengan status 'siswa' yang bisa diedit
@@ -232,14 +289,21 @@ class StudentController extends Controller
         }
 
         if (request()->ajax()) {
+            $view = view('students._form', [
+                'student' => $student,
+                'action' => route('students.update', $student->id),
+                'method' => 'PUT',
+                'title' => __('index.edit_student')
+            ])->render();
+            
             return response()->json([
                 'success' => true,
-                'student' => $student,
-                'title' => 'Edit Siswa',
+                'html' => $view,
+                'title' => __('index.edit_student')
             ]);
         }
 
-        return view('students.edit', compact('student'));
+        return view('students.addEdit', compact('student'));
     }
 
     /**
@@ -435,7 +499,7 @@ class StudentController extends Controller
                 ], 500);
             }
 
-            return redirect()->back()
+            return redirect()->route('students.edit', $id)
                 ->withInput()
                 ->with('error', 'Failed to update student: ' . $e->getMessage());
         }

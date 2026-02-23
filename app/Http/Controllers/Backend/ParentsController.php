@@ -8,10 +8,11 @@ use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Str;
 
 class ParentsController extends Controller
 {
@@ -19,6 +20,14 @@ class ParentsController extends Controller
 
     public function index(Request $request)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         $this->authorize('parents.index');
 
         $query = ParentModel::with(['user', 'user.roles', 'student']);
@@ -35,7 +44,19 @@ class ParentsController extends Controller
             });
         }
         
-        $parents = $query->paginate(10);
+        // Set per page
+        $perPage = $request->get('per_page', 10);
+        $parents = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        
+        // Handle export
+        if ($request->has('export') && $request->export === 'excel') {
+            return $this->exportExcel($parents);
+        }
+
+        // Handle print
+        if ($request->has('print') && $request->print === 'pdf') {
+            return $this->printPDF($parents);
+        }
         
         // Jika request AJAX, return JSON
         if ($request->ajax() || $request->expectsJson()) {
@@ -43,22 +64,22 @@ class ParentsController extends Controller
                 return [
                     'id' => $parent->id,
                     'name' => $parent->name,
-                    // Tambahkan data student
+                    'email' => $parent->user->email,
+                    'phone' => $parent->user->phone,
+                    'status' => $parent->status,
+                    'user_status' => $parent->user->status,
+                    'user_id' => $parent->user_id,
                     'student' => $parent->student ? [
                         'id' => $parent->student->id,
                         'name' => $parent->student->name,
                         'nisn' => $parent->student->nisn,
                     ] : null,
-                    'user' => [
-                        'id' => $parent->user->id,
-                        'email' => $parent->user->email,
-                    ]
                 ];
             });
             
             return response()->json([
                 'success' => true,
-                'parents' => $parentsData,
+                'data' => $parentsData,
                 'pagination' => [
                     'current_page' => $parents->currentPage(),
                     'per_page' => $parents->perPage(),
@@ -79,8 +100,26 @@ class ParentsController extends Controller
      */
     public function create()
     {
-        $students = Student::all(); 
-        return view('parents.create', compact('students'));
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
+        $students = Student::all();
+        
+        if (request()->ajax()) {
+            $html = view('parents.addEdit', ['students' => $students])->render();
+            return response()->json([
+                'success' => true,
+                'title' => 'Tambah Wali Murid',
+                'html' => $html
+            ]);
+        }
+        
+        return view('parents.addEdit', ['students' => $students]);
     }
 
     /**
@@ -91,44 +130,49 @@ class ParentsController extends Controller
         // Validate the request data
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'password' => 'nullable|string|min:8',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8',
             'phone' => 'nullable|string|max:20',
-            'student_id' => 'required|string', // Make student_id required
-            'status' => 'nullable|string|max:20',
+            'student_id' => 'nullable|string',
+            'status' => 'required|in:ayah,ibu,wali',
+            'jenis_kelamin' => 'nullable|in:laki-laki,perempuan',
             'province' => 'nullable|string|max:100',
             'regency' => 'nullable|string|max:100',
             'district' => 'nullable|string|max:100',
             'village' => 'nullable|string|max:100',
-            'address' => 'nullable|string|max:255',
+            'address' => 'required|string|max:255',
         ]);
 
-        // Check if student already has a parent
-        $existingParent = ParentModel::where('student_id', $request->student_id)->first();
-        if ($existingParent) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Siswa sudah memiliki orang tua/wali');
+        // Check if student already has a parent (if student_id is provided)
+        if ($request->student_id) {
+            $existingParent = ParentModel::where('student_id', $request->student_id)->first();
+            if ($existingParent) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Siswa sudah memiliki orang tua/wali');
+            }
         }
 
         try {
             DB::beginTransaction();
 
-            $parents = User::create([
+            $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => $request->password ? Hash::make($request->password) : null,
+                'password' => Hash::make($request->password),
                 'phone' => $request->phone,
+                'status' => true,
             ]);
-            $parents->assignRole('parent');
+            $user->assignRole('parent');
 
-            // Create parent record with unique student_id
-            $parents = ParentModel::create([
+            // Create parent record
+            $parent = ParentModel::create([
                 'id' => Str::uuid(),
-                'user_id' => $parents->id,
+                'user_id' => $user->id,
                 'name' => $request->name,
-                'student_id' => $request->student_id,
+                'student_id' => $request->student_id ?: null,
                 'status' => $request->status,
+                'jenis_kelamin' => $request->jenis_kelamin,
                 'province' => $request->province,
                 'regency' => $request->regency,
                 'district' => $request->district,
@@ -138,13 +182,30 @@ class ParentsController extends Controller
             ]);
 
             DB::commit();
-            return redirect()->route('parents.index')->with('success', 'Parent created successfully.');
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Wali murid berhasil ditambahkan.',
+                    'data' => $parent
+                ]);
+            }
+            
+            return redirect()->route('parents.index')->with('success', 'Wali murid berhasil ditambahkan.');
 
         } catch (\Exception $e) {
             DB::rollback();
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menambahkan wali murid: ' . $e->getMessage()
+                ], 500);
+            }
+            
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Failed to create parent: ' . $e->getMessage());
+                ->with('error', 'Gagal menambahkan wali murid: ' . $e->getMessage());
         }
     }
 
@@ -161,87 +222,121 @@ class ParentsController extends Controller
      */
     public function edit(string $id)
     {
-        $parents = ParentModel::with('user')->findOrFail($id);
-        $students = Student::all(); // Get all students for the dropdown
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
         
-        return view('parents.edit', compact('parents', 'students'));
+        $parent = ParentModel::with('user')->findOrFail($id);
+        $students = Student::all();
+        
+        if (request()->ajax()) {
+            $html = view('parents.addEdit', ['parent' => $parent, 'students' => $students])->render();
+            return response()->json([
+                'success' => true,
+                'title' => 'Edit Wali Murid',
+                'html' => $html
+            ]);
+        }
+        
+        return view('parents.addEdit', ['parent' => $parent, 'students' => $students]);
     }
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
-{
-    // Ambil data parent, bukan student
-    $parent = ParentModel::with('user')->findOrFail($id);
-    
-    // Validate the request data
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email,' . $parent->user_id,
-        'password' => 'nullable|string|min:8',
-        'phone' => 'nullable|string|max:20',
-        'student_id' => 'required|string', 
-        'status' => 'nullable|string|max:20',
-        'province' => 'nullable|string|max:100',
-        'regency' => 'nullable|string|max:100',
-        'district' => 'nullable|string|max:100',
-        'village' => 'nullable|string|max:100',
-        'address' => 'nullable|string|max:255',
-    ]);
-
-    // Check if student_id is already taken by another parent (excluding current parent)
-    $existingParent = ParentModel::where('student_id', $request->student_id)
-                                 ->where('id', '!=', $id)
-                                 ->first();
-    if ($existingParent) {
-        return redirect()->back()
-            ->withInput()
-            ->with('error', 'Siswa sudah memiliki orang tua/wali');
-    }
-
-    try {
-        DB::beginTransaction();
-
-        // Update user data
-        $userData = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-        ];
-
-        // Only update password if provided
-        if ($request->filled('password')) {
-            $userData['password'] = Hash::make($request->password);
-        }
-
-        $parent->user->update($userData);
-
-        // Update parent data
-        $parent->update([
-            'name' => $request->name,
-            'student_id' => $request->student_id,
-            'status' => $request->status,
-            'province' => $request->province,
-            'regency' => $request->regency,
-            'district' => $request->district,
-            'village' => $request->village,
-            'address' => $request->address,
-            'updated_by' => Auth::id(),
+    {
+        $parent = ParentModel::with('user')->findOrFail($id);
+        
+        // Validate the request data
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $parent->user_id,
+            'password' => 'nullable|string|min:8',
+            'phone' => 'nullable|string|max:20',
+            'student_id' => 'nullable|string',
+            'status' => 'required|in:ayah,ibu,wali',
+            'jenis_kelamin' => 'nullable|in:laki-laki,perempuan',
+            'province' => 'nullable|string|max:100',
+            'regency' => 'nullable|string|max:100',
+            'district' => 'nullable|string|max:100',
+            'village' => 'nullable|string|max:100',
+            'address' => 'required|string|max:255',
         ]);
 
-        DB::commit();
+        // Check if student_id is already taken by another parent (if student_id is provided)
+        if ($request->student_id) {
+            $existingParent = ParentModel::where('student_id', $request->student_id)
+                                         ->where('id', '!=', $id)
+                                         ->first();
+            if ($existingParent) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Siswa sudah memiliki orang tua/wali');
+            }
+        }
 
-        return redirect()->route('parents.index')->with('success', 'Parent updated successfully.');
+        try {
+            DB::beginTransaction();
 
-    } catch (\Exception $e) {
-        DB::rollback();
-        
-        return redirect()->back()
-            ->withInput()
-            ->with('error', 'Failed to update parent: ' . $e->getMessage());
+            // Update user data
+            $userData = [
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+            ];
+            
+            if ($request->password) {
+                $userData['password'] = Hash::make($request->password);
+            }
+            
+            $parent->user->update($userData);
+
+            // Update parent data
+            $parent->update([
+                'name' => $request->name,
+                'student_id' => $request->student_id ?: null,
+                'status' => $request->status,
+                'jenis_kelamin' => $request->jenis_kelamin,
+                'province' => $request->province,
+                'regency' => $request->regency,
+                'district' => $request->district,
+                'village' => $request->village,
+                'address' => $request->address,
+                'updated_by' => Auth::id(),
+            ]);
+
+            DB::commit();
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Wali murid berhasil diperbarui.',
+                    'data' => $parent
+                ]);
+            }
+            
+            return redirect()->route('parents.index')->with('success', 'Wali murid berhasil diperbarui.');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui wali murid: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Gagal memperbarui wali murid: ' . $e->getMessage());
+        }
     }
-}
 
     /**
      * Remove the specified resource from storage.
@@ -295,5 +390,29 @@ class ParentsController extends Controller
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Export parents to Excel
+     */
+    public function exportExcel($parents)
+    {
+        // Placeholder for Excel export functionality
+        return response()->json([
+            'success' => false,
+            'message' => 'Export Excel functionality not implemented yet'
+        ]);
+    }
+
+    /**
+     * Print parents to PDF
+     */
+    public function printPDF($parents)
+    {
+        // Placeholder for PDF print functionality
+        return response()->json([
+            'success' => false,
+            'message' => 'Print PDF functionality not implemented yet'
+        ]);
     }
 }

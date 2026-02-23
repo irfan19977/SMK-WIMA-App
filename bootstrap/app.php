@@ -11,7 +11,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->web(\App\Http\Middleware\TrackVisitors::class);
+        $middleware->web(append: [
+            \App\Http\Middleware\TrackVisitors::class,
+            \App\Http\Middleware\GlobalSetLanguage::class,
+        ]);
+        
+        $middleware->group('frontend', [
+            \App\Http\Middleware\FrontendLanguageSync::class,
+        ]);
     })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->validateCsrfTokens(except: [

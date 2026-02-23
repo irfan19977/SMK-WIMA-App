@@ -7,6 +7,7 @@ use App\Models\News;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\Facades\Image;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -17,19 +18,40 @@ class NewsController extends Controller
     
     public function index(Request $request)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+
         $this->authorize('news.index');
-        $query = News::latest();
+        $query = News::with('user')->latest();
         
-        if ($request->has('q')) {
+        if ($request->has('q') && !empty($request->q)) {
             $searchTerm = $request->q;
             $query->where(function($q) use ($searchTerm) {
                 $q->where('title', 'like', "%{$searchTerm}%")
                   ->orWhere('excerpt', 'like', "%{$searchTerm}%")
-                  ->orWhere('category', 'like', "%{$searchTerm}%");
+                  ->orWhere('category', 'like', "%{$searchTerm}%")
+                  ->orWhereHas('user', function($u) use ($searchTerm) {
+                      $u->where('name', 'like', "%{$searchTerm}%");
+                  });
             });
         }
         
-        $news = $query->paginate(10);
+        // Handle export
+        if ($request->has('export') && $request->export === 'excel') {
+            return $this->exportExcel($query->get());
+        }
+
+        // Handle print
+        if ($request->has('print') && $request->print === 'pdf') {
+            return $this->printPDF($query->get());
+        }
+        
+        $news = $query->paginate($request->get('per_page', 10));
         
         if ($request->ajax()) {
             $formattedNews = collect($news->items())->map(function($item) {
@@ -63,8 +85,19 @@ class NewsController extends Controller
         return view('news.index', compact('news'));
     }
 
+    /**
+     * Show the form for creating a new resource.
+     */
     public function create()
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+
         return view('news.addEdit');
     }
 
@@ -148,6 +181,14 @@ class NewsController extends Controller
 
     public function edit($id)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+
         $news = News::findOrFail($id);
         return view('news.addEdit', compact('news'));
     }
@@ -238,6 +279,30 @@ class NewsController extends Controller
 
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+    
+    /**
+     * Export news to Excel
+     */
+    private function exportExcel($news)
+    {
+        // Implementation for Excel export
+        // You can use Laravel Excel package here
+        return response()->json([
+            'message' => 'Export Excel feature coming soon!'
+        ]);
+    }
+
+    /**
+     * Print news to PDF
+     */
+    private function printPDF($news)
+    {
+        // Implementation for PDF print
+        // You can use DomPDF or similar package here
+        return response()->json([
+            'message' => 'Print PDF feature coming soon!'
+        ]);
     }
     
     private function createSlug($title, $id = 0)

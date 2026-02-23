@@ -1,7 +1,6 @@
 @extends('layouts.master')
-
 @section('title')
-    Manajemen Kelas
+    {{ __('index.classes_title') }}
 @endsection
 
 @section('css')
@@ -10,7 +9,7 @@
 @endsection
 
 @section('page-title')
-    Manajemen Kelas
+    {{ __('index.classes_title') }}
 @endsection
 
 @section('body')
@@ -28,15 +27,15 @@
                                 <div class="dropdown">
                                     <button class="btn btn-primary dropdown-toggle w-100" type="button"
                                         data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <i class="mdi mdi-plus me-1"></i> Create New
+                                        <i class="mdi mdi-plus me-1"></i> {{ __('index.create_new') }}
                                     </button>
                                     <div class="dropdown-menu">
                                         <a class="dropdown-item" href="#" id="btn-create"><i class="mdi mdi-folder me-1"></i>
-                                            Kelas</a>
+                                            {{ __('index.classes') }}</a>
                                         <a class="dropdown-item" href="#" id="btn-open-next-semester-bulk"><i class="mdi mdi-swap-horizontal me-1"></i>
-                                            Tutup & Buka Semester</a>
+                                            {{ __('index.close_open_semester') }}</a>
                                         <a class="dropdown-item" href="#" id="btn-promote-bulk"><i class="mdi mdi-arrow-up-bold me-1"></i>
-                                            Naikkan Kelas</a>
+                                            {{ __('index.promote_classes') }}</a>
                                     </div>
                                 </div>
                             </div>
@@ -44,21 +43,21 @@
                                 <li>
                                     <a href="javascript: void(0);" id="toggle-active" class="text-body fw-medium py-1 d-flex align-items-center active">
                                         <i class="mdi mdi-school font-size-20 text-success me-2"></i> <span
-                                            class="me-auto">Active Classes</span>
+                                            class="me-auto">{{ __('index.active_classes') }}</span>
                                         <span class="badge bg-success rounded-pill">{{ $classes->filter(function($class) { return !($class->is_archived ?? false); })->count() }}</span>
                                     </a>
                                 </li>
                                 <li>
                                     <a href="javascript: void(0);" id="toggle-archived" class="text-body d-flex align-items-center">
                                         <i class="mdi mdi-archive font-size-20 me-2 text-warning"></i> <span
-                                            class="me-auto">Archived Classes</span>
+                                            class="me-auto">{{ __('index.archived_classes') }}</span>
                                         <span class="badge bg-warning rounded-pill">{{ $classes->filter(function($class) { return $class->is_archived ?? false; })->count() }}</span>
                                     </a>
                                 </li>
                             </ul>
                         </div>
 
-                        <h5 class="font-size-16 mb-0">Class Statistics</h5>
+                        <h5 class="font-size-16 mb-0">{{ __('index.class_statistics') }}</h5>
 
                         <div class="mt-2">
                             <div class="px-2 py-3 border-bottom">
@@ -70,11 +69,11 @@
                                             </div>
                                         </div>
                                         <div class="overflow-hidden me-auto">
-                                            <h5 class="font-size-15 text-truncate mb-1">Grade 10</h5>
-                                            <p class="text-muted text-truncate mb-0">{{ $classes->filter(function($class) { return ($class->grade ?? '') == '10'; })->count() }} Classes</p>
+                                            <h5 class="font-size-15 text-truncate mb-1">{{ __('index.grade_10') }}</h5>
+                                            <p class="text-muted text-truncate mb-0">{{ $classes->filter(function($class) { return ($class->grade ?? '') == '10'; })->count() }} {{ __('index.classes') }}</p>
                                         </div>
                                         <div class="ms-2">
-                                            <p class="text-muted font-size-14">{{ $classes->filter(function($class) { return ($class->grade ?? '') == '10'; })->sum('students_count') }} Students</p>
+                                            <p class="text-muted font-size-14">{{ $classes->filter(function($class) { return ($class->grade ?? '') == '10'; })->sum('students_count') }} {{ __('index.students') }}</p>
                                         </div>
                                     </div>
                                 </a>
@@ -89,11 +88,11 @@
                                             </div>
                                         </div>
                                         <div class="overflow-hidden me-auto">
-                                            <h5 class="font-size-15 text-truncate mb-1">Grade 11</h5>
-                                            <p class="text-muted text-truncate mb-0">{{ $classes->filter(function($class) { return ($class->grade ?? '') == '11'; })->count() }} Classes</p>
+                                            <h5 class="font-size-15 text-truncate mb-1">{{ __('index.grade_11') }}</h5>
+                                            <p class="text-muted text-truncate mb-0">{{ $classes->filter(function($class) { return ($class->grade ?? '') == '11'; })->count() }} {{ __('index.classes') }}</p>
                                         </div>
                                         <div class="ms-2">
-                                            <p class="text-muted font-size-14">{{ $classes->filter(function($class) { return ($class->grade ?? '') == '11'; })->sum('students_count') }} Students</p>
+                                            <p class="text-muted font-size-14">{{ $classes->filter(function($class) { return ($class->grade ?? '') == '11'; })->sum('students_count') }} {{ __('index.students') }}</p>
                                         </div>
                                     </div>
                                 </a>
@@ -108,11 +107,11 @@
                                             </div>
                                         </div>
                                         <div class="overflow-hidden me-auto">
-                                            <h5 class="font-size-15 text-truncate mb-1">Grade 12</h5>
-                                            <p class="text-muted text-truncate mb-0">{{ $classes->filter(function($class) { return ($class->grade ?? '') == '12'; })->count() }} Classes</p>
+                                            <h5 class="font-size-15 text-truncate mb-1">{{ __('index.grade_12') }}</h5>
+                                            <p class="text-muted text-truncate mb-0">{{ $classes->filter(function($class) { return ($class->grade ?? '') == '12'; })->count() }} {{ __('index.classes') }}</p>
                                         </div>
                                         <div class="ms-2">
-                                            <p class="text-muted font-size-14">{{ $classes->filter(function($class) { return ($class->grade ?? '') == '12'; })->sum('students_count') }} Students</p>
+                                            <p class="text-muted font-size-14">{{ $classes->filter(function($class) { return ($class->grade ?? '') == '12'; })->sum('students_count') }} {{ __('index.students') }}</p>
                                         </div>
                                     </div>
                                 </a>
@@ -138,16 +137,16 @@
                             </div>
                         </div>
 
-                        <h5 class="font-size-16 mt-4 mb-0">Quick Actions</h5>
+                        <h5 class="font-size-16 mt-4 mb-0">{{ __('index.quick_actions') }}</h5>
 
                         <div class="border text-center rounded p-3 mt-4">
                             <div class="">
                                 <i class="mdi mdi-school display-4 text-primary mb-3"></i>
                             </div>
-                            <h5>Class Management</h5>
-                            <p class="pt-1">Manage classes, students, and academic operations</p>
+                            <h5>{{ __('index.class_management') }}</h5>
+                            <p class="pt-1">{{ __('index.manage_classes_description') }}</p>
                             <div class="text-center pt-2">
-                                <button type="button" class="btn btn-primary w-100" id="btn-create-quick">Create Class <i
+                                <button type="button" class="btn btn-primary w-100" id="btn-create-quick">{{ __('index.create_class') }} <i
                                         class="mdi mdi-plus ms-1"></i></button>
                             </div>
                         </div>
@@ -160,10 +159,10 @@
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="font-size-16 mb-0">My Classes</h5>
+                        <h5 class="font-size-16 mb-0">{{ __('index.my_classes') }}</h5>
                         <div class="d-flex gap-2">
                             <div class="input-group" style="width: 300px;">
-                                <input type="text" class="form-control" placeholder="Search classes..." id="search-input">
+                                <input type="text" class="form-control" placeholder="{{ __('index.search_classes') }}" id="search-input">
                                 <button class="btn btn-primary" type="button" id="search-button">
                                     <i class="mdi mdi-magnify"></i>
                                 </button>
@@ -207,8 +206,7 @@
                                         </div>
                                         <div class="flex-grow-1">
                                             <h5 class="font-size-15 mb-1 text-truncate">{{ $class->name }}</h5>
-                                            <a href="{{ route('classes.show', $class->id) }}" class="font-size-14 text-muted text-truncate"><u>View
-                                                    Class</u></a>
+                                            <a href="{{ route('classes.show', $class->id) }}" class="font-size-14 text-muted text-truncate"><u>{{ __('index.view_class') }}</u></a>
                                         </div>
                                     </div>
                                     <div class="mt-3 pt-2">
@@ -218,13 +216,13 @@
                                         </div>
                                         <div class="d-flex justify-content-between">
                                             <p class="text-muted font-size-13 mb-1">{{ $class->major }}</p>
-                                            <p class="text-muted font-size-13 mb-1 text-truncate">{{ $class->students_count }} Students</p>
+                                            <p class="text-muted font-size-13 mb-1 text-truncate">{{ $class->students_count }} {{ __('index.students') }}</p>
                                         </div>
                                         <div class="mt-2">
                                             @if($class->is_archived)
-                                                <span class="badge bg-warning">Archived</span>
+                                                <span class="badge bg-warning">{{ __('index.archived') }}</span>
                                             @else
-                                                <span class="badge bg-success">Active</span>
+                                                <span class="badge bg-success">{{ __('index.active') }}</span>
                                             @endif
                                         </div>
                                     </div>
@@ -239,100 +237,26 @@
                                 </div>
                                 <h5 class="text-muted">
                                     @if(request('show_archived'))
-                                        No archived classes found
+                                        {{ __('index.no_archived_classes') }}
                                     @else
-                                        No classes found
+                                        {{ __('index.no_classes') }}
                                     @endif
                                 </h5>
                                 <p class="text-muted">
                                     @if(request('show_archived'))
-                                        Archived classes will appear here.
+                                        {{ __('index.archived_classes_will_appear') }}
                                     @else
-                                        Click "Create New" to add your first class.
+                                        {{ __('index.click_create_new') }}
                                     @endif
                                 </p>
                                 @if(!request('show_archived'))
                                     <button type="button" class="btn btn-primary" id="btn-create-empty">
-                                        <i class="mdi mdi-plus"></i> Create Class
+                                        <i class="mdi mdi-plus"></i> {{ __('index.create_class') }}
                                     </button>
                                 @endif
                             </div>
                         </div>
                         @endforelse
-                    </div>
-
-                    <div class="d-flex flex-wrap mt-4">
-                        <h5 class="font-size-16 me-3">Recent Classes</h5>
-                        <div class="ms-auto">
-                            <a href="javascript: void(0);" class="fw-medium text-reset">View All</a>
-                        </div>
-                    </div>
-
-                    <div class="table-responsive mt-3">
-                        <table class="table align-middle table-nowrap table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th scope="col">Name</th>
-                                    <th scope="col">Code</th>
-                                    <th scope="col">Grade</th>
-                                    <th scope="col">Major</th>
-                                    <th scope="col">Students</th>
-                                    <th scope="col">Status</th>
-                                    <th scope="col">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($classes->take(5) as $class)
-                                <tr>
-                                    <td>
-                                        <a href="{{ route('classes.show', $class->id) }}" class="text-dark fw-medium">
-                                            <i class="mdi mdi-school font-size-16 align-middle text-primary me-2"></i>
-                                            {{ $class->name }}
-                                        </a>
-                                    </td>
-                                    <td>{{ $class->code }}</td>
-                                    <td>{{ $class->grade }}</td>
-                                    <td>{{ $class->major }}</td>
-                                    <td>{{ $class->students_count }}</td>
-                                    <td>
-                                        @if($class->is_archived)
-                                            <span class="badge bg-warning">Archived</span>
-                                        @else
-                                            <span class="badge bg-success">Active</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <a class="font-size-16 text-muted" role="button"
-                                                data-bs-toggle="dropdown" aria-haspopup="true">
-                                                <i class="mdi mdi-dots-horizontal"></i>
-                                            </a>
-                                            <div class="dropdown-menu dropdown-menu-end">
-                                                <a class="dropdown-item" href="{{ route('classes.show', $class->id) }}">View</a>
-                                                <a class="dropdown-item edit-class" href="#"
-                                                   data-id="{{ $class->id }}"
-                                                   data-name="{{ $class->name }}"
-                                                   data-code="{{ $class->code }}"
-                                                   data-grade="{{ $class->grade }}"
-                                                   data-major="{{ $class->major }}">Edit</a>
-                                                <a class="dropdown-item" href="#" onclick="toggleArchive('{{ $class->id }}'); return false;">
-                                                    {{ $class->is_archived ? 'Unarchive' : 'Archive' }}
-                                                </a>
-                                                <div class="dropdown-divider"></div>
-                                                <a class="dropdown-item text-danger" href="#" onclick="confirmDelete('{{ $class->id }}'); return false;">
-                                                    Remove
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="7" class="text-center">No recent classes</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </div>
@@ -344,37 +268,37 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Create Class</h5>
+                    <h5 class="modal-title" id="modalTitle">{{ __('index.create_class') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form id="classForm" action="/classes" method="POST">
                     @csrf
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="name" class="form-label">Class Name</label>
+                            <label for="name" class="form-label">{{ __('index.class_name') }}</label>
                             <input type="text" class="form-control" id="name" name="name" required>
                         </div>
                         <div class="mb-3">
-                            <label for="code" class="form-label">Class Code</label>
+                            <label for="code" class="form-label">{{ __('index.class_code') }}</label>
                             <input type="text" class="form-control" id="code" name="code" required>
                         </div>
                         <div class="mb-3">
-                            <label for="grade" class="form-label">Grade</label>
+                            <label for="grade" class="form-label">{{ __('index.grade') }}</label>
                             <select class="form-control" id="grade" name="grade" required>
-                                <option value="">Select Grade</option>
+                                <option value="">{{ __('index.select_grade') }}</option>
                                 <option value="10">10</option>
                                 <option value="11">11</option>
                                 <option value="12">12</option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="major" class="form-label">Major</label>
+                            <label for="major" class="form-label">{{ __('index.major') }}</label>
                             <input type="text" class="form-control" id="major" name="major" required>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('index.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ __('index.save') }}</button>
                     </div>
                 </form>
             </div>
@@ -414,32 +338,21 @@
         const btnCreate = document.getElementById('btn-create');
         if (btnCreate) {
             btnCreate.addEventListener('click', function() {
-                currentClassId = null;
-                document.getElementById('modalTitle').textContent = 'Create Class';
-                document.getElementById('classForm').action = '/classes';
-                
-                // Remove method override if exists
-                let methodInput = document.querySelector('input[name="_method"]');
-                if (methodInput) {
-                    methodInput.remove();
-                }
-                
-                document.getElementById('classForm').reset();
-                new bootstrap.Modal(document.getElementById('classModal')).show();
+                openClassModal();
             });
         }
 
         const btnCreateQuick = document.getElementById('btn-create-quick');
         if (btnCreateQuick) {
             btnCreateQuick.addEventListener('click', function() {
-                if (btnCreate) btnCreate.click();
+                openClassModal();
             });
         }
 
         const btnCreateEmpty = document.getElementById('btn-create-empty');
         if (btnCreateEmpty) {
             btnCreateEmpty.addEventListener('click', function() {
-                if (btnCreate) btnCreate.click();
+                openClassModal();
             });
         }
 
@@ -449,46 +362,10 @@
         
         // Edit class
         editButtons.forEach(function(btn) {
-            console.log('Adding event listener to edit button:', btn.getAttribute('data-id')); // Debug log
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
-                console.log('Edit button clicked'); // Debug log
-                
-                currentClassId = this.getAttribute('data-id');
-                console.log('Class ID:', currentClassId); // Debug log
-                
-                document.getElementById('modalTitle').textContent = 'Edit Class';
-                document.getElementById('classForm').action = '/classes/' + currentClassId;
-                
-                // Add method override for PUT
-                let methodInput = document.querySelector('input[name="_method"]');
-                if (!methodInput) {
-                    methodInput = document.createElement('input');
-                    methodInput.type = 'hidden';
-                    methodInput.name = '_method';
-                    methodInput.value = 'PUT';
-                    document.getElementById('classForm').appendChild(methodInput);
-                } else {
-                    methodInput.value = 'PUT';
-                }
-                
-                // Fill form
-                document.getElementById('name').value = this.getAttribute('data-name');
-                document.getElementById('code').value = this.getAttribute('data-code');
-                document.getElementById('grade').value = this.getAttribute('data-grade');
-                document.getElementById('major').value = this.getAttribute('data-major');
-                
-                console.log('Form filled, showing modal'); // Debug log
-                
-                // Check if bootstrap is available
-                if (typeof bootstrap !== 'undefined') {
-                    const modal = new bootstrap.Modal(document.getElementById('classModal'));
-                    modal.show();
-                    console.log('Modal shown'); // Debug log
-                } else {
-                    console.error('Bootstrap is not loaded'); // Debug log
-                    alert('Error: Bootstrap tidak terload. Silakan refresh halaman.');
-                }
+                const id = this.getAttribute('data-id');
+                editClass(id);
             });
         });
 
@@ -510,14 +387,44 @@
 
         // Delete confirmation
         window.confirmDelete = function(classId) {
-            if (confirm('Are you sure you want to delete this class?')) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '/classes/' + classId;
-                form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}"><input type="hidden" name="_method" value="DELETE">';
-                document.body.appendChild(form);
-                form.submit();
-            }
+            Swal.fire({
+                title: '{{ __("index.are_you_sure") }}',
+                text: "{{ __("index.class_will_be_deleted_permanently") }}",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: '{{ __("index.yes_delete") }}',
+                cancelButtonText: '{{ __("index.cancel") }}'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Create form for delete
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/classes/' + classId;
+                    form.style.display = 'none';
+                    
+                    // Add CSRF token
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                    if (csrfToken) {
+                        const csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = '_token';
+                        csrfInput.value = csrfToken.getAttribute('content');
+                        form.appendChild(csrfInput);
+                    }
+                    
+                    // Add method override for DELETE
+                    const methodInput = document.createElement('input');
+                    methodInput.type = 'hidden';
+                    methodInput.name = '_method';
+                    methodInput.value = 'DELETE';
+                    form.appendChild(methodInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
         };
 
         // Toggle archive
@@ -559,6 +466,76 @@
             });
         }
     });
+
+    // Modal functions
+    function openClassModal() {
+        fetch('/classes/create', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('class-modal-label').textContent = data.title;
+                document.querySelector('#class-modal .modal-body').innerHTML = data.html;
+                
+                const modal = new bootstrap.Modal(document.getElementById('class-modal'));
+                modal.show();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: '{{ __("index.error") }}',
+                text: '{{ __("index.failed_to_load_form") }}'
+            });
+        });
+    }
+
+    function editClass(id) {
+        fetch(`/classes/${id}/edit`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('class-modal-label').textContent = data.title;
+                document.querySelector('#class-modal .modal-body').innerHTML = data.html;
+                
+                const modal = new bootstrap.Modal(document.getElementById('class-modal'));
+                modal.show();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: '{{ __("index.error") }}',
+                text: '{{ __("index.failed_to_load_form") }}'
+            });
+        });
+    }
     </script>
     <script src="{{ URL::asset('build/js/app.js') }}"></script>
 @endsection
+
+<!-- Class Modal -->
+<div class="modal fade" id="class-modal" tabindex="-1" aria-labelledby="class-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="class-modal-label">Modal title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>

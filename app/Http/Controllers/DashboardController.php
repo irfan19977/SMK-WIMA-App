@@ -4,12 +4,22 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\App;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         // Get statistics for dashboard cards
         $totalStudents = DB::table('student')->count();
         $activeClasses = DB::table('classes')->where('academic_year', '2025/2026')->count();
@@ -61,10 +71,11 @@ class DashboardController extends Controller
         return DB::table('attendance as a')
             ->join('student as s', 'a.student_id', '=', 's.id')
             ->join('users as u', 's.user_id', '=', 'u.id')
-            ->join('student_class as sc', 's.id', '=', 'sc.student_id')
-            ->join('classes as c', 'sc.class_id', '=', 'c.id')
+            ->join('classes as c', 'a.class_id', '=', 'c.id')  // Direct join to classes
             ->where('a.date', $today)
             ->where('a.check_in_status', 'terlambat')
+            ->whereNull('a.deleted_at')
+            ->whereNull('s.deleted_at')
             ->select([
                 's.nisn as nis',
                 's.name',
@@ -72,7 +83,7 @@ class DashboardController extends Controller
                 'a.date',
                 'a.check_in as time'
             ])
-            ->orderBy('a.check_in', 'asc')
+            ->orderBy('a.check_in', 'desc')
             ->get()
             ->map(function ($student) {
                 // Calculate late duration manually
@@ -86,6 +97,28 @@ class DashboardController extends Controller
     public function getChartData(Request $request)
     {
         $period = $request->get('period', '1y');
+        
+        switch ($period) {
+            case '1m':
+                $data = $this->getOneMonthData();
+                break;
+            case '6m':
+                $data = $this->getSixMonthsData();
+                break;
+            case 'all':
+                $data = $this->getAllData();
+                break;
+            default: // 1y
+                $data = $this->getLateStatistics();
+                break;
+        }
+        
+        return response()->json($data);
+    }
+    
+    public function getAttendanceData(Request $request)
+    {
+        $period = $request->get('period', '1m');
         
         switch ($period) {
             case '1m':
@@ -257,6 +290,9 @@ class DashboardController extends Controller
             $data['onTimeCount'][] = $onTimeCount;
         }
         
+        // Debug: Log the data
+        \Log::info('Late Statistics Data: ' . json_encode($data));
+        
         return $data;
     }
 
@@ -281,9 +317,21 @@ class DashboardController extends Controller
             ->whereIn('check_in_status', ['izin', 'sakit', 'alpha'])
             ->count();
 
-        return [
-            'labels' => ['Tepat Waktu', 'Terlambat', 'Lainnya'],
+        // Get labels based on current locale
+        $labels = [
+            __('index.on_time'),
+            __('index.late'),
+            __('index.others')
+        ];
+
+        $data = [
+            'labels' => $labels,
             'data' => [$tepatCount, $terlambatCount, $otherCount]
         ];
+        
+        // Debug: Log the data
+        \Log::info('Donut Statistics Data: ' . json_encode($data));
+        
+        return $data;
     }
 }

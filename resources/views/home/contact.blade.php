@@ -6,8 +6,8 @@
             <div class="container">
                 <div class="banner-spacing">
                     <div class="section-info">
-                        <h2 data-aos="fade-up" data-aos-delay="100">Hubungi Kami</h2>
-                        <p data-aos="fade-up" data-aos-delay="200">SMK PGRI Lawang siap membantu Anda. Jangan ragu untuk menghubungi kami jika Anda memiliki pertanyaan tentang pendaftaran, program keahlian, atau informasi lainnya seputar sekolah kami.</p>
+                        <h2 data-aos="fade-up" data-aos-delay="100">{{ __('home.contact_banner_title') }}</h2>
+                        <p data-aos="fade-up" data-aos-delay="200">{{ __('home.contact_banner_description') }}</p>
                     </div>
                 </div>
             </div>
@@ -21,9 +21,9 @@
                     <div class="col-lg-8">
                         <div class="contact-content">
                             <div class="header-content">
-                                <h2>Kami Siap Membantu Anda</h2>
-                                <p>SMK PGRI Lawang menyediakan pendidikan vokasional berkualitas dengan 4 jurusan unggulan. Kami siap menjawab pertanyaan Anda tentang pendaftaran, program keahlian, fasilitas, dan informasi lainnya.</p>
-                                <p>Untuk informasi lebih lanjut, silakan email <a href="#">info@smkpgri-lawang.sch.id</a></p>
+                                <h2>{{ __('home.contact_header_title') }}</h2>
+                                <p>{{ __('home.contact_header_description') }}</p>
+                                <p>{{ __('home.contact_email_info') }} <a href="#">info@smkpgri-lawang.sch.id</a></p>
                             </div>
 
                             <div class="contact-form">
@@ -31,42 +31,42 @@
                                     <div class="row">
                                         <div class="col-lg-6 col-md-6">
                                             <div class="form-group">
-                                                <label for="name">Nama Depan</label>
-                                                <input type="text" name="first_name" class="form-control" id="first_name" required data-error="Silakan masukkan nama depan Anda" placeholder="">
+                                                <label for="name">{{ __('home.contact_form_first_name') }}</label>
+                                                <input type="text" name="first_name" class="form-control" id="first_name" required data-error="{{ __('home.contact_form_error_first_name') }}" placeholder="">
                                                 <div class="help-block with-errors"></div>
                                             </div>
                                         </div>
 
                                         <div class="col-lg-6 col-md-6">
                                             <div class="form-group">
-                                                <label for="name">Nama Belakang</label>
-                                                <input type="text" name="last_name" class="form-control" id="last_name" required data-error="Silakan masukkan nama belakang Anda" placeholder="">
+                                                <label for="name">{{ __('home.contact_form_last_name') }}</label>
+                                                <input type="text" name="last_name" class="form-control" id="last_name" required data-error="{{ __('home.contact_form_error_last_name') }}" placeholder="">
                                                 <div class="help-block with-errors"></div>
                                             </div>
                                         </div>
                                             
                                         <div class="col-lg-6 col-md-6">
                                             <div class="form-group">
-                                                <label for="name">Email</label>
-                                                <input type="email" name="email" class="form-control" id="email" required data-error="Silakan masukkan email Anda" placeholder="">
+                                                <label for="name">{{ __('home.contact_form_email') }}</label>
+                                                <input type="email" name="email" class="form-control" id="email" required data-error="{{ __('home.contact_form_error_email') }}" placeholder="">
                                                 <div class="help-block with-errors"></div>
                                             </div>
                                         </div>
 
                                         <div class="col-lg-6 col-md-6">
                                             <div class="form-group">
-                                                <label for="name">Telepon</label>
-                                                <input type="text" name="phone_number" class="form-control" id="phone_number" required data-error="Silakan masukkan nomor telepon Anda" placeholder="">
+                                                <label for="name">{{ __('home.contact_form_phone') }}</label>
+                                                <input type="text" name="phone_number" class="form-control" id="phone_number" required data-error="{{ __('home.contact_form_error_phone') }}" placeholder="">
                                                 <div class="help-block with-errors"></div>
                                             </div>
                                         </div>
     
                                         <div class="col-lg-12 col-md-12">
                                             <div class="form-group">
-                                                <label for="name">Jenis Pertanyaan</label>
+                                                <label for="name">{{ __('home.contact_form_inquiry_type') }}</label>
                                                 <select class="form-select" name="inquiry_type" aria-label="Default select example">
-                                                    <option value="Pendaftaran" selected>Pendaftaran</option>
-                                                    <option value="Kerja Sama">Kerja Sama</option>
+                                                    <option value="Pendaftaran" selected>{{ __('home.contact_info_registration') }}</option>
+                                                    <option value="Kerja Sama">{{ __('home.contact_info_general') }}</option>
                                                     <option value="Administrasi">Administrasi</option>
                                                     <option value="Beasiswa">Beasiswa</option>
                                                     <option value="Bantuan Teknis">Bantuan Teknis</option>
@@ -77,14 +77,14 @@
 
                                         <div class="col-lg-12 col-md-12">
                                             <div class="form-group">
-                                                <label for="name">Pesan</label>
-                                                <textarea name="message" id="message" class="form-control" cols="30" rows="6" required data-error="Silakan masukkan pesan Anda" placeholder=""></textarea>
+                                                <label for="name">{{ __('home.contact_form_message') }}</label>
+                                                <textarea name="message" id="message" class="form-control" cols="30" rows="6" required data-error="{{ __('home.contact_form_error_message') }}" placeholder=""></textarea>
                                                 <div class="help-block with-errors"></div>
                                             </div>
                                         </div>
     
                                         <div class="col-lg-12 col-md-12">
-                                            <button type="submit" class="default-btn">Kirim via WhatsApp</button>
+                                            <button type="submit" class="default-btn">{{ __('home.contact_form_submit') }}</button>
                                             <div id="msgSubmit" class="h3 text-center hidden"></div>
                                             <div class="clearfix"></div>
                                         </div>
@@ -104,9 +104,9 @@
 
                         <div class="info-details">
                             <ul>
-                                <li><i class='bx bxs-phone-call'></i> Informasi Umum - <a href="tel:+6282233088346">+62 822-3308-8346</a></li>
-                                <li><i class='bx bxs-phone-call'></i> Pendaftaran - <a href="tel:+6282233088346">+62 822-3308-8346</a></li>
-                                <li><i class='bx bxs-phone-call'></i> Informasi Jurusan - <a href="tel:+6282233088346">+62 822-3308-8346</a></li>
+                                <li><i class='bx bxs-phone-call'></i> {{ __('home.contact_info_general') }} - <a href="tel:+6282233088346">+62 822-3308-8346</a></li>
+                                <li><i class='bx bxs-phone-call'></i> {{ __('home.contact_info_registration') }} - <a href="tel:+6282233088346">+62 822-3308-8346</a></li>
+                                <li><i class='bx bxs-phone-call'></i> {{ __('home.contact_info_majors') }} - <a href="tel:+6282233088346">+62 822-3308-8346</a></li>
                                 <li><i class='bx bxs-phone-call'></i> WhatsApp - <a href="https://wa.me/6282233088346">+62 822-3308-8346</a></li>
                                 <li><i class='bx bxs-map'></i> Jl. DR. Wahidin No.17, Krajan, Kalirejo, Lawang, Kab. Malang</li>
                                 <li><i class='bx bxs-envelope'></i><a class="info-mail" href="mailto:info@smkpgri-lawang.sch.id">info@smkpgri-lawang.sch.id</a></li>

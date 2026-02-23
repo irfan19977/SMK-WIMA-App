@@ -6,8 +6,8 @@
             <div class="container">
                 <div class="banner-spacing">
                     <div class="section-info">
-                        <h2 data-aos="fade-up" data-aos-delay="100">Teknik Kendaraan Ringan</h2>
-                        <p data-aos="fade-up" data-aos-delay="200">Program keahlian TKR SMK PGRI Lawang dirancang untuk mempersiapkan siswa menjadi ahli dalam perbaikan sistem kendaraan ringan mobil, diagnosa masalah mesin, dan maintenance kendaraan modern.</p>
+                        <h2 data-aos="fade-up" data-aos-delay="100">{{ __('home.tkr_banner_title') }}</h2>
+                        <p data-aos="fade-up" data-aos-delay="200">{{ __('home.tkr_banner_description') }}</p>
                     </div>
                 </div>
             </div>
@@ -21,11 +21,11 @@
                     <div class="col-lg-5 col-md-12">
                         <div class="text-content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Tentang Jurusan TKR</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.tkr_about_title') }}</p>
                             </div>
-                             <h2 class="title-anim">Ahli Kendaraan Ringan</h2>
-                            <p class="title-anim">Program TKR SMK PGRI Lawang membekali siswa dengan kemampuan perbaikan sistem kendaraan ringan, diagnosa mesin, kelistrikan, dan sistem transmisi mobil modern.</p>
-                            <a class="default-btn" href="{{ route('pendaftaran.index') }}">Daftar Sekarang</a>
+                             <h2 class="title-anim">{{ __('home.tkr_about_subtitle') }}</h2>
+                            <p class="title-anim">{{ __('home.tkr_about_description') }}</p>
+                            <a class="default-btn" href="{{ route('pendaftaran.index') }}">{{ __('home.tkr_register_now') }}</a>
                         </div>
                     </div>
 
@@ -39,12 +39,12 @@
                             <div class="col-lg-6 col-sm-6 col-md-6">
                                 <div class="notice-content" data-aos="fade-right" data-aos-delay="200">
                                     <i class='bx bxs-quote-left'></i>
-                                    <h4 class="title-anim">Pembelajaran Praktik</h4>
-                                    <p class="title-anim">Kami menyediakan bengkel praktik modern dengan peralatan diagnostik terkini untuk mendukung pembelajaran perbaikan kendaraan.</p>
+                                    <h4 class="title-anim">{{ __('home.tkr_lab_quote') }}</h4>
+                                    <p class="title-anim">{{ __('home.tkr_lab_description') }}</p>
                                     <div class="author-info">
-                                        <span>Kepala Bengkel TKR</span>
-                                        <h5>Bambang Sutrisno, S.T.</h5>
-                                        <p>Koordinator Program TKR</p>
+                                        <span>{{ __('home.tkr_lab_coordinator') }}</span>
+                                        <h5>{{ __('home.tkr_lab_name') }}</h5>
+                                        <p>{{ __('home.tkr_lab_position') }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -60,41 +60,41 @@
             <div class="container">
                 <div class="section-title" data-aos="fade-up" data-aos-delay="100">
                     <div class="sub-title">
-                        <i class='bx bxs-graduation'></i> <p>Kompetensi TKR</p>
+                        <i class='bx bxs-graduation'></i> <p>{{ __('home.tkr_competencies_title') }}</p>
                     </div>
-                    <h2>Kompetensi yang Dipelajari</h2>
+                    <h2>{{ __('home.tkr_competencies_subtitle') }}</h2>
                 </div>
                 <div class="row justify-content-center">
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="100">
                             <img src="{{ asset('frontend/assets/img/all-img/engine-repair.jpg') }}" alt="icon">
-                            <h4>Mesin Kendaraan</h4>
-                            <p>Perbaikan mesin bensin, diesel, sistem pendingin, dan komponen mesin kendaraan ringan.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.tkr_engine') }}</h4>
+                            <p>{{ __('home.tkr_engine_description') }}</p>
+                            <a href="#">{{ __('home.tkr_learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="200">
                             <img src="{{ asset('frontend/assets/img/all-img/transmission.jpg') }}" alt="icon">
-                            <h4>Sistem Transmisi</h4>
-                            <p>Perbaikan transmisi manual, otomatis, kopling, dan sistem penggerak roda kendaraan.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.tkr_transmission') }}</h4>
+                            <p>{{ __('home.tkr_transmission_description') }}</p>
+                            <a href="#">{{ __('home.tkr_learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="300">
                             <img src="{{ asset('frontend/assets/img/all-img/electrical-system.jpg') }}" alt="icon">
-                            <h4>Kelistrikan</h4>
-                            <p>Diagnosa dan perbaikan sistem kelistrikan, wiring, electronic control unit, dan komponen elektrik.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.tkr_electrical') }}</h4>
+                            <p>{{ __('home.tkr_electrical_description') }}</p>
+                            <a href="#">{{ __('home.tkr_learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="400">
                             <img src="{{ asset('frontend/assets/img/all-img/diagnostics.jpg') }}" alt="icon">
-                            <h4>Diagnostik</h4>
-                            <p>Penggunaan alat diagnostik modern, scanning ECU, dan analisis masalah kendaraan.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.tkr_diagnostics') }}</h4>
+                            <p>{{ __('home.tkr_diagnostics_description') }}</p>
+                            <a href="#">{{ __('home.tkr_learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                 </div>
@@ -109,12 +109,12 @@
                     <div class="col-lg-6">
                         <div class="content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Fasilitas TKR</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.tkr_facilities_title') }}</p>
                             </div>
-                            <h2>Bengkel Kendaraan Ringan</h2>
+                            <h2>{{ __('home.tkr_facilities_subtitle') }}</h2>
 
-                            <p>Bengkel TKR dilengkapi dengan lift mobil, alat diagnostik, peralatan perbaikan mesin, dan sistem scanning modern.</p>
-                            <p>Siswa mendapatkan pengalaman langsung dengan kendaraan nyata dan simulasi perbaikan industri.</p>
+                            <p>{{ __('home.tkr_facilities_description') }}</p>
+                            <p>{{ __('home.tkr_facilities_experience') }}</p>
                         </div>
                     </div>
                     <div class="col-lg-6">
@@ -131,12 +131,12 @@
                     <div class="col-lg-6">
                         <div class="content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Prospek Karir</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.tkr_career_title') }}</p>
                             </div>
-                            <h2>Peluang Karir Lulusan TKR</h2>
+                            <h2>{{ __('home.tkr_career_subtitle') }}</h2>
 
-                            <p>Lulusan TKR siap bekerja sebagai Automotive Technician, Service Advisor, Parts Manager, dan Workshop Supervisor.</p>
-                            <p>Banyak lulusan kami yang diterima di dealer resmi, bengkel independen, dan industri otomotif.</p>
+                            <p>{{ __('home.tkr_career_description1') }}</p>
+                            <p>{{ __('home.tkr_career_description2') }}</p>
                         </div>
                     </div>
                 </div>
@@ -144,12 +144,12 @@
                     <div class="col-lg-6">
                         <div class="content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Sertifikasi</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.tkr_certification_title') }}</p>
                             </div>
-                            <h2>Sertifikasi Kompetensi</h2>
+                            <h2>{{ __('home.tkr_certification_subtitle') }}</h2>
 
-                            <p><strong>Sertifikasi Nasional:</strong> BNSP (Badan Nasional Sertifikasi Profesi) untuk Teknisi Kendaraan Ringan.</p>
-                            <p><strong>Sertifikasi Internasional:</strong> ASEAN Automotive Technician, Toyota Technical Education, dan Honda Technical Training.</p>
+                            <p>{!! __('home.tkr_certification_national') !!}</p>
+                            <p>{!! __('home.tkr_certification_international') !!}</p>
                         </div>
                     </div>
                     <div class="col-lg-6">
@@ -166,13 +166,13 @@
             <div class="container">
                 <div class="section-title" data-aos="fade-up" data-aos-delay="100">
                     <div class="sub-title">
-                        <i class='bx bxs-graduation'></i> <p>Informasi Pendaftaran</p>
+                        <i class='bx bxs-graduation'></i> <p>{{ __('home.tkr_registration_title') }}</p>
                     </div>
-                    <h2>Daftar Sekarang di Jurusan TKR</h2>
+                    <h2>{{ __('home.tkr_registration_subtitle') }}</h2>
                 </div>
 
                 <div class="subscribe-btn text-center" data-aos="fade-up" data-aos-delay="100">
-                    <a class="default-btn" href="{{ route('pendaftaran.index') }}">Daftar Sekarang</a>
+                    <a class="default-btn" href="{{ route('pendaftaran.index') }}">{{ __('home.tkr_register_now') }}</a>
                 </div>
             </div>
         </div> 

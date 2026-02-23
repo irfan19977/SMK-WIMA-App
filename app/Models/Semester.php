@@ -4,10 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Semester extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     protected $fillable = [
         'academic_year',
@@ -15,6 +19,10 @@ class Semester extends Model
         'start_date',
         'end_date',
         'is_active',
+        'description',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     protected $casts = [
@@ -22,6 +30,41 @@ class Semester extends Model
         'end_date' => 'date',
         'is_active' => 'boolean',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (!$model->id) {
+                $model->id = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
+
+    /**
+     * Get the user who created the semester
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the user who updated the semester
+     */
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Get the user who deleted the semester
+     */
+    public function deleter()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
 
     /**
      * Get the display name of the semester

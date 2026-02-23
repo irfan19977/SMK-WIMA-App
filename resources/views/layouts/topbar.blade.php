@@ -68,28 +68,18 @@
             <div class="dropdown d-none d-sm-inline-block">
                 <button type="button" class="btn header-item waves-effect"
                     data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <img class="" src="{{ URL::asset('build/images/flags/us.jpg') }}" alt="Header Language" height="16">
+                    <img class="" src="{{ (auth()->check() ? (auth()->user()->language ?? 'id') : (session('locale') ?? 'id')) === 'id' ? URL::asset('build/images/flags/indonesia.png') : URL::asset('build/images/flags/us.jpg') }}" alt="Header Language" height="16">
                 </button>
                 <div class="dropdown-menu dropdown-menu-end">
                     
-                    <!-- item-->
-                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                        <img src="{{ URL::asset('build/images/flags/spain.jpg') }}" alt="user-image" class="me-1" height="12"> <span class="align-middle">Spanish</span>
+                    <!-- Indonesia -->
+                    <a href="javascript:void(0);" class="dropdown-item notify-item" onclick="changeLanguage('id')">
+                        <img src="{{ URL::asset('build/images/flags/indonesia.png') }}" alt="user-image" class="me-1" height="12"> <span class="align-middle">Bahasa Indonesia</span>
                     </a>
 
-                    <!-- item-->
-                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                        <img src="{{ URL::asset('build/images/flags/germany.jpg') }}" alt="user-image" class="me-1" height="12"> <span class="align-middle">German</span>
-                    </a>
-
-                    <!-- item-->
-                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                        <img src="{{ URL::asset('build/images/flags/italy.jpg') }}" alt="user-image" class="me-1" height="12"> <span class="align-middle">Italian</span>
-                    </a>
-
-                    <!-- item-->
-                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                        <img src="{{ URL::asset('build/images/flags/russia.jpg') }}" alt="user-image" class="me-1" height="12"> <span class="align-middle">Russian</span>
+                    <!-- English -->
+                    <a href="javascript:void(0);" class="dropdown-item notify-item" onclick="changeLanguage('en')">
+                        <img src="{{ URL::asset('build/images/flags/us.jpg') }}" alt="user-image" class="me-1" height="12"> <span class="align-middle">English</span>
                     </a>
                 </div>
             </div>
@@ -250,3 +240,35 @@
         </div>
     </div>
 </header>
+
+<script>
+function changeLanguage(language) {
+    console.log('Changing language to:', language);
+    
+    if (window.userPreferences) {
+        window.userPreferences.preferences.language = language;
+        window.userPreferences.applyLanguage(language);
+        
+        // Update flag icon
+        const flagImg = document.querySelector('.dropdown.d-none.d-sm-inline-block img');
+        if (flagImg) {
+            flagImg.src = language === 'id' 
+                ? '{{ URL::asset("build/images/flags/indonesia.png") }}' 
+                : '{{ URL::asset("build/images/flags/us.jpg") }}';
+        }
+        
+        // Save to server and reload page to apply new language
+        window.userPreferences.savePreferences().then(success => {
+            if (success) {
+                console.log('Language saved successfully');
+                // Reload halaman untuk menerapkan bahasa baru
+                window.location.reload();
+            } else {
+                console.log('Failed to save language');
+            }
+        });
+    } else {
+        console.error('UserPreferences not available');
+    }
+}
+</script>

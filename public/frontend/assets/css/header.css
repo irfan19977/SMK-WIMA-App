@@ -310,6 +310,45 @@ left: 0;
 .navbar-area .navbar .others-option .option-item:last-child a:hover {
     color: var(--mainColor);
 }
+
+/* Language Switcher Styles */
+.navbar-area .navbar .others-option .option-item .nav-link.dropdown-toggle {
+    color: var(--blackColor);
+    font-weight: 500;
+    font-size: 16px;
+    padding: 25px 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    transition: var(--transition);
+}
+
+.navbar-area.style-2 .navbar .others-option .option-item .nav-link.dropdown-toggle {
+    color: var(--whiteColor);
+}
+
+.navbar-area.style-2.sticky .navbar .others-option .option-item .nav-link.dropdown-toggle {
+    color: var(--blackColor);
+}
+
+.navbar-area .navbar .others-option .option-item .nav-link.dropdown-toggle:hover,
+.navbar-area .navbar .others-option .option-item .nav-link.dropdown-toggle:focus {
+    color: var(--mainColor);
+    background: none;
+    box-shadow: none;
+}
+
+.navbar-area .navbar .others-option .option-item .nav-link.dropdown-toggle::after {
+    display: inline-block;
+    margin-left: 5px;
+    border: none;
+    content: "\ea17";
+    font-family: 'boxicons';
+    font-size: 14px;
+    vertical-align: middle;
+}
 .nav-search .search-button {
     font-size: 30px;
 }

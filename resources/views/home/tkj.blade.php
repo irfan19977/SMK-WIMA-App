@@ -6,8 +6,8 @@
             <div class="container">
                 <div class="banner-spacing">
                     <div class="section-info">
-                        <h2 data-aos="fade-up" data-aos-delay="100">Teknik Komputer dan Jaringan</h2>
-                        <p data-aos="fade-up" data-aos-delay="200">Program keahlian TKJ SMK PGRI Lawang dirancang untuk mempersiapkan siswa menjadi ahli dalam instalasi, konfigurasi, dan maintenance jaringan komputer serta sistem keamanan jaringan.</p>
+                        <h2 data-aos="fade-up" data-aos-delay="100">{{ __('home.tkj_banner_title') }}</h2>
+                        <p data-aos="fade-up" data-aos-delay="200">{{ __('home.tkj_banner_description') }}</p>
                     </div>
                 </div>
             </div>
@@ -21,11 +21,11 @@
                     <div class="col-lg-5 col-md-12">
                         <div class="text-content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Tentang Jurusan TKJ</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.tkj_about_title') }}</p>
                             </div>
-                             <h2 class="title-anim">Ahli Jaringan Komputer</h2>
-                            <p class="title-anim">Program TKJ SMK PGRI Lawang membekali siswa dengan kemampuan perakitan komputer, administrasi jaringan, instalasi jaringan kabel & nirkabel, pengelolaan server, hingga dasar keamanan jaringan.</p>
-                            <a class="default-btn" href="{{ route('pendaftaran.index') }}">Daftar Sekarang</a>
+                             <h2 class="title-anim">{{ __('home.tkj_about_subtitle') }}</h2>
+                            <p class="title-anim">{{ __('home.tkj_about_description') }}</p>
+                            <a class="default-btn" href="{{ route('pendaftaran.index') }}">{{ __('home.tkj_register_now') }}</a>
                         </div>
                     </div>
 
@@ -39,12 +39,12 @@
                             <div class="col-lg-6 col-sm-6 col-md-6">
                                 <div class="notice-content" data-aos="fade-right" data-aos-delay="200">
                                     <i class='bx bxs-quote-left'></i>
-                                    <h4 class="title-anim">Pembelajaran Praktik</h4>
-                                    <p class="title-anim">Kami menyediakan laboratorium modern dengan perangkat keras dan lunak terkini untuk mendukung pembelajaran praktik jaringan komputer.</p>
+                                    <h4 class="title-anim">{{ __('home.tkj_lab_quote') }}</h4>
+                                    <p class="title-anim">{{ __('home.tkj_lab_description') }}</p>
                                     <div class="author-info">
-                                        <span>Kepala Lab TKJ</span>
-                                        <h5>Ahmad Fauzi, S.Kom., M.T.</h5>
-                                        <p>Koordinator Program TKJ</p>
+                                        <span>{{ __('home.tkj_lab_coordinator') }}</span>
+                                        <h5>{{ __('home.tkj_lab_name') }}</h5>
+                                        <p>{{ __('home.tkj_lab_position') }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -60,41 +60,41 @@
             <div class="container">
                 <div class="section-title" data-aos="fade-up" data-aos-delay="100">
                     <div class="sub-title">
-                        <i class='bx bxs-graduation'></i> <p>Kompetensi TKJ</p>
+                        <i class='bx bxs-graduation'></i> <p>{{ __('home.tkj_competencies_title') }}</p>
                     </div>
-                    <h2>Kompetensi yang Dipelajari</h2>
+                    <h2>{{ __('home.tkj_competencies_subtitle') }}</h2>
                 </div>
                 <div class="row justify-content-center">
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="100">
                             <img src="{{ asset('frontend/assets/img/all-img/networking.jpg') }}" alt="icon">
-                            <h4>Jaringan Komputer</h4>
-                            <p>Instalasi dan konfigurasi jaringan LAN, WLAN, serta perangkat jaringan seperti router dan switch.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.tkj_networking') }}</h4>
+                            <p>{{ __('home.tkj_networking_description') }}</p>
+                            <a href="#">{{ __('home.tkj_learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="200">
                             <img src="{{ asset('frontend/assets/img/all-img/server.jpg') }}" alt="icon">
-                            <h4>Administrasi Server</h4>
-                            <p>Pengelolaan server, instalasi sistem operasi, dan konfigurasi layanan jaringan.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.tkj_server_admin') }}</h4>
+                            <p>{{ __('home.tkj_server_admin_description') }}</p>
+                            <a href="#">{{ __('home.tkj_learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="300">
                             <img src="{{ asset('frontend/assets/img/all-img/security.jpg') }}" alt="icon">
-                            <h4>Keamanan Jaringan</h4>
-                            <p>Implementasi keamanan jaringan, firewall, dan proteksi sistem dari ancaman cyber.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.tkj_security') }}</h4>
+                            <p>{{ __('home.tkj_security_description') }}</p>
+                            <a href="#">{{ __('home.tkj_learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="400">
                             <img src="{{ asset('frontend/assets/img/all-img/troubleshooting.jpg') }}" alt="icon">
-                            <h4>Troubleshooting</h4>
-                            <p>Diagnosis dan perbaikan masalah jaringan, hardware, dan sistem komputer.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.tkj_troubleshooting') }}</h4>
+                            <p>{{ __('home.tkj_troubleshooting_description') }}</p>
+                            <a href="#">{{ __('home.tkj_learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                 </div>
@@ -109,12 +109,12 @@
                     <div class="col-lg-6">
                         <div class="content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Fasilitas TKJ</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.tkj_facilities_title') }}</p>
                             </div>
-                            <h2>Laboratorium Jaringan Komputer</h2>
+                            <h2>{{ __('home.tkj_facilities_subtitle') }}</h2>
 
-                            <p>Laboratorium TKJ dilengkapi dengan router, switch, access point, firewall, dan server untuk praktik jaringan.</p>
-                            <p>Siswa mendapatkan pengalaman langsung dengan perangkat jaringan industri dan simulasi lingkungan kerja IT.</p>
+                            <p>{{ __('home.tkj_facilities_description') }}</p>
+                            <p>{{ __('home.tkj_facilities_experience') }}</p>
                         </div>
                     </div>
                     <div class="col-lg-6">
@@ -131,12 +131,12 @@
                     <div class="col-lg-6">
                         <div class="content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Prospek Karir</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.tkj_career_title') }}</p>
                             </div>
-                            <h2>Peluang Karir Lulusan TKJ</h2>
+                            <h2>{{ __('home.tkj_career_subtitle') }}</h2>
 
-                            <p>Lulusan TKJ siap bekerja sebagai Network Administrator, IT Support, Teknisi Jaringan, dan System Administrator.</p>
-                            <p>Banyak lulusan kami yang diterima di perusahaan teknologi, lembaga pendidikan, dan instansi pemerintahan.</p>
+                            <p>{{ __('home.tkj_career_description1') }}</p>
+                            <p>{{ __('home.tkj_career_description2') }}</p>
                         </div>
                     </div>
                 </div>
@@ -144,12 +144,12 @@
                     <div class="col-lg-6">
                         <div class="content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Sertifikasi</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.tkj_certification_title') }}</p>
                             </div>
-                            <h2>Sertifikasi Kompetensi</h2>
+                            <h2>{{ __('home.tkj_certification_subtitle') }}</h2>
 
-                            <p><strong>Sertifikasi Nasional:</strong> BNSP (Badan Nasional Sertifikasi Profesi) untuk Teknisi Jaringan.</p>
-                            <p><strong>Sertifikasi Internasional:</strong> Cisco CCNA, CompTIA Network+, dan Microsoft Certified Professional.</p>
+                            <p>{!! __('home.tkj_certification_national') !!}</p>
+                            <p>{!! __('home.tkj_certification_international') !!}</p>
                         </div>
                     </div>
                     <div class="col-lg-6">
@@ -166,13 +166,13 @@
             <div class="container">
                 <div class="section-title" data-aos="fade-up" data-aos-delay="100">
                     <div class="sub-title">
-                        <i class='bx bxs-graduation'></i> <p>Informasi Pendaftaran</p>
+                        <i class='bx bxs-graduation'></i> <p>{{ __('home.tkj_registration_title') }}</p>
                     </div>
-                    <h2>Daftar Sekarang di Jurusan TKJ</h2>
+                    <h2>{{ __('home.tkj_registration_subtitle') }}</h2>
                 </div>
 
                 <div class="subscribe-btn text-center" data-aos="fade-up" data-aos-delay="100">
-                    <a class="default-btn" href="{{ route('pendaftaran.index') }}">Daftar Sekarang</a>
+                    <a class="default-btn" href="{{ route('pendaftaran.index') }}">{{ __('home.tkj_register_now') }}</a>
                 </div>
             </div>
         </div> 

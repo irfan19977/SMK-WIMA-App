@@ -6,8 +6,8 @@
             <div class="container">
                 <div class="banner-spacing">
                     <div class="section-info">
-                        <h2 data-aos="fade-up" data-aos-delay="100">Teknik Kimia Industri</h2>
-                        <p data-aos="fade-up" data-aos-delay="200">Program keahlian TKI SMK PGRI Lawang dirancang untuk mempersiapkan siswa menjadi ahli dalam proses kimia industri, pengembangan produk, dan kontrol kualitas industri kimia.</p>
+                        <h2 data-aos="fade-up" data-aos-delay="100">{{ __('home.kimia_banner_title') }}</h2>
+                        <p data-aos="fade-up" data-aos-delay="200">{{ __('home.kimia_banner_description') }}</p>
                     </div>
                 </div>
             </div>
@@ -21,11 +21,11 @@
                     <div class="col-lg-5 col-md-12">
                         <div class="text-content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Tentang Jurusan TKI</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.kimia_about_title') }}</p>
                             </div>
-                             <h2 class="title-anim">Ahli Kimia Industri</h2>
-                            <p class="title-anim">Program TKI SMK PGRI Lawang membekali siswa dengan kemampuan proses kimia industri, analisis kualitas, pengembangan produk, dan manajemen produksi industri kimia.</p>
-                            <a class="default-btn" href="{{ route('pendaftaran.index') }}">Daftar Sekarang</a>
+                             <h2 class="title-anim">{{ __('home.kimia_about_subtitle') }}</h2>
+                            <p class="title-anim">{{ __('home.kimia_about_description') }}</p>
+                            <a class="default-btn" href="{{ route('pendaftaran.index') }}">{{ __('home.kimia_register_now') }}</a>
                         </div>
                     </div>
 
@@ -39,12 +39,12 @@
                             <div class="col-lg-6 col-sm-6 col-md-6">
                                 <div class="notice-content" data-aos="fade-right" data-aos-delay="200">
                                     <i class='bx bxs-quote-left'></i>
-                                    <h4 class="title-anim">Pembelajaran Praktik</h4>
-                                    <p class="title-anim">Kami menyediakan laboratorium kimia modern dengan peralatan analisis dan proses industri untuk mendukung pembelajaran praktik.</p>
+                                    <h4 class="title-anim">{{ __('home.kimia_lab_quote') }}</h4>
+                                    <p class="title-anim">{{ __('home.kimia_lab_description') }}</p>
                                     <div class="author-info">
-                                        <span>Kepala Lab TKI</span>
-                                        <h5>Drs. Hendra Wijaya, M.Si.</h5>
-                                        <p>Koordinator Program TKI</p>
+                                        <span>{{ __('home.kimia_lab_coordinator') }}</span>
+                                        <h5>{{ __('home.kimia_lab_name') }}</h5>
+                                        <p>{{ __('home.kimia_lab_position') }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -60,41 +60,41 @@
             <div class="container">
                 <div class="section-title" data-aos="fade-up" data-aos-delay="100">
                     <div class="sub-title">
-                        <i class='bx bxs-graduation'></i> <p>Kompetensi TKI</p>
+                        <i class='bx bxs-graduation'></i> <p>{{ __('home.kimia_competencies_title') }}</p>
                     </div>
-                    <h2>Kompetensi yang Dipelajari</h2>
+                    <h2>{{ __('home.kimia_competencies_subtitle') }}</h2>
                 </div>
                 <div class="row justify-content-center">
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="100">
                             <img src="{{ asset('frontend/assets/img/all-img/chemical-process.jpg') }}" alt="icon">
-                            <h4>Proses Kimia</h4>
-                            <p>Operasi unit proses kimia, reaktor, distilasi, dan pemisahan dalam industri kimia.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.kimia_chemical_process') }}</h4>
+                            <p>{{ __('home.kimia_chemical_process_description') }}</p>
+                            <a href="#">{{ __('home.kimia_learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="200">
                             <img src="{{ asset('frontend/assets/img/all-img/quality-control.jpg') }}" alt="icon">
-                            <h4>Kontrol Kualitas</h4>
-                            <p>Analisis kualitas produk, pengujian laboratorium, dan standar QC industri.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.kimia_quality_control') }}</h4>
+                            <p>{{ __('home.kimia_quality_control_description') }}</p>
+                            <a href="#">{{ __('home.kimia_learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="300">
                             <img src="{{ asset('frontend/assets/img/all-img/product-development.jpg') }}" alt="icon">
-                            <h4>Pengembangan Produk</h4>
-                            <p>Formulasi produk, uji stabilitas, dan inovasi produk kimia industri.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.kimia_product_development') }}</h4>
+                            <p>{{ __('home.kimia_product_development_description') }}</p>
+                            <a href="#">{{ __('home.kimia_learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="400">
                             <img src="{{ asset('frontend/assets/img/all-img/safety-management.jpg') }}" alt="icon">
-                            <h4>K3 & Lingkungan</h4>
-                            <p>Manajemen keselamatan kerja, penanganan limbah, dan pengelolaan lingkungan industri.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.kimia_safety_environment') }}</h4>
+                            <p>{{ __('home.kimia_safety_environment_description') }}</p>
+                            <a href="#">{{ __('home.kimia_learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                 </div>
@@ -109,12 +109,12 @@
                     <div class="col-lg-6">
                         <div class="content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Fasilitas TKI</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.kimia_facilities_title') }}</p>
                             </div>
-                            <h2>Laboratorium Kimia Industri</h2>
+                            <h2>{{ __('home.kimia_facilities_subtitle') }}</h2>
 
-                            <p>Laboratorium TKI dilengkapi dengan reaktor, alat distilasi, peralatan analisis kualitas, dan peralatan K3 untuk praktik industri.</p>
-                            <p>Siswa mendapatkan pengalaman langsung dengan proses kimia industri dan simulasi lingkungan pabrik kimia.</p>
+                            <p>{{ __('home.kimia_facilities_description') }}</p>
+                            <p>{{ __('home.kimia_facilities_experience') }}</p>
                         </div>
                     </div>
                     <div class="col-lg-6">
@@ -131,12 +131,12 @@
                     <div class="col-lg-6">
                         <div class="content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Prospek Karir</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.kimia_career_title') }}</p>
                             </div>
-                            <h2>Peluang Karir Lulusan TKI</h2>
+                            <h2>{{ __('home.kimia_career_subtitle') }}</h2>
 
-                            <p>Lulusan TKI siap bekerja sebagai Chemical Operator, QC Analyst, Production Supervisor, dan Lab Analyst.</p>
-                            <p>Banyak lulusan kami yang diterima di industri farmasi, makanan & minuman, kosmetik, dan petrokimia.</p>
+                            <p>{{ __('home.kimia_career_description1') }}</p>
+                            <p>{{ __('home.kimia_career_description2') }}</p>
                         </div>
                     </div>
                 </div>
@@ -144,12 +144,12 @@
                     <div class="col-lg-6">
                         <div class="content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Sertifikasi</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.kimia_certification_title') }}</p>
                             </div>
-                            <h2>Sertifikasi Kompetensi</h2>
+                            <h2>{{ __('home.kimia_certification_subtitle') }}</h2>
 
-                            <p><strong>Sertifikasi Nasional:</strong> BNSP (Badan Nasional Sertifikasi Profesi) untuk Teknisi Kimia Industri.</p>
-                            <p><strong>Sertifikasi Internasional:</strong> ISO 9001 Quality Management, OHSAS 18001 Safety Management, dan ISO 14001 Environmental Management.</p>
+                            <p>{!! __('home.kimia_certification_national') !!}</p>
+                            <p>{!! __('home.kimia_certification_international') !!}</p>
                         </div>
                     </div>
                     <div class="col-lg-6">
@@ -166,13 +166,13 @@
             <div class="container">
                 <div class="section-title" data-aos="fade-up" data-aos-delay="100">
                     <div class="sub-title">
-                        <i class='bx bxs-graduation'></i> <p>Informasi Pendaftaran</p>
+                        <i class='bx bxs-graduation'></i> <p>{{ __('home.kimia_registration_title') }}</p>
                     </div>
-                    <h2>Daftar Sekarang di Jurusan TKI</h2>
+                    <h2>{{ __('home.kimia_registration_subtitle') }}</h2>
                 </div>
 
                 <div class="subscribe-btn text-center" data-aos="fade-up" data-aos-delay="100">
-                    <a class="default-btn" href="{{ route('pendaftaran.index') }}">Daftar Sekarang</a>
+                    <a class="default-btn" href="{{ route('pendaftaran.index') }}">{{ __('home.kimia_register_now') }}</a>
                 </div>
             </div>
         </div> 

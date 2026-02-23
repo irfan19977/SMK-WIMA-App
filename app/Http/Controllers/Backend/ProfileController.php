@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
@@ -17,6 +18,14 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+
         return view('profile.edit', [
             'user' => $request->user(),
         ]);
@@ -27,13 +36,37 @@ class ProfileController extends Controller
      */
     public function show(Request $request): View
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+
         $user = $request->user();
         
         // Check if viewing another user's profile (for admin/teacher)
         if ($request->has('user_id') && auth()->user()->hasRole(['admin', 'Super Admin', 'teacher'])) {
-            $targetUser = \App\Models\User::find($request->input('user_id'));
+            $targetUser = \App\Models\User::with('student')->find($request->input('user_id'));
             if ($targetUser) {
                 $user = $targetUser;
+            }
+        } else {
+            // Load student relationship for current user
+            $user = $user->load('student');
+        }
+        
+        // Auto-assign student role if user has student data but no role
+        if ($user->student && !$user->hasRole('student') && !$user->hasRole('Student')) {
+            $studentRole = \Spatie\Permission\Models\Role::where('name', 'student')->first();
+            if ($studentRole) {
+                $user->assignRole($studentRole);
+                \Log::info('Auto-assigned student role to user', [
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'student_status' => $user->student->status ?? 'no_status'
+                ]);
             }
         }
         
@@ -47,6 +80,14 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+
         $user = $request->user();
         $originalData = $user->toArray();
         

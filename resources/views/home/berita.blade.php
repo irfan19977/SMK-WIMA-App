@@ -6,8 +6,8 @@
             <div class="container">
                 <div class="banner-spacing">
                     <div class="section-info">
-                        <h2 data-aos="fade-up" data-aos-delay="100">News and Blog</h2>
-                        <p data-aos="fade-up" data-aos-delay="200">SMK PGRI Lawang adalah tempat di mana mimpi terwujud, ide berkembang, dan Anda akan menemukan dukungan serta inspirasi untuk masa depan cemerlang.</p>
+                        <h2 data-aos="fade-up" data-aos-delay="100">{{ __('home.news_banner_title') }}</h2>
+                        <p data-aos="fade-up" data-aos-delay="200">{{ __('home.news_banner_description') }}</p>
                     </div>
                 </div>
             </div>
@@ -22,19 +22,19 @@
                         <div class="widget-area">
                             <div class="widget widget-search">
                                 <h3 class="widget-title">
-                                    Search
+                                    {{ __('home.news_search') }}
                                 </h3>
                                 <form class="search-form">
                                     <label>
-                                        <span class="screen-reader-text">Search for:</span>
-                                        <input type="search" class="search-field" placeholder="Search...">
+                                        <span class="screen-reader-text">{{ __('home.news_search_for') }}</span>
+                                        <input type="search" class="search-field" placeholder="{{ __('home.news_search_placeholder') }}">
                                     </label>
                                     <button type="submit"><i class='bx bx-search'></i></button>
                                 </form>
                             </div>
                             <div class="widget widget-catagories">
                                 <h3 class="widget-title">
-                                    Categories
+                                    {{ __('home.news_categories') }}
                                 </h3>
                                 
                                 <ul>
@@ -43,14 +43,14 @@
                                             <li><h3><a href="{{ route('berita.category', $category->category) }}">{{ $category->category }}</a></h3> <span>({{ $category->total }})</span></li>
                                         @endforeach
                                     @else
-                                        <li><h3><a href="#">Belum ada kategori</a></h3> <span>(0)</span></li>
+                                        <li><h3><a href="#">{{ __('home.news_no_categories') }}</a></h3> <span>(0)</span></li>
                                     @endif
                                 </ul>
 
                             </div>
                             {{-- <div class="widget widget-tags">
                                 <h3 class="widget-title">
-                                    Popular Tags
+                                    {{ __('home.news_popular_tags') }}
                                 </h3>
                                 <ul>
                                     <li><a href="#">Aktivitas</a></li>
@@ -70,33 +70,41 @@
                         </div>
                     </div>
                     <div class="col-lg-8">
-                        <div class="row">
-                            @foreach ($featuredNews as $news)
-                            <div class="col-lg-6 col-sm-6 col-md-6">
-                                <div class="blog-single-card">
-                                    <div class="image">
-                                        <img src="{{ $news->thumbnail_url }}" alt="{{ $news->title }}">
-                                        <span class="badge badge-primary" style="position: absolute; top: 10px; left: 10px;">{{ $news->category }}</span>
-                                    </div>
-                                    
-                                    <div class="content">
-                                        <div class="meta">
-                                            <ul>
-                                                <li><a href="#">{{ $news->user->name }}</a></li>
-                                                <li>{{ $news->published_at->translatedFormat('d F Y') }}</li>
-                                            </ul>
+                            @if(isset($featuredNews) && count($featuredNews) > 0)
+                            <div class="row">
+                                @foreach ($featuredNews as $news)
+                                    <div class="col-lg-6 col-sm-6 col-md-6">
+                                        <div class="blog-single-card">
+                                            <div class="image">
+                                                <img src="{{ $news->thumbnail_url }}" alt="{{ $news->title }}">
+                                                <span class="badge badge-primary" style="position: absolute; top: 10px; left: 10px;">{{ $news->category }}</span>
+                                            </div>
+                                            
+                                            <div class="content">
+                                                <div class="meta">
+                                                    <ul>
+                                                        <li><a href="#">{{ $news->user->name }}</a></li>
+                                                        <li>{{ $news->published_at->translatedFormat('d F Y') }}</li>
+                                                    </ul>
+                                                </div>
+                                                <h3><a href="{{ route('berita.detail', $news->slug) }}">{{ $news->title }}</a></h3>
+                                                <a class="butn" href="{{ route('berita.detail', $news->slug) }}">{{ __('home.news_read_more') }} <i class="bx bx-right-arrow-alt"></i></a>
+                                            </div>
                                         </div>
-                                        <h3><a href="{{ route('berita.detail', $news->slug) }}">{{ $news->title }}</a></h3>
-                                        <a class="butn" href="{{ route('berita.detail', $news->slug) }}">Read More <i class="bx bx-right-arrow-alt"></i></a>
                                     </div>
-                                </div>
+                                @endforeach
                             </div>
-                            @endforeach
+                            @else
+                                <div class="text-center py-5">
+                                    <h3 class="text-muted">{{ __('home.news_no_articles') }}</h3>
+                                </div>
+                            @endif
                         </div>
+                        @if(isset($featuredNews) && count($featuredNews) > 0 && $featuredNews->lastPage() > 1)
                         <div class="blog-pagi">
                             <ul class="pagination">
                                 <li class="page-item">
-                                  <a class="page-link" href="#" aria-label="Previous">
+                                  <a class="page-link" href="#" aria-label="{{ __('home.news_pagination_previous') }}">
                                     <span aria-hidden="true"><i class='bx bx-arrow-back'></i></span>
                                   </a>
                                 </li>
@@ -108,12 +116,13 @@
                                     @endif
                                 @endforeach
                                 <li class="page-item">
-                                  <a class="page-link" href="#" aria-label="Next">
+                                  <a class="page-link" href="#" aria-label="{{ __('home.news_pagination_next') }}">
                                     <span aria-hidden="true"><i class='bx bx-arrow-back bx-rotate-180' ></i></span>
                                   </a>
                                 </li>
                               </ul>
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>

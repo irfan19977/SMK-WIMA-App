@@ -29,6 +29,8 @@ class User extends Authenticatable
         'status',
         'photo_path',
         'face_descriptor',
+        'theme_mode',
+        'language',
     ];
 
     /**

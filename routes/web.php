@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\RFIDController;
 use App\Http\Controllers\Backend\AsramaController;
 use App\Http\Controllers\Backend\AttendanceController;
@@ -30,15 +31,94 @@ use App\Http\Controllers\Backend\AcademicReportController;
 use App\Http\Controllers\Frontend\BeritaController;
 use App\Http\Controllers\Frontend\QrCodeController;
 use App\Http\Controllers\ScreenShareController;
+use App\Http\Controllers\Backend\UserPreferenceController;
 use App\Http\Controllers\WebRTCController;
 use App\Models\Ekstrakurikuler;
 use App\Models\Student;
 use App\Models\Gallery;
 use App\Models\News;
 
+// Test route for debugging language
+Route::get('/test-language', function() {
+    $user = auth()->user();
+    $language = $user ? $user->language : session('locale', 'id');
+    
+    return response()->json([
+        'user_authenticated' => auth()->check(),
+        'user_id' => $user ? $user->id : null,
+        'user_name' => $user ? $user->name : null,
+        'user_language' => $user ? $user->language : null,
+        'session_locale' => session('locale'),
+        'app_locale' => app()->getLocale(),
+        'detected_language' => $language,
+        'translation_test' => __('index.total_students'),
+    ]);
+});
+
+// Test route to check language consistency
+Route::get('/test-language-consistency', function() {
+    $user = auth()->user();
+    $language = $user ? $user->language : session('locale', 'id');
+    
+    return response()->json([
+        'user_authenticated' => auth()->check(),
+        'user_id' => $user ? $user->id : null,
+        'user_name' => $user ? $user->name : null,
+        'user_language' => $user ? $user->language : null,
+        'session_locale' => session('locale'),
+        'app_locale' => app()->getLocale(),
+        'detected_language' => $language,
+        'translation_test' => __('index.total_students'),
+    ]);
+});
+
+// Force sync language from database to session
+Route::get('/sync-language', function() {
+    if (auth()->check()) {
+        $user = auth()->user();
+        $language = $user->language ?? 'id';
+        session(['locale' => $language]);
+        app()->setLocale($language);
+        
+        return response()->json([
+            'message' => 'Language synced from database',
+            'user_language' => $user->language,
+            'session_locale' => session('locale'),
+            'app_locale' => app()->getLocale(),
+        ]);
+    }
+    
+    return response()->json(['message' => 'User not authenticated']);
+});
+
+// Language switching routes
+Route::get('language/{lang}', function ($lang) {
+    // Validate language
+    if (!in_array($lang, ['id', 'en'])) {
+        $lang = 'id';
+    }
+    
+    // Set session locale
+    session(['locale' => $lang]);
+    
+    // If user is authenticated, update user preference
+    if (auth()->check()) {
+        $user = auth()->user();
+        $user->language = $lang;
+        $user->save();
+    }
+    
+    // Set app locale for current request
+    app()->setLocale($lang);
+    
+    // Redirect back to previous page or home
+    return redirect()->back()->with('language_changed', __('index.language_changed'));
+})->name('language.switch');
+
 // Frontend Routes
-Route::get('/', function () {
-    // Ambil 1 berita terbaru untuk bagian atas
+Route::middleware(['frontend'])->group(function () {
+    Route::get('/', function () {
+        // Ambil 1 berita terbaru untuk bagian atas
     $featuredNews = News::published()
         ->latest('published_at')
         ->first();
@@ -134,9 +214,15 @@ Route::get('/contact', function () {
     return view('home.contact');
 })->name('contact.index');
 
+Route::get('/about', function () {
+    return view('home.profile');
+})->name('about');
+
 Route::resource('/pendaftaran', PendaftaranController::class);
 
-    Route::post('/rfid-detect', [RFIDController::class, 'detectRFID']);
+});
+
+// Other routes (outside frontend middleware)
     Route::get('/get-latest-rfid', [RFIDController::class, 'getLatestRFID'])->name('get.latest.rfid');
     Route::post('/clear-rfid-cache', [RFIDController::class, 'clearRFIDCache'])->name('clear.rfid');
 
@@ -222,6 +308,7 @@ Route::group(['middleware' => 'auth'], function () {
         Route::post('{class}/assign-student', [ClassesController::class, 'assignStudent'])->name('assign-student');
         Route::post('{class}/bulk-assign', [ClassesController::class, 'bulkAssign'])->name('bulk-assign');
         Route::delete('{class}/remove-student', [ClassesController::class, 'removeStudent'])->name('remove-student');
+        Route::delete('remove-student/{studentId}', [ClassesController::class, 'removeStudentFromClass'])->name('remove-student-from-class');
         Route::get('{class}/attendance-data', [ClassesController::class, 'getAttendanceData'])->name('attendance-data');
         Route::post('{class}/toggle-archive', [ClassesController::class, 'toggleArchive'])->name('toggle-archive');
         Route::post('{class}/open-next-semester', [ClassesController::class, 'openNextSemester'])->name('open-next-semester');
@@ -248,14 +335,17 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Schedule Management Routes
     Route::prefix('schedules')->name('schedules.')->group(function() {
-        Route::resource('/', ScheduleController::class);
+        Route::resource('/', ScheduleController::class)->parameters(['' => 'schedule']);
         Route::get('/class/{classId}', [ScheduleController::class, 'getSchedulesByClass'])->name('by-class');
+        Route::get('/export', [ScheduleController::class, 'exportExcel'])->name('export');
+        Route::get('/print', [ScheduleController::class, 'printPDF'])->name('print');
     });
 
     // Attendance Management Routes
-    Route::prefix('attendances')-> name('attendances.')->group(function() {
-        Route::resource('/', AttendanceController::class);
+    Route::prefix('attendances')->name('attendances.')->group(function() {
+        Route::resource('/', AttendanceController::class)->parameters(['' => 'attendance']);
         Route::get('/find-by-nisn/{nisn}', [AttendanceController::class, 'findByNisn']);
+        Route::post('/find-existing', [AttendanceController::class, 'findExistingAttendance']);
     });
     
     // Lesson Attendance Routes
@@ -263,9 +353,14 @@ Route::group(['middleware' => 'auth'], function () {
         Route::resource('/', LessonAttendanceController::class)->except(['create', 'edit', 'show']);
     
         // Additional routes for AJAX calls
-        Route::get('/get-subjects-by-class', [LessonAttendanceController::class, 'getSubjectsByClass'])->name('get-subjects-by-class');
-        Route::get('/get-students', [LessonAttendanceController::class, 'getStudents'])->name('get-students');
+        Route::get('/create', [LessonAttendanceController::class, 'create'])->name('create');
+        Route::get('/{id}/edit', [LessonAttendanceController::class, 'edit'])->name('edit');
+        Route::match(['get', 'post'], '/get-subjects-by-class', [LessonAttendanceController::class, 'getSubjectsByClass'])->name('get-subjects-by-class');
+        Route::match(['get', 'post'], '/get-students', [LessonAttendanceController::class, 'getStudents'])->name('get-students');
+        Route::match(['get', 'post'], '/get-current-subject-by-class', [LessonAttendanceController::class, 'getCurrentSubjectByClass'])->name('get-current-subject-by-class');
         Route::get('/get-attendance', [LessonAttendanceController::class, 'getAttendance'])->name('get-attendance');
+        Route::get('/get-attendance-calendar', [LessonAttendanceController::class, 'getAttendanceCalendar'])->name('get-attendance-calendar');
+        Route::get('/get-general-attendance-calendar', [LessonAttendanceController::class, 'getGeneralAttendanceCalendar'])->name('get-general-attendance-calendar');
         Route::post('/bulk-update', [LessonAttendanceController::class, 'bulkUpdate'])->name('bulk-update');
     });
 
@@ -297,8 +392,12 @@ Route::group(['middleware' => 'auth'], function () {
 
     });
     Route::resource('subjects', SubjectController::class);
+    Route::post('subjects/{id}/restore', [SubjectController::class, 'restore'])->name('subjects.restore');
+    Route::delete('subjects/{id}/force-delete', [SubjectController::class, 'forceDelete'])->name('subjects.force-delete');
     Route::resource('setting-schedule', SettingScheduleController::class);
     Route::resource('permissions', PermissionController::class);
+    Route::get('permissions/export', [PermissionController::class, 'export'])->name('permissions.export');
+    Route::post('permissions/import', [PermissionController::class, 'import'])->name('permissions.import');
     Route::resource('roles', RoleController::class);
     Route::resource('semester', SemesterController::class);
     Route::post('semester/generate', [SemesterController::class, 'generateSemester'])->name('semester.generate');
@@ -369,6 +468,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // User Preference Routes
+    Route::prefix('preferences')->name('preferences.')->group(function() {
+        Route::get('/', [UserPreferenceController::class, 'get'])->name('get');
+        Route::post('/', [UserPreferenceController::class, 'update'])->name('update');
+    });
 });
 
 require __DIR__.'/auth.php';

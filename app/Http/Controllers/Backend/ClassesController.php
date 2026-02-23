@@ -11,6 +11,7 @@ use App\Models\Student;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +20,32 @@ use Illuminate\Support\Str;
 class ClassesController extends Controller
 {
     use AuthorizesRequests;
+
+    /**
+     * Helper function to generate consistent class name
+     * Format: {Roman Grade} {Major Short} {Academic Year}
+     * Example: X TKJ 2025/2026
+     */
+    private function generateClassName($grade, $major, $academicYear)
+    {
+        $majorShortMap = [
+            'Teknik Komputer & Jaringan' => 'TKJ',
+            'Teknik Bisnis Sepeda Motor' => 'TSM',
+            'Teknik Kendaraan Ringan Otomotif' => 'TKR',
+            'Teknik Kimia Industri' => 'KI',
+        ];
+
+        $romanGradeMap = [
+            10 => 'X',
+            11 => 'XI',
+            12 => 'XII',
+        ];
+
+        $gradeLabel = $romanGradeMap[$grade] ?? (string) $grade;
+        $majorLabel = $majorShortMap[$major] ?? $major;
+        
+        return $gradeLabel . ' ' . $majorLabel . ' ' . $academicYear;
+    }
 
     /**
      * Search for classes based on query
@@ -73,6 +100,15 @@ class ClassesController extends Controller
     public function index(Request $request)
     {
         $this->authorize('classes.index');
+        
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+
         if (Auth::check()) {
             // Check if user has student role by checking if they have a student record
             $student = \App\Models\Student::where('user_id', Auth::id())->first();
@@ -121,9 +157,12 @@ class ClassesController extends Controller
               ->orderByRaw("FIELD(major, '" . implode("','", $majorOrder) . "') ASC");
 
         // Tampilkan semua kelas (tanpa pagination) sesuai filter
-        $classes = $query->withCount(['students' => function($query) {
-            $query->whereNull('student_class.deleted_at');
-        }])->get();
+        $classes = $query->withUniqueStudentsCount()->get();
+        
+        // Add unique_students_count to each class
+        $classes->each(function($class) {
+            $class->students_count = $class->unique_students_count;
+        });
         
         // Return JSON for AJAX requests
         if ($request->ajax() || $request->expectsJson()) {
@@ -151,6 +190,29 @@ class ClassesController extends Controller
 
     public function create()
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
+        if (request()->ajax()) {
+            $view = view('classes._form', [
+                'class' => null,
+                'action' => route('classes.store'),
+                'method' => 'POST',
+                'title' => __('index.create_class')
+            ])->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $view,
+                'title' => __('index.create_class')
+            ]);
+        }
+        
         return view('classes.create');
     }
 
@@ -177,8 +239,23 @@ class ClassesController extends Controller
                 $code = 'CLS-' . strtoupper(Str::random(6));
             } while (Classes::where('code', $code)->exists());
 
+            // Gunakan format nama yang konsisten jika grade dan academic_year tersedia
+            $className = $request->name;
+            if ($request->grade && $request->academic_year) {
+                $className = $this->generateClassName($request->grade, $request->major, $request->academic_year);
+                
+                // Pastikan nama unik, tambahkan suffix jika perlu
+                $suffix = 1;
+                $finalName = $className;
+                while (Classes::where('name', $finalName)->exists()) {
+                    $finalName = $className . ' (' . $suffix . ')';
+                    $suffix++;
+                }
+                $className = $finalName;
+            }
+
             $classes = Classes::create([
-                'name' => $request->name,
+                'name' => $className,
                 'grade' => $request->grade,
                 'major' => $request->major,
                 'code' => $code,
@@ -234,6 +311,14 @@ class ClassesController extends Controller
 
     public function show(string $id)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         // Debug logging
         \Log::info('ClassesController@show called', [
             'class_id' => $id,
@@ -255,11 +340,17 @@ class ClassesController extends Controller
         $students = Student::whereHas('classes', function($query) use ($id) {
             $query->where('classes.id', $id);
         })->with('user')
+        ->select('id', 'name', 'nisn', 'no_absen', 'gender', 'user_id')
         ->orderByRaw('CAST(no_absen AS UNSIGNED) ASC')
         ->get();
         
-        // Get available students (siswa yang belum memiliki kelas sama sekali)
-        $availableStudents = Student::whereDoesntHave('classes')->with('user')->orderByRaw('CAST(no_absen AS UNSIGNED) ASC')->get();
+        // Get available students (siswa yang belum memiliki kelas sama sekali dan statusnya 'siswa')
+        $availableStudents = Student::whereDoesntHave('classes')
+            ->where('status', 'siswa')
+            ->with('user')
+            ->select('id', 'name', 'nisn', 'no_absen', 'gender', 'user_id')
+            ->orderByRaw('CAST(no_absen AS UNSIGNED) ASC')
+            ->get();
         
         // Determine current active semester for this class in its academic year
         $currentSemesterLabel = null;
@@ -269,7 +360,7 @@ class ClassesController extends Controller
                 $activeSemester = Semester::where('academic_year', $classes->academic_year)
                     ->where('is_active', true)
                     ->first();
-                    
+                
                 if ($activeSemester) {
                     $currentSemesterLabel = ucfirst($activeSemester->semester_type);
                 } else {
@@ -293,28 +384,36 @@ class ClassesController extends Controller
                     }
                 }
             } catch (\Exception $e) {
-                // Handle jika tabel semesters tidak ada
-                \Log::warning('Semesters table not found, using fallback logic', [
+                // Handle jika tabel semesters tidak ada atau error lain
+                \Log::warning('Semesters table error, using fallback logic', [
                     'error' => $e->getMessage()
                 ]);
                 
                 // Fallback ke logic lama
-                $activePivot = DB::table('student_class')
-                    ->where('class_id', $classes->id)
-                    ->where('academic_year', $classes->academic_year)
-                    ->where('status', 'active')
-                    ->whereNull('deleted_at')
-                    ->first();
+                try {
+                    $activePivot = DB::table('student_class')
+                        ->where('class_id', $classes->id)
+                        ->where('academic_year', $classes->academic_year)
+                        ->where('status', 'active')
+                        ->whereNull('deleted_at')
+                        ->first();
 
-                if ($activePivot) {
-                    $sem = $activePivot->semester;
-                    if ($sem === null || $sem === '' || $sem === '1' || $sem === 1 || strtolower((string) $sem) === 'ganjil') {
-                        $currentSemesterLabel = 'Ganjil';
-                    } elseif ($sem === '2' || $sem === 2 || strtolower((string) $sem) === 'genap') {
-                        $currentSemesterLabel = 'Genap';
-                    } else {
-                        $currentSemesterLabel = 'Belum ditentukan';
+                    if ($activePivot) {
+                        $sem = $activePivot->semester;
+                        if ($sem === null || $sem === '' || $sem === '1' || $sem === 1 || strtolower((string) $sem) === 'ganjil') {
+                            $currentSemesterLabel = 'Ganjil';
+                        } elseif ($sem === '2' || $sem === 2 || strtolower((string) $sem) === 'genap') {
+                            $currentSemesterLabel = 'Genap';
+                        } else {
+                            $currentSemesterLabel = 'Belum ditentukan';
+                        }
                     }
+                } catch (\Exception $pivotException) {
+                    \Log::error('Both semester and student_class queries failed', [
+                        'semester_error' => $e->getMessage(),
+                        'pivot_error' => $pivotException->getMessage()
+                    ]);
+                    $currentSemesterLabel = 'Tidak tersedia';
                 }
             }
         }
@@ -551,7 +650,30 @@ class ClassesController extends Controller
 
     public function edit(string $id)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         $classes = Classes::findOrFail($id);
+
+        if (request()->ajax()) {
+            $view = view('classes._form', [
+                'class' => $classes,
+                'action' => route('classes.update', $classes->id),
+                'method' => 'PUT',
+                'title' => __('index.edit_class')
+            ])->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $view,
+                'title' => __('index.edit_class')
+            ]);
+        }
 
         return view('classes.edit', compact('classes'));
     }
@@ -585,16 +707,19 @@ class ClassesController extends Controller
 
             // Return JSON for AJAX requests
             if ($request->ajax() || $request->expectsJson()) {
+                $redirectTo = $request->input('redirect_to', 'index');
+                
                 return response()->json([
                     'success' => true,
                     'message' => 'Kelas berhasil diperbarui.',
-                    'class' => [
+                    'data' => [
                         'id' => $classes->id,
                         'name' => $classes->name,
                         'major' => $classes->major,
                         'code' => $classes->code,
                         'grade' => $classes->grade,
                         'academic_year' => $classes->academic_year,
+                        'redirect_to' => $redirectTo
                     ]
                 ]);
             }
@@ -794,6 +919,50 @@ class ClassesController extends Controller
         }
     }    
 
+    /**
+     * Remove student from class using student ID in URL
+     */
+    public function removeStudentFromClass($studentId)
+    {
+        try {
+            $student = Student::findOrFail($studentId);
+            
+            // Check if student is assigned to any class
+            $classAssignment = DB::table('student_class')
+                ->where('student_id', $studentId)
+                ->first();
+
+            if (!$classAssignment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Siswa tidak ditemukan di kelas manapun.'
+                ], 404);
+            }
+
+            // Remove student from class
+            $deleted = DB::table('student_class')
+                ->where('student_id', $studentId)
+                ->delete();
+
+            if ($deleted) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Siswa berhasil dihapus dari kelas.'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menghapus siswa dari kelas.'
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function openNextSemesterBulk(Request $request)
     {
         try {
@@ -817,6 +986,50 @@ class ClassesController extends Controller
             }
 
             DB::transaction(function () use ($classes, $academicYear, $now, $ganjilValues, $genapValues) {
+                // Proses pembuatan/pengaktifan semester genap di tabel semesters
+                try {
+                    // Cek apakah semester genap sudah ada untuk academic year ini
+                    $genapSemester = Semester::where('academic_year', $academicYear)
+                        ->where('semester_type', 'genap')
+                        ->first();
+
+                    if (!$genapSemester) {
+                        // Buat semester genap baru
+                        Semester::create([
+                            'id' => (string) Str::uuid(),
+                            'academic_year' => $academicYear,
+                            'semester_type' => 'genap',
+                            'is_active' => true,
+                            'start_date' => $now,
+                            'end_date' => null, // Akan diisi saat semester selesai
+                            'description' => "Semester Genap Tahun Ajaran {$academicYear}",
+                            'created_by' => Auth::id(),
+                        ]);
+                    } else {
+                        // Aktifkan semester genap yang sudah ada
+                        $genapSemester->update([
+                            'is_active' => true,
+                            'start_date' => $now,
+                            'updated_by' => Auth::id(),
+                        ]);
+                    }
+
+                    // Nonaktifkan semester ganjil untuk academic year ini
+                    Semester::where('academic_year', $academicYear)
+                        ->where('semester_type', 'ganjil')
+                        ->update([
+                            'is_active' => false,
+                            'end_date' => $now,
+                            'updated_by' => Auth::id(),
+                        ]);
+
+                } catch (\Exception $semesterError) {
+                    // Log error tapi lanjutkan proses student_class
+                    Log::warning('Gagal memproses tabel semesters, melanjutkan dengan student_class', [
+                        'error' => $semesterError->getMessage()
+                    ]);
+                }
+
                 foreach ($classes as $class) {
                     $activeGanjil = DB::table('student_class')
                         ->where('class_id', $class->id)
@@ -830,9 +1043,11 @@ class ClassesController extends Controller
                         ->get();
 
                     if ($activeGanjil->isEmpty()) {
+                        // Jika tidak ada students di kelas ini, skip
                         continue;
                     }
 
+                    // Update status ganjil ke completed
                     DB::table('student_class')
                         ->where('class_id', $class->id)
                         ->where('academic_year', $academicYear)
@@ -849,6 +1064,7 @@ class ClassesController extends Controller
                             'updated_at' => $now,
                         ]);
 
+                    // Create genap records untuk students yang sama (tanpa copy dari arsip)
                     foreach ($activeGanjil as $row) {
                         $existsGenap = DB::table('student_class')
                             ->where('class_id', $class->id)
@@ -899,325 +1115,292 @@ class ClassesController extends Controller
     {
         try {
             $this->authorize('classes.edit');
-            // Tentukan tahun akademik aktif berdasarkan kelas yang belum diarsip (tahun berjalan).
+            
+            // Tentukan tahun akademik aktif berdasarkan kelas yang belum diarsip
             $currentAcademicYear = Classes::where('is_archived', false)->max('academic_year');
             if (!$currentAcademicYear) {
                 $currentAcademicYear = AcademicYearHelper::getCurrentAcademicYear();
             }
 
-            // Hitung tahun akademik berikutnya dari format "YYYY/YYYY+1"
+            // Hitung tahun akademik berikutnya
             [$startYear, $endYear] = array_map('intval', explode('/', $currentAcademicYear));
             $nextStartYear = $startYear + 1;
             $nextEndYear = $endYear + 1;
             $nextAcademicYear = $nextStartYear . '/' . $nextEndYear;
 
             $now = now();
+            $userId = Auth::id() ?: '85fb727b-2080-4b36-bf9d-74de938acf84';
 
-            $genapValues = ['2', 'genap', 2];
-
-            // Ambil semua kelas aktif pada tahun akademik saat ini
-            $classes = Classes::where('academic_year', $currentAcademicYear)
+            // 1. Arsipkan semua kelas lama
+            $oldClasses = Classes::where('academic_year', $currentAcademicYear)
                 ->where('is_archived', false)
                 ->get();
 
-            if ($classes->isEmpty()) {
-                return redirect()->route('classes.index')
-                    ->with('error', 'Tidak ada kelas aktif pada tahun akademik saat ini yang dapat diproses.');
+            foreach ($oldClasses as $oldClass) {
+                $oldClass->is_archived = true;
+                $oldClass->save();
             }
 
-            // Siapkan mapping data siswa dari request (jika ada)
-            $studentsMap = [];
-            $studentsJson = $request->input('students_json');
-            if ($studentsJson) {
-                $decoded = json_decode($studentsJson, true);
-                if (is_array($decoded)) {
-                    foreach ($decoded as $item) {
-                        if (!isset($item['student_id'], $item['class_id'])) {
-                            continue;
-                        }
-                        $key = $item['class_id'] . ':' . $item['student_id'];
-                        $studentsMap[$key] = [
-                            'promote' => isset($item['promote']) ? (bool)$item['promote'] : true,
-                        ];
-                    }
-                }
-            }
-
-            // Siapkan cache kelas tujuan tahun depan berdasarkan (grade, major)
-            $nextYearClasses = Classes::where('academic_year', $nextAcademicYear)
-                ->where('is_archived', false)
-                ->get()
-                ->groupBy(function ($cls) {
-                    return $cls->grade . '|' . $cls->major;
-                });
-
-            DB::transaction(function () use ($classes, $currentAcademicYear, $nextAcademicYear, $now, $genapValues, $studentsMap, $nextYearClasses) {
-                $majorShortMap = [
-                    'Teknik Komputer & Jaringan' => 'TKJ',
-                    'Teknik Bisnis Sepeda Motor' => 'TSM',
-                    'Teknik Kendaraan Ringan Otomotif' => 'TKR',
-                    'Teknik Kimia Industri' => 'KI',
-                ];
-                $romanGradeMap = [10 => 'X', 11 => 'XI', 12 => 'XII'];
-                foreach ($classes as $class) {
-                    if (empty($class->grade)) {
-                        continue;
-                    }
-
-                    $currentGrade = (int) $class->grade;
-
-                    // Ambil semua student_class aktif di semester genap untuk kelas ini
-                    $activeGenap = DB::table('student_class')
-                        ->where('class_id', $class->id)
-                        ->where('academic_year', $currentAcademicYear)
-                        ->whereIn('semester', $genapValues)
-                        ->where('status', 'active')
-                        ->whereNull('deleted_at')
-                        ->get();
-
-                    if ($activeGenap->isEmpty()) {
-                        continue;
-                    }
-
-                    // Tutup semua record semester genap yang aktif untuk kelas ini
-                    DB::table('student_class')
-                        ->where('class_id', $class->id)
-                        ->where('academic_year', $currentAcademicYear)
-                        ->whereIn('semester', $genapValues)
-                        ->where('status', 'active')
-                        ->whereNull('deleted_at')
-                        ->update([
-                            'status' => 'completed',
-                            'end_date' => $now,
-                            'updated_by' => Auth::id(),
-                            'updated_at' => $now,
-                        ]);
-
-                    foreach ($activeGenap as $row) {
-                        $key = $class->id . ':' . $row->student_id;
-                        $promote = $studentsMap[$key]['promote'] ?? true; // default: naik
-
-                        // Jika tidak dicentang (tidak naik) -> siswa mengulang di grade yang sama (10, 11, atau 12)
-                        if (!$promote) {
-                            if (in_array($currentGrade, [10, 11, 12], true)) {
-                                $repeatGrade = $currentGrade;
-                                $gradeLabel = $romanGradeMap[$repeatGrade] ?? (string) $repeatGrade;
-                                $majorLabel = $majorShortMap[$class->major] ?? $class->major;
-                                $repeatGroupKey = $repeatGrade . '|' . $class->major;
-                                $repeatClass = $nextYearClasses->get($repeatGroupKey)?->first();
-
-                                if (!$repeatClass) {
-                                    $code = null;
-                                    do {
-                                        $code = 'CLS-' . strtoupper(Str::random(6));
-                                    } while (Classes::where('code', $code)->exists());
-
-                                    // Pastikan nama kelas ulang unik, misal "XI TKJ 2026/2027"
-                                    $baseName = $gradeLabel . ' ' . $majorLabel . ' ' . $nextAcademicYear;
-                                    $targetName = $baseName;
-                                    $suffix = 1;
-                                    while (Classes::where('name', $targetName)->exists()) {
-                                        $targetName = $baseName . ' (' . $suffix . ')';
-                                        $suffix++;
-                                    }
-
-                                    $repeatClass = Classes::create([
-                                        'name' => $targetName,
-                                        'grade' => $repeatGrade,
-                                        'major' => $class->major,
-                                        'code' => $code,
-                                        'academic_year' => $nextAcademicYear,
-                                        'is_archived' => false,
-                                        'created_by' => Auth::id(),
-                                    ]);
-
-                                    $nextYearClasses = $nextYearClasses->put($repeatGroupKey, collect([$repeatClass]));
-                                }
-
-                                $existsRepeat = DB::table('student_class')
-                                    ->where('class_id', $repeatClass->id)
-                                    ->where('student_id', $row->student_id)
-                                    ->where('academic_year', $nextAcademicYear)
-                                    ->whereNull('deleted_at')
-                                    ->exists();
-
-                                if (!$existsRepeat) {
-                                    DB::table('student_class')->insert([
-                                        'id' => Str::uuid(),
-                                        'class_id' => $repeatClass->id,
-                                        'student_id' => $row->student_id,
-                                        'academic_year' => $nextAcademicYear,
-                                        'semester' => 'ganjil',
-                                        'start_date' => $now,
-                                        'end_date' => null,
-                                        'status' => 'active',
-                                        'created_by' => Auth::id(),
-                                        'updated_by' => null,
-                                        'deleted_by' => null,
-                                        'created_at' => $now,
-                                        'updated_at' => $now,
-                                    ]);
-                                }
-                            }
-
-                            continue;
-                        }
-
-                        // Tentukan grade tujuan untuk siswa yang dinaikkan
-                        if ($currentGrade >= 12) {
-                            // Kelas 12 yang dinaikkan: dianggap lulus, tidak dibuat record baru
-                            continue;
-                        }
-                        $targetGrade = $currentGrade + 1;
-
-                        $groupKey = $targetGrade . '|' . $class->major;
-                        $targetClass = $nextYearClasses->get($groupKey)?->first();
-
-                        if (!$targetClass) {
-                            $code = null;
-                            do {
-                                $code = 'CLS-' . strtoupper(Str::random(6));
-                            } while (Classes::where('code', $code)->exists());
-
-                            // Pastikan nama kelas tujuan unik (kolom name unik di tabel classes)
-                            $gradeLabel = $romanGradeMap[$targetGrade] ?? (string) $targetGrade;
-                            $majorLabel = $majorShortMap[$class->major] ?? $class->major;
-                            $baseName = $gradeLabel . ' ' . $majorLabel . ' ' . $nextAcademicYear;
-                            $targetName = $baseName;
-                            $suffix = 1;
-                            while (Classes::where('name', $targetName)->exists()) {
-                                $targetName = $baseName . ' (' . $suffix . ')';
-                                $suffix++;
-                            }
-
-                            $targetClass = Classes::create([
-                                'name' => $targetName,
-                                'grade' => $targetGrade,
-                                'major' => $class->major,
-                                'code' => $code,
-                                'academic_year' => $nextAcademicYear,
-                                'is_archived' => false,
-                                'created_by' => Auth::id(),
-                            ]);
-
-                            $nextYearClasses = $nextYearClasses->put($groupKey, collect([$targetClass]));
-                        }
-
-                        // Cek apakah sudah ada record di tahun ajaran berikutnya untuk kelas tujuan ini
-                        $existsNext = DB::table('student_class')
-                            ->where('class_id', $targetClass->id)
-                            ->where('student_id', $row->student_id)
-                            ->where('academic_year', $nextAcademicYear)
-                            ->whereNull('deleted_at')
-                            ->exists();
-
-                        if ($existsNext) {
-                            continue;
-                        }
-
-                        DB::table('student_class')->insert([
-                            'id' => Str::uuid(),
-                            'class_id' => $targetClass->id,
-                            'student_id' => $row->student_id,
-                            'academic_year' => $nextAcademicYear,
-                            'semester' => 'ganjil',
-                            'start_date' => $now,
-                            'end_date' => null,
-                            'status' => 'active',
-                            'created_by' => Auth::id(),
-                            'updated_by' => null,
-                            'deleted_by' => null,
-                            'created_at' => $now,
-                            'updated_at' => $now,
-                        ]);
-                    }
-
-                    // Arsipkan kelas lama setelah memproses semua siswa
-                    $class->is_archived = true;
-                    $class->save();
-                }
-            });
-
-            // Tambahan: buat kelas X (grade 10) kosong untuk tahun akademik berikutnya per jurusan,
-            // berdasarkan kelas grade 10 yang ada di tahun akademik saat ini.
-            $grade10Classes = Classes::where('academic_year', $currentAcademicYear)
-                ->where('grade', 10)
-                ->get()
-                ->groupBy('major');
-
-            foreach ($grade10Classes as $major => $grade10Group) {
-                $existsNextYearGrade10 = Classes::where('academic_year', $nextAcademicYear)
-                    ->where('grade', 10)
-                    ->where('major', $major)
-                    ->exists();
-
-                if ($existsNextYearGrade10) {
+            // 2. Buat kelas baru untuk tahun ajaran berikutnya (grade +1) dan copy students
+            $processedMajors = [];
+            
+            foreach ($oldClasses as $oldClass) {
+                // Skip kelas 12 (lulus)
+                if ($oldClass->grade >= 12) {
                     continue;
                 }
 
-                $sampleClass = $grade10Group->first();
+                // Skip jika sudah dibuat kelas untuk major dan grade ini
+                $key = $oldClass->grade . '|' . $oldClass->major;
+                if (isset($processedMajors[$key])) {
+                    continue;
+                }
 
-                // Generate unique code untuk kelas baru
+                // Buat kelas baru dengan grade +1
+                $newGrade = $oldClass->grade + 1;
+                $newClassName = $this->generateClassName($newGrade, $oldClass->major, $nextAcademicYear);
+
+                // Generate unique code
                 $code = null;
                 do {
                     $code = 'CLS-' . strtoupper(Str::random(6));
                 } while (Classes::where('code', $code)->exists());
 
-                // Pastikan nama kelas baru unik dengan format "X {short_major} {nextAcademicYear}"
-                $majorShortMap = [
-                    'Teknik Komputer & Jaringan' => 'TKJ',
-                    'Teknik Bisnis Sepeda Motor' => 'TSM',
-                    'Teknik Kendaraan Ringan Otomotif' => 'TKR',
-                    'Teknik Kimia Industri' => 'KI',
-                ];
-                $majorLabel = $majorShortMap[$major] ?? $major;
-                $baseName = 'X ' . $majorLabel . ' ' . $nextAcademicYear;
-                $targetName = $baseName;
+                // Pastikan nama unik
                 $suffix = 1;
-                while (Classes::where('name', $targetName)->exists()) {
-                    $targetName = $baseName . ' (' . $suffix . ')';
+                $finalName = $newClassName;
+                while (Classes::where('name', $finalName)->exists()) {
+                    $finalName = $newClassName . ' (' . $suffix . ')';
                     $suffix++;
                 }
 
-                Classes::create([
-                    'name' => $targetName,
-                    'grade' => 10,
-                    'major' => $major,
+                $newClass = Classes::create([
+                    'name' => $finalName,
+                    'grade' => $newGrade,
+                    'major' => $oldClass->major,
                     'code' => $code,
                     'academic_year' => $nextAcademicYear,
                     'is_archived' => false,
-                    'created_by' => Auth::id(),
+                    'created_by' => $userId,
+                ]);
+
+                // Copy students dari kelas lama ke kelas baru
+                $this->copyStudentsToNewClass($oldClass, $newClass, $nextAcademicYear, $userId);
+
+                $processedMajors[$key] = true;
+            }
+
+            // 4. Update semester (opsional)
+            try {
+                // Nonaktifkan semester genap tahun lama
+                Semester::where('academic_year', $currentAcademicYear)
+                    ->where('semester_type', 'genap')
+                    ->update([
+                        'is_active' => false,
+                        'end_date' => $now,
+                        'updated_by' => $userId,
+                    ]);
+
+                // Aktifkan semester ganjil tahun baru
+                $nextGanjilSemester = Semester::where('academic_year', $nextAcademicYear)
+                    ->where('semester_type', 'ganjil')
+                    ->first();
+
+                if (!$nextGanjilSemester) {
+                    Semester::create([
+                        'id' => (string) Str::uuid(),
+                        'academic_year' => $nextAcademicYear,
+                        'semester_type' => 'ganjil',
+                        'is_active' => true,
+                        'start_date' => $now,
+                        'end_date' => null,
+                        'description' => "Semester Ganjil Tahun Ajaran {$nextAcademicYear}",
+                        'created_by' => $userId,
+                    ]);
+                } else {
+                    $nextGanjilSemester->update([
+                        'is_active' => true,
+                        'start_date' => $now,
+                        'updated_by' => $userId,
+                    ]);
+                }
+            } catch (\Exception $semesterError) {
+                // Log error tapi lanjutkan proses
+                Log::warning('Semester processing failed', [
+                    'error' => $semesterError->getMessage()
                 ]);
             }
 
-            // Hapus semua kelas yang benar-benar tidak memiliki siswa sama sekali (kelas kosong)
-            // Kriteria: tidak memiliki relasi students pada pivot student_class
-            // KECUALI kelas grade 10 pada tahun ajaran baru ($nextAcademicYear),
-            // karena kelas tersebut memang disiapkan kosong untuk siswa baru.
-            $emptyClasses = Classes::whereDoesntHave('students')
-                ->where(function ($query) use ($nextAcademicYear) {
-                    $query->where('academic_year', '!=', $nextAcademicYear)
-                          ->orWhere('grade', '!=', 10);
-                })
-                ->get();
-
-            foreach ($emptyClasses as $emptyClass) {
-                // Pastikan kembali tidak ada data di pivot untuk keamanan tambahan
-                $hasPivot = DB::table('student_class')
-                    ->where('class_id', $emptyClass->id)
-                    ->exists();
-
-                if (!$hasPivot) {
-                    $emptyClass->delete();
-                }
+            // Return JSON response for AJAX requests
+            $isAjax = $request->ajax() || $request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+            
+            Log::info('Response type', [
+                'ajax' => $request->ajax(),
+                'expects_json' => $request->expectsJson(),
+                'x_requested_with' => $request->header('X-Requested-With'),
+                'is_ajax' => $isAjax
+            ]);
+            
+            if ($isAjax) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Kelas berhasil dinaikkan. Kelas lama telah diarsipkan dan kelas baru untuk tahun ajaran berikutnya telah dibuat.',
+                    'redirect' => route('classes.index')
+                ]);
             }
 
             return redirect()->route('classes.index')
-                ->with('success', 'Semua siswa berhasil dipromosikan ke kelas dengan grade berikutnya untuk tahun akademik baru (jika kelas tujuan tersedia).');
+                ->with('success', 'Kelas berhasil dinaikkan. Kelas lama telah diarsipkan dan kelas baru untuk tahun ajaran berikutnya telah dibuat.');
+
         } catch (\Exception $e) {
+            Log::error('promoteStudentsBulk failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->route('classes.index')
-                ->with('error', 'Terjadi kesalahan saat melakukan naik kelas masal: ' . $e->getMessage());
+                ->with('error', 'Terjadi kesalahan saat melakukan naik kelas: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Copy students from archived class to new class when opening new semester
+     */
+    private function copyFromArchivedClass($newClass, $academicYear, $now, $genapValues)
+    {
+        // First, check if there are already any students in this class for any semester
+        $existingStudents = DB::table('student_class')
+            ->where('class_id', $newClass->id)
+            ->where('academic_year', $academicYear)
+            ->whereNull('deleted_at')
+            ->count();
+
+        if ($existingStudents > 0) {
+            Log::info('Class already has students, skipping copy from archived', [
+                'class' => $newClass->name,
+                'existing_students' => $existingStudents
+            ]);
+            return;
+        }
+
+        // Find the corresponding archived class (same major, previous grade)
+        $archivedClass = Classes::where('major', $newClass->major)
+            ->where('grade', $newClass->grade - 1)
+            ->where('is_archived', true)
+            ->where('academic_year', '<', $academicYear)
+            ->orderBy('academic_year', 'desc')
+            ->first();
+
+        if (!$archivedClass) {
+            Log::info('No archived class found', [
+                'new_class' => $newClass->name,
+                'major' => $newClass->major,
+                'grade' => $newClass->grade - 1
+            ]);
+            return;
+        }
+
+        // Get students from archived class
+        $students = DB::table('student_class')
+            ->where('class_id', $archivedClass->id)
+            ->whereNull('deleted_at')
+            ->get();
+
+        if ($students->isEmpty()) {
+            Log::info('No students found in archived class', [
+                'archived_class' => $archivedClass->name
+            ]);
+            return;
+        }
+
+        $copiedCount = 0;
+        foreach ($students as $student) {
+            // Check if student already exists in new class for ANY semester
+            $exists = DB::table('student_class')
+                ->where('class_id', $newClass->id)
+                ->where('student_id', $student->student_id)
+                ->where('academic_year', $academicYear)
+                ->whereNull('deleted_at')
+                ->exists();
+
+            if (!$exists) {
+                // Create student_class record for genap semester
+                DB::table('student_class')->insert([
+                    'id' => Str::uuid(),
+                    'class_id' => $newClass->id,
+                    'student_id' => $student->student_id,
+                    'academic_year' => $academicYear,
+                    'semester' => 'genap',
+                    'start_date' => $now,
+                    'end_date' => null,
+                    'status' => 'active',
+                    'created_by' => Auth::id(),
+                    'updated_by' => null,
+                    'deleted_by' => null,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+                $copiedCount++;
+            }
+        }
+
+        Log::info('Copied students from archived class', [
+            'archived_class' => $archivedClass->name,
+            'new_class' => $newClass->name,
+            'total_students' => $students->count(),
+            'copied_students' => $copiedCount
+        ]);
+    }
+
+    /**
+     * Copy students from old class to new class
+     */
+    private function copyStudentsToNewClass($oldClass, $newClass, $nextAcademicYear, $userId)
+    {
+        // Get all students from old class (any semester, any status)
+        $students = DB::table('student_class')
+            ->where('class_id', $oldClass->id)
+            ->whereNull('deleted_at')
+            ->get();
+
+        $now = now();
+        $copiedCount = 0;
+
+        foreach ($students as $student) {
+            // Check if student already exists in new class
+            $exists = DB::table('student_class')
+                ->where('class_id', $newClass->id)
+                ->where('student_id', $student->student_id)
+                ->where('academic_year', $nextAcademicYear)
+                ->whereNull('deleted_at')
+                ->exists();
+
+            if (!$exists) {
+                // Create new student_class record for new class
+                DB::table('student_class')->insert([
+                    'id' => Str::uuid(),
+                    'class_id' => $newClass->id,
+                    'student_id' => $student->student_id,
+                    'academic_year' => $nextAcademicYear,
+                    'semester' => 'ganjil', // Default to ganjil for new academic year
+                    'start_date' => $now,
+                    'end_date' => null,
+                    'status' => 'active',
+                    'created_by' => $userId,
+                    'updated_by' => null,
+                    'deleted_by' => null,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+                $copiedCount++;
+            }
+        }
+
+        Log::info('Students copied to new class', [
+            'old_class' => $oldClass->name,
+            'new_class' => $newClass->name,
+            'total_students' => $students->count(),
+            'copied_students' => $copiedCount
+        ]);
     }
 
     public function getPromoteData(Request $request)

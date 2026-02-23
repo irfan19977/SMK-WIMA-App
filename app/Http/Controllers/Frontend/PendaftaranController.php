@@ -93,9 +93,40 @@ class PendaftaranController extends Controller
             ]);
 
             if ($validator->fails()) {
+            // Store uploaded file info in session for display
+            $uploadedFiles = [];
+            
+            // Check all possible file uploads
+            $fileFields = ['photo_path', 'ijazah', 'kartu_keluarga', 'akte_lahir', 'ktp', 'sertifikat'];
+            
+            foreach ($fileFields as $field) {
+                if ($request->hasFile($field)) {
+                    $files = $request->file($field);
+                    
+                    if (is_array($files)) {
+                        // Handle multiple files (like sertifikat)
+                        $fileNames = [];
+                        foreach ($files as $file) {
+                            if ($file->isValid()) {
+                                $fileNames[] = $file->getClientOriginalName();
+                            }
+                        }
+                        if (!empty($fileNames)) {
+                            $uploadedFiles[$field] = implode(', ', $fileNames);
+                        }
+                    } else {
+                        // Handle single file
+                        if ($files->isValid()) {
+                            $uploadedFiles[$field] = $files->getClientOriginalName();
+                        }
+                    }
+                }
+            }
+            
             return redirect()->back()
                 ->withErrors($validator)
-                ->withInput();
+                ->withInput()
+                ->with('uploaded_files', $uploadedFiles);
         }
 
             DB::beginTransaction();
@@ -149,7 +180,7 @@ class PendaftaranController extends Controller
             DB::commit();
 
             return redirect()->back()
-                ->with('success', 'Pendaftaran berhasil! Silakan login dengan email dan password yang telah Anda buat.');
+                ->with('registration_success', 'Pendaftaran berhasil! Silakan login dengan email dan password yang telah Anda buat.');
 
         } catch (\Exception $e) {
             DB::rollBack();

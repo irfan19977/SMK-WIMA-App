@@ -6,8 +6,8 @@
             <div class="container">
                 <div class="banner-spacing">
                     <div class="section-info">
-                        <h2 data-aos="fade-up" data-aos-delay="100">Tentang SMK PGRI Lawang</h2>
-                        <p data-aos="fade-up" data-aos-delay="200">SMK PGRI Lawang adalah lembaga pendidikan vokasional yang berdedikasi untuk menghasilkan lulusan berkualitas, siap kerja, dan berdaya saing global.</p>
+                        <h2 data-aos="fade-up" data-aos-delay="100">{{ __('home.about_school_title') }}</h2>
+                        <p data-aos="fade-up" data-aos-delay="200">{{ __('home.about_school_description') }}</p>
                     </div>
                 </div>
             </div>
@@ -21,11 +21,11 @@
                     <div class="col-lg-5 col-md-12">
                         <div class="text-content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Tentang SMK PGRI Lawang</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.about_school_title') }}</p>
                             </div>
-                             <h2 class="title-anim">Mencetak Lulusan Berkualitas</h2>
-                            <p class="title-anim">SMK PGRI Lawang berkomitmen untuk menghasilkan lulusan yang siap kerja, berkarakter, dan berdaya saing global. Dengan pengalaman lebih dari 17 tahun, kami terus berinovasi dalam pendidikan vokasional.</p>
-                            <a class="default-btn" href="#">Kunjungi Sekolah</a>
+                             <h2 class="title-anim">{{ __('home.creating_quality_graduates') }}</h2>
+                            <p class="title-anim">{{ __('home.quality_commitment') }}</p>
+                            <a class="default-btn" href="#">{{ __('home.visit_school') }}</a>
                         </div>
                     </div>
 
@@ -39,12 +39,12 @@
                             <div class="col-lg-6 col-sm-6 col-md-6">
                                 <div class="notice-content" data-aos="fade-right" data-aos-delay="200">
                                     <i class='bx bxs-quote-left'></i>
-                                    <h4 class="title-anim">Pendidikan Berkualitas</h4>
-                                    <p class="title-anim">Kami menyediakan lingkungan belajar yang kondusif dengan kurikulum berbasis industri dan tenaga pengajar profesional.</p>
+                                    <h4 class="title-anim">{{ __('home.quality_education') }}</h4>
+                                    <p class="title-anim">{{ __('home.conducive_learning') }}</p>
                                     <div class="author-info">
-                                        <span>Kepala Sekolah</span>
-                                        <h5>Dr. Budi Santoso, S.Pd., M.Pd.</h5>
-                                        <p>Kepala Sekolah SMK PGRI Lawang</p>
+                                        <span>{{ __('home.principal_title') }}</span>
+                                        <h5>{{ __('home.principal_name_full') }}</h5>
+                                        <p>{{ __('home.principal_title_full') }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -60,41 +60,41 @@
             <div class="container">
                 <div class="section-title" data-aos="fade-up" data-aos-delay="100">
                     <div class="sub-title">
-                        <i class='bx bxs-graduation'></i> <p>Program Keahlian</p>
+                        <i class='bx bxs-graduation'></i> <p>{{ __('home.expertise_programs') }}</p>
                     </div>
-                    <h2>Program Keahlian Unggulan</h2>
+                    <h2>{{ __('home.featured_expertise_programs') }}</h2>
                 </div>
                 <div class="row justify-content-center">
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="100">
                             <img src="{{ asset('frontend/assets/img/all-img/kimia.jpeg') }}" alt="icon">
-                            <h4>Teknik Kimia Industri</h4>
-                            <p>Program keahlian yang fokus pada proses kimia industri dan pengembangan produk kimia.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.industrial_chemistry_engineering') }}</h4>
+                            <p>{{ __('home.industrial_chemistry_description') }}</p>
+                            <a href="#">{{ __('home.learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="200">
                             <img src="{{ asset('frontend/assets/img/all-img/tkj.jpeg') }}" alt="icon">
-                            <h4>Teknik Komputer & Jaringan</h4>
-                            <p>Program keahlian yang mempelajari instalasi jaringan komputer dan administrasi sistem.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.computer_network_engineering') }}</h4>
+                            <p>{{ __('home.computer_network_description') }}</p>
+                            <a href="#">{{ __('home.learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="300">
                             <img src="{{ asset('frontend/assets/img/all-img/tsm.jpg') }}" alt="icon">
-                            <h4>Teknik Sepeda Motor</h4>
-                            <p>Program keahlian yang fokus pada perbaikan dan perawatan sepeda motor.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.motorcycle_engineering') }}</h4>
+                            <p>{{ __('home.motorcycle_technic_description') }}</p>
+                            <a href="#">{{ __('home.learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6 col-md-6">
                         <div class="academics-item" data-aos="fade-up" data-aos-delay="400">
                             <img src="{{ asset('frontend/assets/img/all-img/tkr.jpg') }}" alt="icon">
-                            <h4>Teknik Kendaraan Ringan</h4>
-                            <p>Program keahlian yang fokus pada perbaikan sistem kendaraan ringan mobil.</p>
-                            <a href="#">Learn More <i class='bx bx-right-arrow-alt'></i></a>
+                            <h4>{{ __('home.light_vehicle_engineering') }}</h4>
+                            <p>{{ __('home.light_vehicle_description') }}</p>
+                            <a href="#">{{ __('home.learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
                     </div>
                 </div>
@@ -109,12 +109,12 @@
                     <div class="col-lg-6">
                         <div class="content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Fasilitas Sekolah</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.school_facilities') }}</p>
                             </div>
-                            <h2>Sarana & Prasarana SMK PGRI Lawang</h2>
+                            <h2>{{ __('home.facilities_infrastructure') }}</h2>
 
-                            <p>SMK PGRI Lawang dilengkapi dengan fasilitas modern untuk mendukung pembelajaran praktik dan teori.</p>
-                            <p>Kami memiliki laboratorium komputer, bengkel praktik, ruang kelas ber-AC, perpustakaan, dan area olahraga.</p>
+                            <p>{{ __('home.modern_facilities_description') }}</p>
+                            <p>{{ __('home.facilities_list') }}</p>
                         </div>
                     </div>
                     <div class="col-lg-6">
@@ -131,12 +131,12 @@
                     <div class="col-lg-6">
                         <div class="content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Prestasi</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.achievements') }}</p>
                             </div>
-                            <h2>Kelulusan Unggulan</h2>
+                            <h2>{{ __('home.excellence_graduation') }}</h2>
 
-                            <p>SMK PGRI Lawang bangga dengan kelulusan yang berkualitas dan siap kerja.</p>
-                            <p>Setiap tahun kami meluluskan siswa-siswi berprestasi yang diterima di berbagai industri ternama.</p>
+                            <p>{{ __('home.excellence_graduation_description') }}</p>
+                            <p>{{ __('home.graduation_success') }}</p>
                         </div>
                     </div>
                 </div>
@@ -144,12 +144,12 @@
                     <div class="col-lg-6">
                         <div class="content" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <i class='bx bxs-graduation'></i> <p>Nilai-Nilai</p>
+                                <i class='bx bxs-graduation'></i> <p>{{ __('home.values') }}</p>
                             </div>
-                            <h2>Visi & Misi</h2>
+                            <h2>{{ __('home.vision_mission_title') }}</h2>
 
-                            <p><strong>Visi:</strong> Menjadi sekolah vokasional unggulan yang menghasilkan lulusan berkarakter, kompeten, dan siap bersaing.</p>
-                            <p><strong>Misi:</strong> Memberikan pendidikan berkualitas dengan mengembangkan potensi siswa melalui pembelajaran terpadu.</p>
+                            <p><strong>Visi:</strong> {{ __('home.vision_statement') }}</p>
+                            <p><strong>Misi:</strong> {{ __('home.mission_statement') }}</p>
                         </div>
                     </div>
                     <div class="col-lg-6">
@@ -166,13 +166,13 @@
             <div class="container">
                 <div class="section-title" data-aos="fade-up" data-aos-delay="100">
                     <div class="sub-title">
-                        <i class='bx bxs-graduation'></i> <p>Informasi Pendaftaran</p>
+                        <i class='bx bxs-graduation'></i> <p>{{ __('home.registration_information') }}</p>
                     </div>
-                    <h2>Daftar Sekarang di SMK PGRI Lawang</h2>
+                    <h2>{{ __('home.register_now_at_school') }}</h2>
                 </div>
 
                 <div class="subscribe-btn text-center" data-aos="fade-up" data-aos-delay="100">
-                    <a class="default-btn" href="application-form.html">Daftar Sekarang</a>
+                    <a class="default-btn" href="application-form.html">{{ __('home.register_now_button') }}</a>
                 </div>
             </div>
         </div> 

@@ -6,8 +6,8 @@
             <div class="container">
                 <div class="banner-spacing">
                     <div class="section-info">
-                        <h2 data-aos="fade-up" data-aos-delay="100">Pendaftaran Siswa Baru</h2>
-                        <p data-aos="fade-up" data-aos-delay="200">SMK PGRI Lawang membuka pendaftaran siswa baru untuk tahun ajaran {{ \App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}. Daftar sekarang untuk masa depan gemilang!</p>
+                        <h2 data-aos="fade-up" data-aos-delay="100">{{ __('home.registration_page_title') }}</h2>
+                        <p data-aos="fade-up" data-aos-delay="200">{{ __('home.registration_page_description') }} {{ \App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}. {{ __('home.registration_page_cta') }}</p>
                     </div>
                 </div>
             </div>
@@ -22,10 +22,10 @@
                         <div class="academics-left">
                             <div class="ac-category">
                                 <ul>
-                                    <li><a class="active" href="#" onclick="showTab('info'); return false;">Informasi Pendaftaran</a></li>
-                                    <li><a href="#" onclick="showTab('form'); return false;">Formulir Pendaftaran</a></li>
-                                    <li><a href="#" onclick="showTab('biaya'); return false;">Biaya Administrasi</a></li>
-                                    <li><a href="#" onclick="showTab('panduan'); return false;">Panduan</a></li>
+                                    <li><a class="active" href="#" onclick="showTab('info'); return false;">{{ __('home.registration_info_tab') }}</a></li>
+                                    <li><a href="#" onclick="showTab('form'); return false;">{{ __('home.registration_form_tab') }}</a></li>
+                                    <li><a href="#" onclick="showTab('biaya'); return false;">{{ __('home.registration_fee_tab') }}</a></li>
+                                    <li><a href="#" onclick="showTab('panduan'); return false;">{{ __('home.registration_guide_tab') }}</a></li>
                                 </ul>
                             </div>
                             <hr>
@@ -36,33 +36,33 @@
                             <!-- Informasi Pendaftaran Content -->
                             <div id="info-content" class="tab-content">
                                 <div class="pera-title">
-                                    <h2><span>4</span>Program Keahlian <br>Unggulan</h2>
+                                    <h2><span>4</span>{{ __('home.expertise_programs_count') }} <br>{{ __('home.expertise_programs_tagline') }}</h2>
                                 </div>
                                 <div class="pera-dec">
-                                    <p>SMK PGRI Lawang menyediakan 4 program keahlian unggulan yang dirancang untuk mempersiapkan siswa menjadi tenaga terampil dan siap kerja. Setiap program dilengkapi dengan fasilitas modern dan kurikulum berbasis industri.</p>
+                                    <p>{{ __('home.expertise_programs_description') }}</p>
                                     
                                    <div class="problem-sector">
 
                                     <div class="problem-list">
                                         <div class="title">
-                                            <h3>Teknik Kimia Industri</h3>
+                                            <h3>{{ __('home.industrial_chemistry_title') }}</h3>
                                         </div>
                                         <div class="row">
                                             <div class="col-lg-6 col-sm-6 col-md-6">
                                                 <div class="problem-items">
                                                     <ul>
-                                                        <li><a href="#">Proses Kimia Industri</a></li>
-                                                        <li><a href="#">Teknologi Kimia</a></li>
-                                                        <li><a href="#">Quality Control</a></li>
+                                                        <li><a href="#">{{ __('home.industrial_chemical_processes') }}</a></li>
+                                                        <li><a href="#">{{ __('home.chemical_technology') }}</a></li>
+                                                        <li><a href="#">{{ __('home.quality_control') }}</a></li>
                                                     </ul>
                                                 </div>
                                             </div>
                                             <div class="col-lg-6 col-sm-6 col-md-6">
                                                 <div class="problem-items">
                                                     <ul>
-                                                        <li><a href="#">Manajemen Industri</a></li>
-                                                        <li><a href="#">Keselamatan Kerja</a></li>
-                                                        <li><a href="#">Analisis Laboratorium</a></li>
+                                                        <li><a href="#">{{ __('home.industrial_management') }}</a></li>
+                                                        <li><a href="#">{{ __('home.work_safety') }}</a></li>
+                                                        <li><a href="#">{{ __('home.laboratory_analysis') }}</a></li>
                                                     </ul>
                                                 </div>
                                             </div>
@@ -70,24 +70,24 @@
                                     </div>
                                     <div class="problem-list">
                                         <div class="title">
-                                            <h3>Teknik Komputer dan Jaringan</h3>
+                                            <h3>{{ __('home.computer_network_title') }}</h3>
                                         </div>
                                         <div class="row">
                                             <div class="col-lg-6 col-sm-6 col-md-6">
                                                 <div class="problem-items">
                                                     <ul>
-                                                        <li><a href="#">Teknik Komputer</a></li>
-                                                        <li><a href="#">Jaringan Komputer</a></li>
-                                                        <li><a href="#">Administrasi Sistem</a></li>
+                                                        <li><a href="#">{{ __('home.computer_technique') }}</a></li>
+                                                        <li><a href="#">{{ __('home.computer_networks') }}</a></li>
+                                                        <li><a href="#">{{ __('home.system_administration') }}</a></li>
                                                     </ul>
                                                 </div>
                                             </div>
                                             <div class="col-lg-6 col-sm-6 col-md-6">
                                                 <div class="problem-items">
                                                     <ul>
-                                                        <li><a href="#">Pemrograman Web</a></li>
-                                                        <li><a href="#">Database Management</a></li>
-                                                        <li><a href="#">Keamanan Jaringan</a></li>
+                                                        <li><a href="#">{{ __('home.web_programming') }}</a></li>
+                                                        <li><a href="#">{{ __('home.database_management') }}</a></li>
+                                                        <li><a href="#">{{ __('home.network_security') }}</a></li>
                                                     </ul>
                                                 </div>
                                             </div>
@@ -95,24 +95,24 @@
                                     </div>
                                     <div class="problem-list">
                                         <div class="title">
-                                            <h3>Teknik Sepeda Motor</h3>
+                                            <h3>{{ __('home.motorcycle_technic_title') }}</h3>
                                         </div>
                                         <div class="row">
                                             <div class="col-lg-6 col-sm-6 col-md-6">
                                                 <div class="problem-items">
                                                     <ul>
-                                                        <li><a href="#">Mesin Sepeda Motor</a></li>
-                                                        <li><a href="#">Sistem Pengapian</a></li>
-                                                        <li><a href="#">Sistem Bahan Bakar</a></li>
+                                                        <li><a href="#">{{ __('home.motorcycle_engine') }}</a></li>
+                                                        <li><a href="#">{{ __('home.ignition_system') }}</a></li>
+                                                        <li><a href="#">{{ __('home.fuel_system') }}</a></li>
                                                     </ul>
                                                 </div>
                                             </div>
                                             <div class="col-lg-6 col-sm-6 col-md-6">
                                                 <div class="problem-items">
                                                     <ul>
-                                                        <li><a href="#">Overhaul Mesin</a></li>
-                                                        <li><a href="#">Tune Up Service</a></li>
-                                                        <li><a href="#">Diagnostik Motor</a></li>
+                                                        <li><a href="#">{{ __('home.engine_overhaul') }}</a></li>
+                                                        <li><a href="#">{{ __('home.tune_up_service') }}</a></li>
+                                                        <li><a href="#">{{ __('home.motorcycle_diagnostics') }}</a></li>
                                                     </ul>
                                                 </div>
                                             </div>
@@ -120,24 +120,24 @@
                                     </div>
                                     <div class="problem-list">
                                         <div class="title">
-                                            <h3>Teknik Kendaraan Ringan</h3>
+                                            <h3>{{ __('home.light_vehicle_title') }}</h3>
                                         </div>
                                         <div class="row">
                                             <div class="col-lg-6 col-sm-6 col-md-6">
                                                 <div class="problem-items">
                                                     <ul>
-                                                        <li><a href="#">Mesin Kendaraan Ringan</a></li>
-                                                        <li><a href="#">Sistem Transmisi</a></li>
-                                                        <li><a href="#">Sistem Rem dan Suspensi</a></li>
+                                                        <li><a href="#">{{ __('home.vehicle_engine') }}</a></li>
+                                                        <li><a href="#">{{ __('home.transmission_system') }}</a></li>
+                                                        <li><a href="#">{{ __('home.brake_system') }} dan Suspensi</a></li>
                                                     </ul>
                                                 </div>
                                             </div>
                                             <div class="col-lg-6 col-sm-6 col-md-6">
                                                 <div class="problem-items">
                                                     <ul>
-                                                        <li><a href="#">AC dan Kelistrikan</a></li>
-                                                        <li><a href="#">Diagnostik Elektronik</a></li>
-                                                        <li><a href="#">Body Repair</a></li>
+                                                        <li><a href="#">{{ __('home.vehicle_electrical') }}</a></li>
+                                                        <li><a href="#">{{ __('home.electronic_diagnostics') }}</a></li>
+                                                        <li><a href="#">{{ __('home.body_repair') }}</a></li>
                                                     </ul>
                                                 </div>
                                             </div>
@@ -145,25 +145,25 @@
                                     </div>
                                     <div class="problem-list">
                                         <div class="title">
-                                            <h3>Persyaratan Pendaftaran</h3>
+                                            <h3>{{ __('home.registration_requirements') }}</h3>
                                         </div>
                                         <div class="row">
                                             <div class="col-lg-6 col-sm-6 col-md-6">
                                                 <div class="problem-items">
                                                     <ul>
-                                                        <li><a href="#">Usia Maksimal 21 Tahun</a></li>
-                                                        <li><a href="#">Lulus SMP/MTs/Sederajat</a></li>
-                                                        <li><a href="#">Akte Kelahiran</a></li>
+                                                        <li><a href="#">{{ __('home.max_age_21') }}</a></li>
+                                                        <li><a href="#">{{ __('home.junior_high_graduate') }}</a></li>
+                                                        <li><a href="#">{{ __('home.birth_certificate') }}</a></li>
                                                     </ul>
                                                 </div>
                                             </div>
                                             <div class="col-lg-6 col-sm-6 col-md-6">
                                                 <div class="problem-items">
                                                     <ul>
-                                                        <li><a href="#">Kartu Keluarga</a></li>
-                                                        <li><a href="#">Pas Foto 3x4 (4 Lembar)</a></li>
-                                                        <li><a href="#">Surat Keterangan Sehat</a></li>
-                                                        <li><a href="#">Biaya Pendaftaran Rp 50.000</a></li>
+                                                        <li><a href="#">{{ __('home.family_card') }}</a></li>
+                                                        <li><a href="#">{{ __('home.photo_requirements') }}</a></li>
+                                                        <li><a href="#">{{ __('home.health_certificate') }}</a></li>
+                                                        <li><a href="#">{{ __('home.registration_fee_amount') }}</a></li>
                                                     </ul>
                                                 </div>
                                             </div>
@@ -178,41 +178,41 @@
                             <!-- Biaya Administrasi Content -->
                             <div id="biaya-content" class="tab-content" style="display: none;">
                                 <div class="pera-title">
-                                    <h2>Biaya <br>Administrasi</h2>
+                                    <h2>{{ __('home.biaya_administrasi_title') }} <br>{{ __('home.biaya_administrasi_subtitle') }}</h2>
                                 </div>
                                 <div class="pera-dec">
-                                    <p>Berikut adalah rincian biaya administrasi untuk pendaftaran siswa baru SMK PGRI Lawang tahun ajaran {{ \App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}.</p>
+                                    <p>{{ __('home.biaya_administrasi_description') }} {{ \App\Helpers\AcademicYearHelper::getCurrentAcademicYear() }}.</p>
                                     
                                     <div class="row mt-4">
                                         <div class="col-lg-12">
                                             <div class="problem-list">
                                                 <div class="title">
-                                                    <h3>Biaya Pendaftaran</h3>
+                                                    <h3>{{ __('home.biaya_pendaftaran_title') }}</h3>
                                                 </div>
                                                 <div class="table-responsive">
                                                     <table class="table table-bordered">
                                                         <thead>
                                                             <tr>
-                                                                <th>Jenis Biaya</th>
-                                                                <th>Nominal</th>
-                                                                <th>Keterangan</th>
+                                                                <th>{{ __('home.jenis_biaya') }}</th>
+                                                                <th>{{ __('home.nominal') }}</th>
+                                                                <th>{{ __('home.keterangan') }}</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             <tr>
-                                                                <td>Formulir Pendaftaran</td>
+                                                                <td>{{ __('home.formulir_pendaftaran') }}</td>
                                                                 <td>Rp 50.000</td>
-                                                                <td>Biaya pendaftaran awal</td>
+                                                                <td>{{ __('home.biaya_pendaftaran_awal') }}</td>
                                                             </tr>
                                                             <tr>
-                                                                <td>Uang Pangkal</td>
+                                                                <td>{{ __('home.uang_pangkal') }}</td>
                                                                 <td>Rp 1.500.000</td>
-                                                                <td>Dibayar sekali saat penerimaan</td>
+                                                                <td>{{ __('home.dibayar_sekali_saat_penerimaan') }}</td>
                                                             </tr>
                                                         </tbody>
                                                         <tfoot>
                                                             <tr>
-                                                                <th>Total</th>
+                                                                <th>{{ __('home.total') }}</th>
                                                                 <th>Rp 1.550.000</th>
                                                                 <th></th>
                                                             </tr>
@@ -227,32 +227,32 @@
                                         <div class="col-lg-12">
                                             <div class="problem-list">
                                                 <div class="title">
-                                                    <h3>SPP Bulanan</h3>
+                                                    <h3>{{ __('home.spp_bulanan_title') }}</h3>
                                                 </div>
                                                 <div class="table-responsive">
                                                     <table class="table table-bordered">
                                                         <thead>
                                                             <tr>
-                                                                <th>Kelas</th>
-                                                                <th>Nominal/Bulan</th>
-                                                                <th>Keterangan</th>
+                                                                <th>{{ __('home.kelas') }}</th>
+                                                                <th>{{ __('home.nominal_per_bulan') }}</th>
+                                                                <th>{{ __('home.keterangan') }}</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             <tr>
-                                                                <td>Kelas X</td>
+                                                                <td>{{ __('home.kelas_x') }}</td>
                                                                 <td>Rp 150.000</td>
-                                                                <td>perbulan</td>
+                                                                <td>{{ __('home.perbulan') }}</td>
                                                             </tr>
                                                             <tr>
-                                                                <td>Kelas XI</td>
+                                                                <td>{{ __('home.kelas_xi') }}</td>
                                                                 <td>Rp 150.000</td>
-                                                                <td>perbulan</td>
+                                                                <td>{{ __('home.perbulan') }}</td>
                                                             </tr>
                                                             <tr>
-                                                                <td>Kelas XII</td>
+                                                                <td>{{ __('home.kelas_xii') }}</td>
                                                                 <td>Rp 150.000</td>
-                                                                <td>perbulan</td>
+                                                                <td>{{ __('home.perbulan') }}</td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -264,13 +264,13 @@
                                     <div class="row mt-4">
                                         <div class="col-lg-12">
                                             <div class="alert alert-info">
-                                                <h5><i class="bx bx-info-circle"></i> Informasi Pembayaran</h5>
+                                                <h5><i class="bx bx-info-circle"></i> {{ __('home.informasi_pembayaran') }}</h5>
                                                 <ul class="mb-0">
-                                                    <li>Pembayaran dapat dilakukan melalui transfer ke rekening BNI No. 1234567890 a.n. SMK PGRI Lawang</li>
-                                                    <li>Pembayaran uang pangkal dan biaya administrasi lainnya dilakukan setelah dinyatakan diterima</li>
-                                                    <li>SPP dibayarkan setiap bulan pada tanggal 1-10</li>
-                                                    <li>Ada potongan 10% untuk pembayaran tahunan SPP</li>
-                                                    <li>Bantuan biaya pendidikan tersedia untuk siswa berprestasi dan kurang mampu</li>
+                                                    <li>{{ __('home.pembayaran_transfer_info') }}</li>
+                                                    <li>{{ __('home.pembayaran_uang_pangkal_info') }}</li>
+                                                    <li>{{ __('home.spp_pembayaran_info') }}</li>
+                                                    <li>{{ __('home.potongan_tahunan_info') }}</li>
+                                                    <li>{{ __('home.bantuan_pendidikan_info') }}</li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -280,23 +280,23 @@
                                         <div class="col-lg-12">
                                             <div class="problem-list">
                                                 <div class="title">
-                                                    <h3>Beasiswa & Bantuan</h3>
+                                                    <h3>{{ __('home.beasiswa_bantuan_title') }}</h3>
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="problem-items">
                                                             <ul>
-                                                                <li><a href="#">Beasiswa Prestasi (Akademik)</a></li>
-                                                                <li><a href="#">Beasiswa Non-Prestasi</a></li>
+                                                                <li><a href="#">{{ __('home.beasiswa_prestasi_akademik') }}</a></li>
+                                                                <li><a href="#">{{ __('home.beasiswa_non_prestasi') }}</a></li>
                                                             </ul>
                                                         </div>
                                                     </div>
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="problem-items">
                                                             <ul>
-                                                                <li><a href="#">Juara (Lomba/Olahraga)</a></li>
-                                                                <li><a href="#">Kurang Mampu</a></li>
-                                                                <li><a href="#">Yatim/Yatim Piatu</a></li>
+                                                                <li><a href="#">{{ __('home.juara_lomba_olahraga') }}</a></li>
+                                                                <li><a href="#">{{ __('home.kurang_mampu') }}</a></li>
+                                                                <li><a href="#">{{ __('home.yatim_yatim_piatu') }}</a></li>
                                                             </ul>
                                                         </div>
                                                     </div>
@@ -311,39 +311,39 @@
                             <!-- Panduan Content -->
                             <div id="panduan-content" class="tab-content" style="display: none;">
                                 <div class="pera-title">
-                                    <h2>Panduan <br>Pendaftaran</h2>
+                                    <h2>{{ __('home.panduan_pendaftaran_title') }} <br>{{ __('home.panduan_pendaftaran_subtitle') }}</h2>
                                 </div>
                                 <div class="pera-dec">
-                                    <p>Berikut adalah panduan lengkap untuk melakukan pendaftaran siswa baru di SMK PGRI Lawang. Pastikan untuk mengikuti setiap langkah dengan benar.</p>
+                                    <p>{{ __('home.panduan_pendaftaran_description') }}</p>
                                     
                                     <div class="faq-content">
                                         <!-- Cara Pendaftaran -->
                                         <div class="faq-item">
-                                            <div class="faq-question">Cara Pendaftaran</div>
+                                            <div class="faq-question">{{ __('home.cara_pendaftaran') }}</div>
                                             <div class="icon-container"><i class='bx bx-chevron-down'></i></div>
                                         </div>
                                         <div class="faq-answer">
                                             <div class="list-item-list">
-                                                <h4>Langkah-langkah Pendaftaran</h4>
+                                                <h4>{{ __('home.langkah_langkah_pendaftaran') }}</h4>
                                                 <ol class="mb-4">
-                                                    <li><strong>Pendaftaran Online</strong>: Kunjungi website resmi SMK PGRI Lawang dan isi formulir pendaftaran online</li>
-                                                    <li><strong>Verifikasi Email</strong>: Periksa email Anda untuk verifikasi akun pendaftaran</li>
-                                                    <li><strong>Lengkapi Data</strong>: Isi semua data pribadi dan data orang tua dengan lengkap dan benar</li>
-                                                    <li><strong>Unggah Dokumen</strong>: Scan dan unggah dokumen yang diperlukan (Ijazah, KK, Akte Kelahiran, dll)</li>
-                                                    <li><strong>Pembayaran</strong>: Lakukan pembayaran biaya pendaftaran sebesar Rp 250.000,- melalui bank/transfer/gerai</li>
-                                                    <li><strong>Konfirmasi</strong>: Upload bukti pembayaran di halaman konfirmasi</li>
-                                                    <li><strong>Tes Seleksi</strong>: Ikuti tes seleksi sesuai jadwal yang ditentukan</li>
-                                                    <li><strong>Pengumuman</strong>: Cek pengumuman hasil seleksi di website</li>
-                                                    <li><strong>Daftar Ulang</strong>: Lakukan daftar ulang bagi yang dinyatakan diterima</li>
+                                                    <li><strong>{{ __('home.pendaftaran_online_desc') }}</strong></li>
+                                                    <li><strong>{{ __('home.verifikasi_email_desc') }}</strong></li>
+                                                    <li><strong>{{ __('home.lengkapi_data_desc') }}</strong></li>
+                                                    <li><strong>{{ __('home.unggah_dokumen_desc') }}</strong></li>
+                                                    <li><strong>{{ __('home.pembayaran_desc') }}</strong></li>
+                                                    <li><strong>{{ __('home.konfirmasi_desc') }}</strong></li>
+                                                    <li><strong>{{ __('home.tes_seleksi_desc') }}</strong></li>
+                                                    <li><strong>{{ __('home.pengumuman_desc') }}</strong></li>
+                                                    <li><strong>{{ __('home.daftar_ulang_desc') }}</strong></li>
                                                 </ol>
                                                 <div class="alert alert-info">
-                                                    <h5><i class="bx bx-info-circle"></i> Persyaratan Umum</h5>
+                                                    <h5><i class="bx bx-info-circle"></i> {{ __('home.persyaratan_umum') }}</h5>
                                                     <ul class="mb-0">
-                                                        <li>Usia maksimal 21 tahun pada saat pendaftaran</li>
-                                                        <li>Fotokopi ijazah/surat keterangan lulus yang telah dilegalisir</li>
-                                                        <li>Fotokopi akte kelahiran dan KK</li>
-                                                        <li>Pas foto 3x4 (4 lembar, latar merah)</li>
-                                                        <li>Surat keterangan sehat dari dokter</li>
+                                                        <li>{{ __('home.usia_maksimal_21') }}</li>
+                                                        <li>{{ __('home.fotokopi_ijazah') }}</li>
+                                                        <li>{{ __('home.fotokopi_akta_kk') }}</li>
+                                                        <li>{{ __('home.pas_foto_3x4') }}</li>
+                                                        <li>{{ __('home.surat_keterangan_sehat') }}</li>
                                                     </ul>
                                                 </div>
                                             </div>
@@ -351,32 +351,32 @@
 
                                         <!-- Beasiswa -->
                                         <div class="faq-item">
-                                            <div class="faq-question">Informasi Beasiswa</div>
+                                            <div class="faq-question">{{ __('home.informasi_beasiswa') }}</div>
                                             <div class="icon-container"><i class='bx bx-chevron-down'></i></div>
                                         </div>
                                         <div class="faq-answer">
                                             <div class="list-item-list">
-                                                <h4>Jenis Beasiswa yang Tersedia</h4>
-                                                <p>SMK PGRI Lawang menyediakan berbagai beasiswa untuk siswa berprestasi maupun yang membutuhkan:</p>
+                                                <h4>{{ __('home.jenis_beasiswa_tersedia') }}</h4>
+                                                <p>{{ __('home.beasiswa_description') }}</p>
                                                 
                                                 <div class="row">
                                                     <div class="col-md-6 mb-4">
                                                         <div class="card h-100">
                                                             <div class="card-header bg-primary text-white">
-                                                                <h5 class="mb-0">Beasiswa Prestasi (Akademik)</h5>
+                                                                <h5 class="mb-0">{{ __('home.beasiswa_prestasi_akademik') }}</h5>
                                                             </div>
                                                             <div class="card-body">
-                                                                <h6 class="card-subtitle mb-2 text-muted">Untuk siswa berprestasi akademik</h6>
+                                                                <h6 class="card-subtitle mb-2 text-muted">{{ __('home.beasiswa_prestasi_subtitle') }}</h6>
                                                                 <p class="card-text">
                                                                     <strong>Syarat:</strong>
                                                                     <ul>
-                                                                        <li>Nilai rata-rata rapor minimal 85</li>
-                                                                        <li>Juara kelas/tingkat sekolah</li>
+                                                                        <li>{{ __('home.nilai_rata_rata') }}</li>
+                                                                        <li>{{ __('home.juara_kelas') }}</li>
                                                                     </ul>
                                                                     <strong>Benefit:</strong>
                                                                     <ul>
-                                                                        <li>Potongan SPP 50-100%</li>
-                                                                        <li>Bebas biaya praktik</li>
+                                                                        <li>{{ __('home.potongan_spp_50_100') }}</li>
+                                                                        <li>{{ __('home.bebas_biaya_praktik') }}</li>
                                                                     </ul>
                                                                 </p>
                                                             </div>
@@ -386,22 +386,22 @@
                                                     <div class="col-md-6 mb-4">
                                                         <div class="card h-100">
                                                             <div class="card-header bg-success text-white">
-                                                                <h5 class="mb-0">Beasiswa Non-Prestasi</h5>
+                                                                <h5 class="mb-0">{{ __('home.beasiswa_non_prestasi') }}</h5>
                                                             </div>
                                                             <div class="card-body">
-                                                                <h6 class="card-subtitle mb-2 text-muted">Untuk siswa yang membutuhkan bantuan</h6>
+                                                                <h6 class="card-subtitle mb-2 text-muted">{{ __('home.beasiswa_non_prestasi_subtitle') }}</h6>
                                                                 <p class="card-text">
                                                                     <strong>Kategori:</strong>
                                                                     <ul>
-                                                                        <li><strong>Juara (Lomba/Olahraga)</strong> - Prestasi di bidang non-akademik</li>
-                                                                        <li><strong>Kurang Mampu</strong> - Surat keterangan tidak mampu</li>
-                                                                        <li><strong>Yatim/Yatim Piatu</strong> - Dokumen yatim piatu</li>
+                                                                        <li><strong>{{ __('home.juara_lomba_olahraga') }}</strong> - {{ __('home.juara_non_akademik') }}</li>
+                                                                        <li><strong>{{ __('home.kurang_mampu') }}</strong> - {{ __('home.surat_tidak_mampu') }}</li>
+                                                                        <li><strong>{{ __('home.yatim_yatim_piatu') }}</strong> - {{ __('home.dokumen_yatim_piatu') }}</li>
                                                                     </ul>
                                                                     <strong>Benefit:</strong>
                                                                     <ul>
-                                                                        <li>Potongan SPP 25-75%</li>
-                                                                        <li>Bantuan biaya pendidikan</li>
-                                                                        <li>Bantuan seragam dan buku</li>
+                                                                        <li>{{ __('home.potongan_spp_25_75') }}</li>
+                                                                        <li>{{ __('home.bantuan_biaya_pendidikan') }}</li>
+                                                                        <li>{{ __('home.bantuan_seragam_buku') }}</li>
                                                                     </ul>
                                                                 </p>
                                                             </div>
@@ -410,37 +410,37 @@
                                                 </div>
                                                 
                                                 <div class="alert alert-info">
-                                                    <h5><i class="bx bx-info-circle"></i> Cara Mengajukan Beasiswa</h5>
+                                                    <h5><i class="bx bx-info-circle"></i> {{ __('home.cara_mengajukan_beasiswa') }}</h5>
                                                     <ol class="mb-0">
-                                                        <li>Mengisi formulir pengajuan beasiswa</li>
-                                                        <li>Melengkapi dokumen pendukung</li>
-                                                        <li>Wawancara dengan tim seleksi</li>
-                                                        <li>Pengumuman hasil seleksi</li>
+                                                        <li>{{ __('home.mengisi_formulir') }}</li>
+                                                        <li>{{ __('home.melengkapi_dokumen') }}</li>
+                                                        <li>{{ __('home.wawancara_seleksi') }}</li>
+                                                        <li>{{ __('home.pengumuman_hasil') }}</li>
                                                     </ol>
-                                                    <p class="mb-0 mt-2"><strong>Batas waktu pengajuan:</strong> 2 minggu setelah pengumuman kelulusan</p>
+                                                    <p class="mb-0 mt-2"><strong>{{ __('home.batas_waktu_pengajuan') }}</strong> {{ __('home.batas_waktu_desc') }}</p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <!-- Panduan NISN -->
                                         <div class="faq-item">
-                                            <div class="faq-question">Panduan NISN</div>
+                                            <div class="faq-question">{{ __('home.panduan_nisn') }}</div>
                                             <div class="icon-container"><i class='bx bx-chevron-down'></i></div>
                                         </div>
                                         <div class="faq-answer">
                                             <div class="list-item-list">
-                                                <h4>Informasi Penting Tentang NISN</h4>
-                                                <p>NISN (Nomor Induk Siswa Nasional) adalah nomor identitas siswa yang berlaku secara nasional dan menjadi syarat wajib dalam proses pendaftaran.</p>
+                                                <h4>{{ __('home.informasi_nisn') }}</h4>
+                                                <p>{{ __('home.nisn_description') }}</p>
                                                 
                                                 <div class="alert alert-warning">
-                                                    <h5><i class="bx bx-error"></i> Jika Belum Memiliki NISN</h5>
-                                                    <p>Ikuti langkah-langkah berikut untuk mendapatkan NISN:</p>
+                                                    <h5><i class="bx bx-error"></i> {{ __('home.jika_belum_nisn') }}</h5>
+                                                    <p>{{ __('home.langkah_nisn_desc') }}</p>
                                                     <ol>
-                                                        <li>Kunjungi website <a href="https://nisn.data.kemdikbud.go.id/" target="_blank">Verifikasi NISN</a></li>
-                                                        <li>Klik menu "Pencarian Berdasarkan Nama"</li>
-                                                        <li>Isi data lengkap sesuai dokumen (Nama, Tempat/Tanggal Lahir, Nama Ibu Kandung)</li>
-                                                        <li>Jika NISN ditemukan, catat nomornya</li>
-                                                        <li>Jika tidak ditemukan, Anda perlu mendaftar melalui sekolah asal</li>
+                                                        <li>{{ __('home.kunjungi_website_nisn') }}</li>
+                                                        <li>{{ __('home.klik_menu_pencarian') }}</li>
+                                                        <li>{{ __('home.isi_data_lengkap') }}</li>
+                                                        <li>{{ __('home.catat_nisn') }}</li>
+                                                        <li>{{ __('home.daftar_sekolah_asal') }}</li>
                                                     </ol>
                                                 </div>
 
@@ -448,21 +448,21 @@
                                                     <div class="col-md-6">
                                                         <div class="card mb-4">
                                                             <div class="card-header bg-primary text-white">
-                                                                <h5 class="mb-0">Cara Daftar NISN Baru</h5>
+                                                                <h5 class="mb-0">{{ __('home.cara_daftar_nisn_baru') }}</h5>
                                                             </div>
                                                             <div class="card-body">
                                                                 <ol>
-                                                                    <li>Mengajukan permohonan ke operator NISN di sekolah asal</li>
-                                                                    <li>Membawa dokumen yang diperlukan:
+                                                                    <li>{{ __('home.mengajukan_permohonan') }}</li>
+                                                                    <li>{{ __('home.membawa_dokumen') }}
                                                                         <ul>
-                                                                            <li>Fotokopi akte kelahiran (legalisir)</li>
-                                                                            <li>Fotokopi KK</li>
-                                                                            <li>Surat pengantar dari sekolah asal</li>
-                                                                            <li>Pas foto 3x4 (2 lembar)</li>
+                                                                            <li>{{ __('home.fotokopi_akta_legalisir') }}</li>
+                                                                            <li>{{ __('home.fotokopi_kk_nisn') }}</li>
+                                                                            <li>{{ __('home.surat_pengantar') }}</li>
+                                                                            <li>{{ __('home.pas_foto_2_lembar') }}</li>
                                                                         </ul>
                                                                     </li>
-                                                                    <li>Menunggu proses verifikasi dari operator sekolah</li>
-                                                                    <li>NISN akan aktif dalam 3-7 hari kerja</li>
+                                                                    <li>{{ __('home.menunggu_verifikasi') }}</li>
+                                                                    <li>{{ __('home.nisn_aktif') }}</li>
                                                                 </ol>
                                                             </div>
                                                         </div>
@@ -471,28 +471,28 @@
                                                     <div class="col-md-6">
                                                         <div class="card mb-4">
                                                             <div class="card-header bg-success text-white">
-                                                                <h5 class="mb-0">Jika NISN Tidak Ditemukan</h5>
+                                                                <h5 class="mb-0">{{ __('home.jika_nisn_tidak_ditemukan') }}</h5>
                                                             </div>
                                                             <div class="card-body">
-                                                                <p>Jika NISN tidak ditemukan, kemungkinan karena:</p>
+                                                                <p>{{ __('home.nisn_tidak_ditemukan_desc') }}</p>
                                                                 <ul>
-                                                                    <li>Data belum terdaftar di database pusat</li>
-                                                                    <li>Ada perbedaan data antara sekolah dan pusat</li>
-                                                                    <li>Nama di ijazah tidak sesuai dengan akte kelahiran</li>
+                                                                    <li>{{ __('home.data_terdaftar') }}</li>
+                                                                    <li>{{ __('home.perbedaan_data') }}</li>
+                                                                    <li>{{ __('home.nama_tidak_sesuai') }}</li>
                                                                 </ul>
-                                                                <p><strong>Solusi:</strong> Segera hubungi operator NISN di sekolah asal untuk verifikasi dan perbaikan data.</p>
+                                                                <p><strong>Solusi:</strong> {{ __('home.solusi_nisn') }}</p>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 
                                                 <div class="alert alert-info">
-                                                    <h5><i class="bx bx-info-circle"></i> Bantuan NISN</h5>
-                                                    <p>Untuk bantuan lebih lanjut terkait NISN, silakan hubungi:</p>
+                                                    <h5><i class="bx bx-info-circle"></i> {{ __('home.bantuan_nisn') }}</h5>
+                                                    <p>{{ __('home.bantuan_nisn_desc') }}</p>
                                                     <ul class="mb-0">
-                                                        <li>Call Center NISN: 1500-123</li>
-                                                        <li>Email: nisn@kemdikbud.go.id</li>
-                                                        <li>Datang langsung ke sekolah asal dengan membawa dokumen lengkap</li>
+                                                        <li>{{ __('home.call_center_nisn') }}</li>
+                                                        <li>{{ __('home.email_nisn') }}</li>
+                                                        <li>{{ __('home.datang_langsung') }}</li>
                                                     </ul>
                                                 </div>
                                             </div>
@@ -500,13 +500,13 @@
                                         
                                         <!-- Informasi Kontak -->
                                         <div class="faq-item">
-                                            <div class="faq-question">Kontak & Informasi</div>
+                                            <div class="faq-question">{{ __('home.kontak_informasi') }}</div>
                                             <div class="icon-container"><i class='bx bx-chevron-down'></i></div>
                                         </div>
                                         <div class="faq-answer">
                                             <div class="list-item-list">
-                                                <h4>Hubungi Kami</h4>
-                                                <p>Untuk informasi lebih lanjut, silakan hubungi:</p>
+                                                <h4>{{ __('home.hubungi_kami') }}</h4>
+                                                <p>{{ __('home.hubungi_kami_desc') }}</p>
                                                 
                                                 <div class="row">
                                                     <div class="col-md-6">
@@ -515,9 +515,9 @@
                                                                 <i class="bx bx-map"></i>
                                                             </div>
                                                             <div class="content">
-                                                                <h5>Alamat</h5>
-                                                                <p>Jl. Veteran No. 12, Lawang</p>
-                                                                <p>Malang, Jawa Timur 65211</p>
+                                                                <h5>{{ __('home.alamat') }}</h5>
+                                                                <p>{{ __('home.alamat_detail') }}</p>
+                                                                <p>{{ __('home.alamat_kota') }}</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -528,9 +528,9 @@
                                                                 <i class="bx bx-phone"></i>
                                                             </div>
                                                             <div class="content">
-                                                                <h5>Telepon</h5>
-                                                                <p>0341-426789 (Sekretariat)</p>
-                                                                <p>0812-3456-7890 (WA Panitia PPDB)</p>
+                                                                <h5>{{ __('home.telepon') }}</h5>
+                                                                <p>{{ __('home.telepon_sekretariat') }}</p>
+                                                                <p>{{ __('home.telepon_wa') }}</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -541,9 +541,9 @@
                                                                 <i class="bx bx-envelope"></i>
                                                             </div>
                                                             <div class="content">
-                                                                <h5>Email</h5>
-                                                                <p>info@smkpgrilawang.sch.id</p>
-                                                                <p>ppdb@smkpgrilawang.sch.id</p>
+                                                                <h5>{{ __('home.email') }}</h5>
+                                                                <p>{{ __('home.email_info') }}</p>
+                                                                <p>{{ __('home.email_ppdb') }}</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -554,9 +554,9 @@
                                                                 <i class="bx bx-time"></i>
                                                             </div>
                                                             <div class="content">
-                                                                <h5>Jam Operasional</h5>
-                                                                <p>Senin - Jumat: 08.00 - 15.00 WIB</p>
-                                                                <p>Sabtu: 08.00 - 12.00 WIB</p>
+                                                                <h5>{{ __('home.jam_operasional') }}</h5>
+                                                                <p>{{ __('home.jam_weekday') }}</p>
+                                                                <p>{{ __('home.jam_weekend') }}</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -571,10 +571,10 @@
                             <!-- Formulir Pendaftaran Content -->
                             <div id="form-content" class="tab-content" style="display: none;">
                                 <div class="pera-title">
-                                    <h2>Formulir <br>Pendaftaran</h2>
+                                    <h2>{{ __('home.formulir_pendaftaran_title') }} <br>{{ __('home.formulir_pendaftaran_subtitle') }}</h2>
                                 </div>
                                 <div class="pera-dec">
-                                    <p>Isi formulir pendaftaran di bawah ini untuk mendaftar sebagai siswa baru SMK PGRI Lawang.</p>
+                                    <p>{{ __('home.formulir_pendaftaran_desc') }}</p>
                                     
                                                                         
                                     <div class="mb-4">
@@ -594,12 +594,12 @@
                                             <!-- Display Session Messages -->
                                             <!-- Step 1: Data Diri -->
                                             <div class="form-step" id="step-1">
-                                                <h4 class="mb-3">Bagian 1: Data Diri</h4>
+                                                <h4 class="mb-3">{{ __('home.data_diri_title') }}</h4>
                                                 <div class="row">
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="form-group">
-                                                            <label for="name">Nama Lengkap</label>
-                                                            <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" id="name" data-error="Masukkan nama lengkap" value="{{ old('name') }}" placeholder="" required>
+                                                            <label for="name">{{ __('home.nama_lengkap') }}</label>
+                                                            <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" id="name" data-error="{{ __('home.error_nama_lengkap') }}" value="{{ old('name') }}" placeholder="" required>
                                                             <div class="help-block with-errors"></div>
                                                             @error('name')
                                                                 <div class="invalid-feedback d-block">
@@ -610,8 +610,8 @@
                                                     </div>
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="form-group">
-                                                            <label for="phone">Nomor WhatsApp</label>
-                                                            <input type="text" name="phone" class="form-control @error('phone') is-invalid @enderror" id="phone" data-error="Masukkan nomor WhatsApp" placeholder="" required>
+                                                            <label for="phone">{{ __('home.nomor_whatsapp') }}</label>
+                                                            <input type="text" name="phone" class="form-control @error('phone') is-invalid @enderror" id="phone" data-error="{{ __('home.error_nomor_whatsapp') }}" value="{{ old('phone') }}" placeholder="" required>
                                                             <div class="help-block with-errors"></div>
                                                             @error('phone')
                                                                 <div class="invalid-feedback d-block">
@@ -622,8 +622,8 @@
                                                     </div>
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="form-group">
-                                                            <label for="nik">NIK</label>
-                                                            <input type="number" name="nik" class="form-control @error('nik') is-invalid @enderror" id="nik" data-error="Masukkan NIK 16 digit" placeholder="16 Angka" required>
+                                                            <label for="nik">{{ __('home.nik_label') }}</label>
+                                                            <input type="number" name="nik" class="form-control @error('nik') is-invalid @enderror" id="nik" data-error="{{ __('home.error_nik_16_digit') }}" value="{{ old('nik') }}" placeholder="{{ __('home.placeholder_16_angka') }}" required>
                                                             <div class="help-block with-errors"></div>
                                                             @error('nik')
                                                                 <div class="invalid-feedback d-block">
@@ -634,8 +634,8 @@
                                                     </div>
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="form-group">
-                                                            <label for="nisn">NISN</label>
-                                                            <input type="tel" name="nisn" class="form-control @error('nisn') is-invalid @enderror" id="nisn" data-error="Masukkan NISN 10 digit" placeholder="" required>
+                                                            <label for="nisn">{{ __('home.nisn_label') }}</label>
+                                                            <input type="tel" name="nisn" class="form-control @error('nisn') is-invalid @enderror" id="nisn" data-error="{{ __('home.error_nisn_10_digit') }}" value="{{ old('nisn') }}" placeholder="" required>
                                                             <div class="help-block with-errors"></div>
                                                             @error('nisn')
                                                                 <div class="invalid-feedback d-block">
@@ -646,13 +646,13 @@
                                                     </div>
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="form-group">
-                                                            <label for="jurusan_utama">Jurusan Utama</label>
-                                                            <select class="form-select @error('jurusan_utama') is-invalid @enderror" name="jurusan_utama" id="jurusan_utama" data-error="Pilih jurusan utama" required>
-                                                                <option value="">-- Pilih Jurusan Utama --</option>
-                                                                <option value="Teknik Kimia Industri">Teknik Kimia Industri (TKI)</option>
-                                                                <option value="Teknik Komputer dan Jaringan">Teknik Komputer dan Jaringan (TKJ)</option>
-                                                                <option value="Teknik Sepeda Motor">Teknik Sepeda Motor (TSM)</option>
-                                                                <option value="Teknik Kendaraan Ringan">Teknik Kendaraan Ringan (TKR)</option>
+                                                            <label for="jurusan_utama">{{ __('home.jurusan_utama_label') }}</label>
+                                                            <select class="form-select @error('jurusan_utama') is-invalid @enderror" name="jurusan_utama" id="jurusan_utama" data-error="{{ __('home.error_pilih_jurusan_utama') }}" required>
+                                                                <option value="">{{ __('home.pilih_jurusan_utama') }}</option>
+                                                                <option value="Teknik Kimia Industri" {{ old('jurusan_utama') == 'Teknik Kimia Industri' ? 'selected' : '' }}>{{ __('home.teknik_kimia_industri') }}</option>
+                                                                <option value="Teknik Komputer dan Jaringan" {{ old('jurusan_utama') == 'Teknik Komputer dan Jaringan' ? 'selected' : '' }}>{{ __('home.teknik_komputer_jaringan') }}</option>
+                                                                <option value="Teknik Sepeda Motor" {{ old('jurusan_utama') == 'Teknik Sepeda Motor' ? 'selected' : '' }}>{{ __('home.teknik_sepeda_motor') }}</option>
+                                                                <option value="Teknik Kendaraan Ringan" {{ old('jurusan_utama') == 'Teknik Kendaraan Ringan' ? 'selected' : '' }}>{{ __('home.teknik_kendaraan_ringan') }}</option>
                                                             </select>
                                                             <div class="help-block with-errors"></div>
                                                             @error('jurusan_utama')
@@ -664,24 +664,24 @@
                                                     </div>
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="form-group">
-                                                            <label for="jurusan_cadangan">Jurusan Cadangan</label>
-                                                            <select class="form-select @error('jurusan_cadangan') is-invalid @enderror" name="jurusan_cadangan" id="jurusan_cadangan" data-error="Pilih jurusan cadangan" required>
-                                                                <option value="">-- Pilih Jurusan Cadangan --</option>
-                                                                <option value="Teknik Kimia Industri">Teknik Kimia Industri (TKI)</option>
-                                                                <option value="Teknik Komputer dan Jaringan">Teknik Komputer dan Jaringan (TKJ)</option>
-                                                                <option value="Teknik Sepeda Motor">Teknik Sepeda Motor (TSM)</option>
-                                                                <option value="Teknik Kendaraan Ringan">Teknik Kendaraan Ringan (TKR)</option>
+                                                            <label for="jurusan_cadangan">{{ __('home.jurusan_cadangan_label') }}</label>
+                                                            <select class="form-select @error('jurusan_cadangan') is-invalid @enderror" name="jurusan_cadangan" id="jurusan_cadangan" data-error="{{ __('home.error_pilih_jurusan_cadangan') }}" required>
+                                                                <option value="">{{ __('home.pilih_jurusan_cadangan') }}</option>
+                                                                <option value="Teknik Kimia Industri" {{ old('jurusan_cadangan') == 'Teknik Kimia Industri' ? 'selected' : '' }}>{{ __('home.teknik_kimia_industri') }}</option>
+                                                                <option value="Teknik Komputer dan Jaringan" {{ old('jurusan_cadangan') == 'Teknik Komputer dan Jaringan' ? 'selected' : '' }}>{{ __('home.teknik_komputer_jaringan') }}</option>
+                                                                <option value="Teknik Sepeda Motor" {{ old('jurusan_cadangan') == 'Teknik Sepeda Motor' ? 'selected' : '' }}>{{ __('home.teknik_sepeda_motor') }}</option>
+                                                                <option value="Teknik Kendaraan Ringan" {{ old('jurusan_cadangan') == 'Teknik Kendaraan Ringan' ? 'selected' : '' }}>{{ __('home.teknik_kendaraan_ringan') }}</option>
                                                             </select>
                                                             <div class="help-block with-errors"></div>
                                                         </div>
                                                     </div>
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="form-group">
-                                                            <label for="gender">Jenis Kelamin</label>
-                                                            <select class="form-select @error('gender') is-invalid @enderror" name="gender" id="gender" data-error="Pilih jenis kelamin" required>
-                                                                <option value="">-- Pilih Jenis Kelamin --</option>
-                                                                <option value="laki-laki">Laki-laki</option>
-                                                                <option value="perempuan">Perempuan</option>
+                                                            <label for="gender">{{ __('home.jenis_kelamin') }}</label>
+                                                            <select class="form-select @error('gender') is-invalid @enderror" name="gender" id="gender" data-error="{{ __('home.error_pilih_jenis_kelamin') }}" required>
+                                                                <option value="">{{ __('home.pilih_jenis_kelamin') }}</option>
+                                                                <option value="laki-laki" {{ old('gender') == 'laki-laki' ? 'selected' : '' }}>{{ __('home.laki_laki') }}</option>
+                                                                <option value="perempuan" {{ old('gender') == 'perempuan' ? 'selected' : '' }}>{{ __('home.perempuan') }}</option>
                                                             </select>
                                                             <div class="help-block with-errors"></div>
                                                             @error('gender')
@@ -693,8 +693,8 @@
                                                     </div>
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="form-group">
-                                                            <label for="birth_date">Tanggal Lahir</label>
-                                                            <input type="date" name="birth_date" class="form-control @error('birth_date') is-invalid @enderror" id="birth_date" data-error="Pilih tanggal lahir" required>
+                                                            <label for="birth_date">{{ __('home.tanggal_lahir') }}</label>
+                                                            <input type="date" name="birth_date" class="form-control @error('birth_date') is-invalid @enderror" id="birth_date" data-error="{{ __('home.error_pilih_tanggal_lahir') }}" value="{{ old('birth_date') }}" required>
                                                             <div class="help-block with-errors"></div>
                                                             @error('birth_date')
                                                                 <div class="invalid-feedback d-block">
@@ -705,8 +705,8 @@
                                                     </div>
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="form-group">
-                                                            <label for="birth_place">Tempat Lahir</label>
-                                                            <input type="text" name="birth_place" class="form-control @error('birth_place') is-invalid @enderror" id="birth_place" data-error="Masukkan tempat lahir" placeholder="" required>
+                                                            <label for="birth_place">{{ __('home.tempat_lahir') }}</label>
+                                                            <input type="text" name="birth_place" class="form-control @error('birth_place') is-invalid @enderror" id="birth_place" data-error="{{ __('home.error_masukkan_tempat_lahir') }}" value="{{ old('birth_place') }}" placeholder="" required>
                                                             <div class="help-block with-errors"></div>
                                                             @error('birth_place')
                                                                 <div class="invalid-feedback d-block">
@@ -717,15 +717,15 @@
                                                     </div>
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="form-group">
-                                                            <label for="religion">Agama</label>
-                                                            <select class="form-select @error('religion') is-invalid @enderror" name="religion" id="religion" data-error="Pilih agama" required>
-                                                                <option value="">-- Pilih Agama --</option>
-                                                                <option value="Islam">Islam</option>
-                                                                <option value="Kristen">Kristen</option>
-                                                                <option value="Katolik">Katolik</option>
-                                                                <option value="Hindu">Hindu</option>
-                                                                <option value="Buddha">Buddha</option>
-                                                                <option value="Konghucu">Konghucu</option>
+                                                            <label for="religion">{{ __('home.agama_label') }}</label>
+                                                            <select class="form-select @error('religion') is-invalid @enderror" name="religion" id="religion" data-error="{{ __('home.error_pilih_agama') }}" required>
+                                                                <option value="">{{ __('home.pilih_agama') }}</option>
+                                                                <option value="Islam" {{ old('religion') == 'Islam' ? 'selected' : '' }}>{{ __('home.islam') }}</option>
+                                                                <option value="Kristen" {{ old('religion') == 'Kristen' ? 'selected' : '' }}>{{ __('home.kristen') }}</option>
+                                                                <option value="Katolik" {{ old('religion') == 'Katolik' ? 'selected' : '' }}>{{ __('home.katolik') }}</option>
+                                                                <option value="Hindu" {{ old('religion') == 'Hindu' ? 'selected' : '' }}>{{ __('home.hindu') }}</option>
+                                                                <option value="Buddha" {{ old('religion') == 'Buddha' ? 'selected' : '' }}>{{ __('home.buddha') }}</option>
+                                                                <option value="Konghucu" {{ old('religion') == 'Konghucu' ? 'selected' : '' }}>{{ __('home.konghucu') }}</option>
                                                             </select>
                                                             <div class="help-block with-errors"></div>
                                                             @error('religion')
@@ -737,8 +737,8 @@
                                                     </div>
                                                     <div class="col-lg-12 col-md-12">
                                                         <div class="form-group">
-                                                            <label for="address">Alamat Lengkap</label>
-                                                            <textarea name="address" id="address" class="form-control @error('address') is-invalid @enderror" cols="30" rows="4" data-error="Masukkan alamat lengkap" placeholder="" required></textarea>
+                                                            <label for="address">{{ __('home.alamat_lengkap') }}</label>
+                                                            <textarea name="address" id="address" class="form-control @error('address') is-invalid @enderror" cols="30" rows="4" data-error="{{ __('home.error_masukkan_alamat') }}" placeholder="" required>{{ old('address') }}</textarea>
                                                             <div class="help-block with-errors"></div>
                                                             @error('address')
                                                                 <div class="invalid-feedback d-block">
@@ -749,8 +749,8 @@
                                                     </div>
                                                     <div class="col-lg-12 col-md-12">
                                                         <div class="form-group">
-                                                            <label for="asalSekolah">Asal Sekolah</label>
-                                                            <input type="text" name="asalSekolah" class="form-control @error('asalSekolah') is-invalid @enderror" id="asalSekolah" placeholder="" required>
+                                                            <label for="asalSekolah">{{ __('home.asal_sekolah') }}</label>
+                                                            <input type="text" name="asalSekolah" class="form-control @error('asalSekolah') is-invalid @enderror" id="asalSekolah" value="{{ old('asalSekolah') }}" data-error="{{ __('home.error_masukkan_asal_sekolah') }}" placeholder="" required>
                                                             <div class="help-block with-errors"></div>
                                                             @error('asalSekolah')
                                                                 <div class="invalid-feedback d-block">
@@ -761,27 +761,35 @@
                                                     </div>
                                                 </div>
                                                 <div class="d-flex justify-content-end mt-4">
-                                                    <button type="button" class="default-btn" id="btnNext1">Selanjutnya</button>
+                                                    <button type="button" class="default-btn" id="btnNext1">{{ __('home.selanjutnya') }}</button>
                                                 </div>
                                             </div>
 
                                             <!-- Step 2: Upload Dokumen -->
                                             <div class="form-step d-none" id="step-2">
-                                                <h4 class="mb-4">Bagian 2: Upload Dokumen</h4>
+                                                <h4 class="mb-4">{{ __('home.upload_dokumen_title') }}</h4>
                                                 <div class="row">
                                                     <div class="col-12 mb-4">
-                                                        <p class="text-muted">Silakan upload dokumen-dokumen yang diperlukan untuk pendaftaran. Dokumen yang bertanda (*) wajib diupload. Maksimal ukuran file 200KB.</p>
+                                                        <p class="text-muted">{{ __('home.upload_dokumen_desc') }}</p>
                                                     </div>
                                                     
                                                     <!-- Foto 3x4 -->
                                                     <div class="col-12 mb-4">
-                                                        <label class="form-label fw-bold">Foto 3x4 (Pas Foto) <small class="text-danger">*</small></label>
+                                                        <label class="form-label fw-bold">{{ __('home.foto_3x4') }} <small class="text-danger">{{ __('home.wajib') }}</small></label>
                                                         <div class="upload-area" id="photoUploadArea">
                                                             <input type="file" name="photo_path" class="d-none" id="photo_path" accept="image/*" required>
                                                             <div class="upload-icon">
                                                                 <i class="ri-upload-cloud-2-line"></i>
-                                                                <p class="mb-1">Upload File Disini</p>
-                                                                <p class="file-info" id="photoFileInfo">Format JPG/PNG, maks. 200KB</p>
+                                                                <p class="mb-1">{{ __('home.upload_disini') }}</p>
+                                                                <p class="file-info" id="photoFileInfo">
+                                                                    @if(session('uploaded_files.photo_path'))
+                                                                        <span class="text-success">
+                                                                            <i class="ri-check-line"></i> {{ __('home.file_sudah_diupload', ['field' => __('home.foto_3x4'), 'filename' => session('uploaded_files.photo_path')]) }}
+                                                                        </span>
+                                                                    @else
+                                                                        {{ __('home.format_jpg_png') }}
+                                                                    @endif
+                                                                </p>
                                                             </div>
                                                         </div>
                                                         <div class="help-block with-errors text-danger"></div>
@@ -789,90 +797,130 @@
 
                                                     <!-- Ijazah/SKL -->
                                                     <div class="col-md-6 mb-4">
-                                                        <label class="form-label fw-bold">Ijazah / SKL <small class="text-danger">*</small></label>
+                                                        <label class="form-label fw-bold">{{ __('home.ijazah_skl') }} <small class="text-danger">{{ __('home.wajib') }}</small></label>
                                                         <div class="upload-area small" id="ijazahUploadArea">
                                                             <input type="file" name="ijazah" class="d-none" id="ijazah" accept=".jpg,.jpeg,.png,.pdf" required>
                                                             <div class="upload-icon">
                                                                 <i class="ri-file-upload-line"></i>
-                                                                <p class="file-info" id="ijazahFileInfo">Belum ada file ijazah yang dipilih</p>
+                                                                <p class="file-info" id="ijazahFileInfo">
+                                                                    @if(session('uploaded_files.ijazah'))
+                                                                        <span class="text-success">
+                                                                            <i class="ri-check-line"></i> {{ __('home.file_sudah_diupload', ['field' => __('home.ijazah_skl'), 'filename' => session('uploaded_files.ijazah')]) }}
+                                                                        </span>
+                                                                    @else
+                                                                        {{ __('home.belum_ada_file', ['field' => __('home.ijazah_skl')]) }}
+                                                                    @endif
+                                                                </p>
                                                             </div>
                                                         </div>
-                                                        <small class="text-muted d-block mt-1">Maksimal ukuran 200KB</small>
+                                                        <small class="text-muted d-block mt-1">{{ __('home.maksimal_ukuran') }}</small>
                                                         <div class="help-block with-errors text-danger"></div>
                                                     </div>
 
                                                     <!-- Kartu Keluarga -->
                                                     <div class="col-md-6 mb-4">
-                                                        <label class="form-label fw-bold">Kartu Keluarga (KK) <small class="text-danger">*</small></label>
+                                                        <label class="form-label fw-bold">{{ __('home.kartu_keluarga') }} <small class="text-danger">{{ __('home.wajib') }}</small></label>
                                                         <div class="upload-area small" id="kkUploadArea">
                                                             <input type="file" name="kartu_keluarga" class="d-none" id="kartu_keluarga" accept=".jpg,.jpeg,.png,.pdf" required>
                                                             <div class="upload-icon">
                                                                 <i class="ri-file-upload-line"></i>
-                                                                <p class="file-info" id="kkFileInfo">Belum ada file KK yang dipilih</p>
+                                                                <p class="file-info" id="kkFileInfo">
+                                                                    @if(session('uploaded_files.kartu_keluarga'))
+                                                                        <span class="text-success">
+                                                                            <i class="ri-check-line"></i> {{ __('home.file_sudah_diupload', ['field' => __('home.kartu_keluarga'), 'filename' => session('uploaded_files.kartu_keluarga')]) }}
+                                                                        </span>
+                                                                    @else
+                                                                        {{ __('home.belum_ada_file', ['field' => __('home.kartu_keluarga')]) }}
+                                                                    @endif
+                                                                </p>
                                                             </div>
                                                         </div>
-                                                        <small class="text-muted d-block mt-1">Maksimal ukuran 200KB</small>
+                                                        <small class="text-muted d-block mt-1">{{ __('home.maksimal_ukuran') }}</small>
                                                         <div class="help-block with-errors text-danger"></div>
                                                     </div>
 
                                                     <!-- Akte Lahir -->
                                                     <div class="col-md-6 mb-4">
-                                                        <label class="form-label fw-bold">Akte Lahir <small class="text-muted">(opsional)</small></label>
+                                                        <label class="form-label fw-bold">{{ __('home.akte_lahir') }} <small class="text-muted">{{ __('home.opsional') }}</small></label>
                                                         <div class="upload-area small" id="akteUploadArea">
                                                             <input type="file" name="akte_lahir" class="d-none" id="akte_lahir" accept=".jpg,.jpeg,.png,.pdf">
                                                             <div class="upload-icon">
                                                                 <i class="ri-file-upload-line"></i>
-                                                                <p class="file-info" id="akteFileInfo">Belum ada file akte lahir yang dipilih</p>
+                                                                <p class="file-info" id="akteFileInfo">
+                                                                    @if(session('uploaded_files.akte_lahir'))
+                                                                        <span class="text-success">
+                                                                            <i class="ri-check-line"></i> {{ __('home.file_sudah_diupload', ['field' => __('home.akte_lahir'), 'filename' => session('uploaded_files.akte_lahir')]) }}
+                                                                        </span>
+                                                                    @else
+                                                                        {{ __('home.belum_ada_file', ['field' => __('home.akte_lahir')]) }}
+                                                                    @endif
+                                                                </p>
                                                             </div>
                                                         </div>
-                                                        <small class="text-muted d-block mt-1">Maksimal ukuran 200KB</small>
+                                                        <small class="text-muted d-block mt-1">{{ __('home.maksimal_ukuran') }}</small>
                                                     </div>
 
                                                     <!-- KTP -->
                                                     <div class="col-md-6 mb-4">
-                                                        <label class="form-label fw-bold">KTP <small class="text-danger">*</small></label>
+                                                        <label class="form-label fw-bold">{{ __('home.ktp_label') }} <small class="text-danger">{{ __('home.wajib') }}</small></label>
                                                         <div class="upload-area small" id="ktpUploadArea">
                                                             <input type="file" name="ktp" class="d-none" id="ktp" accept=".jpg,.jpeg,.png,.pdf" required>
                                                             <div class="upload-icon">
                                                                 <i class="ri-file-upload-line"></i>
-                                                                <p class="file-info" id="ktpFileInfo">Belum ada file KTP yang dipilih</p>
+                                                                <p class="file-info" id="ktpFileInfo">
+                                                                    @if(session('uploaded_files.ktp'))
+                                                                        <span class="text-success">
+                                                                            <i class="ri-check-line"></i> {{ __('home.file_sudah_diupload', ['field' => __('home.ktp_label'), 'filename' => session('uploaded_files.ktp')]) }}
+                                                                        </span>
+                                                                    @else
+                                                                        {{ __('home.belum_ada_file', ['field' => __('home.ktp_label')]) }}
+                                                                    @endif
+                                                                </p>
                                                             </div>
                                                         </div>
-                                                        <small class="text-muted d-block mt-1">Maksimal ukuran 200KB</small>
+                                                        <small class="text-muted d-block mt-1">{{ __('home.maksimal_ukuran') }}</small>
                                                         <div class="help-block with-errors text-danger"></div>
                                                     </div>
 
                                                     <!-- Sertifikat Pendukung -->
                                                     <div class="col-12 mb-4">
-                                                        <label class="form-label fw-bold">Sertifikat Pendukung <small class="text-muted">(opsional)</small></label>
+                                                        <label class="form-label fw-bold">{{ __('home.sertifikat_pendukung') }} <small class="text-muted">{{ __('home.opsional') }}</small></label>
                                                         <div class="upload-area small" id="sertifikatUploadArea">
                                                             <input type="file" name="sertifikat" class="d-none" id="sertifikat" multiple accept=".jpg,.jpeg,.png,.pdf">
                                                             <div class="upload-icon">
                                                                 <i class="ri-file-upload-line"></i>
-                                                                <p class="file-info" id="sertifikatFileInfo">Belum ada file sertifikat yang dipilih</p>
+                                                                <p class="file-info" id="sertifikatFileInfo">
+                                                                    @if(session('uploaded_files.sertifikat'))
+                                                                        <span class="text-success">
+                                                                            <i class="ri-check-line"></i> {{ __('home.file_sudah_diupload', ['field' => __('home.sertifikat_pendukung'), 'filename' => session('uploaded_files.sertifikat')]) }}
+                                                                        </span>
+                                                                    @else
+                                                                        {{ __('home.belum_ada_file', ['field' => __('home.sertifikat_pendukung')]) }}
+                                                                    @endif
+                                                                </p>
                                                             </div>
                                                         </div>
-                                                        <small class="text-muted d-block mt-1">Maksimal ukuran 200KB per file</small>
+                                                        <small class="text-muted d-block mt-1">{{ __('home.maksimal_ukuran_per_file') }}</small>
                                                     </div>
                                                 </div>
 
                                                 <div class="d-flex justify-content-between mt-4">
-                                                    <button type="button" class="default-btn" id="btnPrev2" style="background-color: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6;">Kembali</button>
-                                                    <button type="button" class="default-btn btn-style-2" id="btnNext2">Selanjutnya</button>
+                                                    <button type="button" class="default-btn" id="btnPrev2" style="background-color: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6;">{{ __('home.kembali') }}</button>
+                                                    <button type="button" class="default-btn btn-style-2" id="btnNext2">{{ __('home.selanjutnya') }}</button>
                                                 </div>
                                             </div>
 
                                             <!-- Step 3: Akun -->
                                             <div class="form-step d-none" id="step-3">
-                                                <h4 class="mb-3">Bagian 3: Pembuatan Akun</h4>
+                                                <h4 class="mb-3">{{ __('home.data_akun_title') }}</h4>
                                                 <div class="row">
                                                     <div class="col-lg-12 col-md-12">
-                                                        <p class="text-muted mb-4">Buat akun untuk memantau status pendaftaran Anda.</p>
+                                                        <p class="text-muted mb-4">{{ __('home.buat_akun_desc') }}</p>
                                                     </div>
                                                     <div class="col-lg-12 col-md-12">
                                                         <div class="form-group">
-                                                            <label for="email">Email *</label>
-                                                            <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" id="email" required data-error="Masukkan email yang valid" value="{{ old('email') }}" placeholder="">
+                                                            <label for="email">{{ __('home.email_label') }} *</label>
+                                                            <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" id="email" required data-error="{{ __('home.error_masukkan_email_valid') }}" value="{{ old('email') }}" placeholder="">
                                                             <div class="help-block with-errors"></div>
                                                             @error('email')
                                                                 <div class="invalid-feedback d-block">
@@ -883,9 +931,9 @@
                                                     </div>
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="form-group">
-                                                            <label for="password">Password *</label>
+                                                            <label for="password">{{ __('home.password_label') }} *</label>
                                                             <div class="password-wrapper" style="position: relative;">
-                                                                <input type="password" name="password" class="form-control" id="password" data-error="Password minimal 8 karakter" style="padding-right: 2.5rem;" placeholder="" required>
+                                                                <input type="password" name="password" class="form-control" id="password" data-error="{{ __('home.error_password_minimal') }}" value="{{ old('password') }}" style="padding-right: 2.5rem;" placeholder="" required>
                                                                 <button type="button" class="password-toggle-btn" id="togglePassword" style="position: absolute; top: 50%; right: 0.75rem; transform: translateY(-50%); border: none; background: transparent; padding: 0; color: #6c757d; cursor: pointer;">
                                                                     <i class="bx bx-show"></i>
                                                                 </button>
@@ -895,9 +943,9 @@
                                                     </div>
                                                     <div class="col-lg-6 col-md-6">
                                                         <div class="form-group">
-                                                            <label for="password_confirmation">Konfirmasi Password *</label>
+                                                            <label for="password_confirmation">{{ __('home.konfirmasi_password') }} *</label>
                                                             <div class="password-wrapper" style="position: relative;">
-                                                                <input type="password" name="password_confirmation" class="form-control" id="password_confirmation" data-error="Konfirmasi password harus cocok" style="padding-right: 2.5rem;" placeholder="" required>
+                                                                <input type="password" name="password_confirmation" class="form-control" id="password_confirmation" data-error="{{ __('home.error_konfirmasi_password_cocok') }}" value="{{ old('password_confirmation') }}" style="padding-right: 2.5rem;" placeholder="" required>
                                                                 <button type="button" class="password-toggle-btn" id="togglePasswordConfirm" style="position: absolute; top: 50%; right: 0.75rem; transform: translateY(-50%); border: none; background: transparent; padding: 0; color: #6c757d; cursor: pointer;">
                                                                     <i class="bx bx-show"></i>
                                                                 </button>
@@ -908,9 +956,9 @@
                                                     <div class="col-lg-12 col-md-12">
                                                         <div class="form-group">
                                                             <div class="form-check">
-                                                                <input class="form-check-input @error('setuju') is-invalid @enderror" type="checkbox" name="setuju" id="setuju" data-error="Anda harus menyetujui pernyataan" {{ old('setuju') ? 'checked' : '' }} required>
+                                                                <input class="form-check-input @error('setuju') is-invalid @enderror" type="checkbox" name="setuju" id="setuju" data-error="{{ __('home.error_setuju_pendaftaran') }}" {{ old('setuju') ? 'checked' : '' }} required>
                                                                 <label class="form-check-label" for="setuju">
-                                                                    Saya menyatakan bahwa data yang diisi adalah benar dan bersedia mematuhi semua peraturan yang berlaku di SMK PGRI Lawang *
+                                                                    {{ __('home.setuju_pendaftaran') }} *
                                                                 </label>
                                                             </div>
                                                             <div class="help-block with-errors"></div>
@@ -923,8 +971,8 @@
                                                     </div>
                                                 </div>
                                                 <div class="d-flex justify-content-between mt-4">
-                                                    <button type="button" class="default-btn darkbtn" id="btnPrev3">Kembali</button>
-                                                    <button type="submit" class="default-btn" id="btnSubmit">Kirim Pendaftaran</button>
+                                                    <button type="button" class="default-btn darkbtn" id="btnPrev3">{{ __('home.kembali') }}</button>
+                                                    <button type="submit" class="default-btn" id="btnSubmit">{{ __('home.kirim_pendaftaran') }}</button>
                                                 </div>
                                             </div>
                                         </form>
@@ -1266,6 +1314,163 @@
 
 @push('scripts')
  <script>
+            // Real-time validation for specific fields
+            function setupRealtimeValidation() {
+                // NIK validation - harus 16 digit
+                const nikInput = document.getElementById('nik');
+                if (nikInput) {
+                    nikInput.addEventListener('input', function() {
+                        const value = this.value.replace(/\D/g, ''); // Hanya angka
+                        this.value = value;
+                        
+                        if (value.length !== 16) {
+                            this.classList.add('is-invalid');
+                            showFieldError(this, '{{ __('home.error_nik_harus_16') }}');
+                        } else {
+                            this.classList.remove('is-invalid');
+                            hideFieldError(this);
+                        }
+                    });
+                }
+                
+                // WhatsApp validation - 10-15 digit
+                const phoneInput = document.getElementById('phone');
+                if (phoneInput) {
+                    phoneInput.addEventListener('input', function() {
+                        const value = this.value.replace(/\D/g, ''); // Hanya angka
+                        this.value = value;
+                        
+                        if (value.length < 10 || value.length > 15) {
+                            this.classList.add('is-invalid');
+                            showFieldError(this, '{{ __('home.error_nomor_whatsapp') }}');
+                        } else {
+                            this.classList.remove('is-invalid');
+                            hideFieldError(this);
+                        }
+                    });
+                }
+                
+                // NISN validation - 10 digit
+                const nisnInput = document.getElementById('nisn');
+                if (nisnInput) {
+                    nisnInput.addEventListener('input', function() {
+                        const value = this.value.replace(/\D/g, ''); // Hanya angka
+                        this.value = value;
+                        
+                        if (value.length !== 10) {
+                            this.classList.add('is-invalid');
+                            showFieldError(this, '{{ __('home.error_nisn_harus_10') }}');
+                        } else {
+                            this.classList.remove('is-invalid');
+                            hideFieldError(this);
+                        }
+                    });
+                }
+                
+                // File upload validation - maksimal 200KB
+                setupFileUploadValidation();
+            }
+            
+            // File upload validation
+            function setupFileUploadValidation() {
+                const fileInputs = document.querySelectorAll('input[type="file"]');
+                const maxSize = 200 * 1024; // 200KB in bytes
+                
+                fileInputs.forEach(input => {
+                    input.addEventListener('change', function() {
+                        if (this.files.length > 0) {
+                            const file = this.files[0];
+                            const uploadArea = this.closest('.upload-area');
+                            
+                            if (file.size > maxSize) {
+                                // File terlalu besar
+                                this.classList.add('is-invalid');
+                                if (uploadArea) {
+                                    uploadArea.style.borderColor = '#dc3545';
+                                    uploadArea.style.backgroundColor = '#f8d7da';
+                                }
+                                showFileUploadError(this, '{{ __('home.error_file_terlalu_besar') }}');
+                                
+                                // Clear the file
+                                this.value = '';
+                                
+                                // Reset file info
+                                const fileInfo = document.getElementById(this.id + 'FileInfo');
+                                if (fileInfo) {
+                                    const fieldName = this.getAttribute('name');
+                                    let defaultText = 'Format JPG/PNG, maks. 200KB';
+                                    
+                                    if (fieldName === 'ijazah') defaultText = '{{ __('home.belum_ada_file', ['field' => __('home.ijazah_skl')]) }}';
+                                    else if (fieldName === 'kartu_keluarga') defaultText = '{{ __('home.belum_ada_file', ['field' => __('home.kartu_keluarga')]) }}';
+                                    else if (fieldName === 'akte_lahir') defaultText = '{{ __('home.belum_ada_file', ['field' => __('home.akte_lahir')]) }}';
+                                    else if (fieldName === 'ktp') defaultText = '{{ __('home.belum_ada_file', ['field' => __('home.ktp_label')]) }}';
+                                    else if (fieldName === 'sertifikat') defaultText = '{{ __('home.belum_ada_file', ['field' => __('home.sertifikat_pendukung')]) }}';
+                                    
+                                    fileInfo.innerHTML = defaultText;
+                                    fileInfo.classList.remove('text-primary', 'fw-medium');
+                                }
+                            } else {
+                                // File size OK
+                                this.classList.remove('is-invalid');
+                                if (uploadArea) {
+                                    uploadArea.style.borderColor = '#dee2e6';
+                                    uploadArea.style.backgroundColor = '#f8f9fa';
+                                }
+                                hideFileUploadError(this);
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // Helper functions for file upload validation
+            function showFileUploadError(field, message) {
+                // Hapus error message yang sudah ada
+                hideFileUploadError(field);
+                
+                // Tambahkan error message baru
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback d-block';
+                errorDiv.textContent = message;
+                
+                // Insert after upload area
+                const uploadArea = field.closest('.upload-area');
+                if (uploadArea) {
+                    uploadArea.insertAdjacentElement('afterend', errorDiv);
+                }
+            }
+            
+            function hideFileUploadError(field) {
+                // Hapus error message yang ada
+                const uploadArea = field.closest('.upload-area');
+                if (uploadArea) {
+                    const errorDiv = uploadArea.nextElementSibling;
+                    if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+                        errorDiv.remove();
+                    }
+                }
+            }
+            
+            // Helper functions for field validation
+            function showFieldError(field, message) {
+                // Hapus error message yang sudah ada
+                hideFieldError(field);
+                
+                // Tambahkan error message baru
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback d-block';
+                errorDiv.textContent = message;
+                field.insertAdjacentElement('afterend', errorDiv);
+            }
+            
+            function hideFieldError(field) {
+                // Hapus error message yang ada
+                const errorDiv = field.nextElementSibling;
+                if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+                    errorDiv.remove();
+                }
+            }
+
             // Tab switching function
             function showTab(tabName) {
                 // Hide all tab contents
@@ -1571,12 +1776,17 @@
                 // Initialize on page load
                 updateJurusanOptions();
                 
-                // Check if there's a success message and show form tab
-                @if(session('success'))
+                // Check if there's a registration success message (not language change)
+                @if(session('registration_success'))
+                    // Clear the success session immediately to prevent showing on language change
+                    @php
+                        session()->forget('registration_success');
+                    @endphp
+                    
                     // Wait a bit for the page to fully load
                     setTimeout(() => {
                         showTab('form');
-                        // Reset form to show first step
+                        // Only reset to step 1, don't clear form values (this is success case)
                         currentStep = 1;
                         showStep(currentStep);
                         
@@ -1618,17 +1828,11 @@
                                 countdownElement.classList.remove('bg-primary');
                                 countdownElement.classList.add('bg-warning');
                             }
-                            if (countdown <= 2) {
-                                countdownProgress.classList.remove('bg-warning');
-                                countdownProgress.classList.add('bg-danger');
-                                countdownElement.classList.remove('bg-warning');
-                                countdownElement.classList.add('bg-danger');
-                            }
                             
-                            // Auto redirect when countdown reaches 0
+                            // Redirect when countdown reaches 0
                             if (countdown <= 0 && !hasRedirected) {
-                                clearInterval(countdownInterval);
                                 hasRedirected = true;
+                                clearInterval(countdownInterval);
                                 
                                 // Auto redirect to WhatsApp group
                                 window.open('https://chat.whatsapp.com/HczMn0QnznG1Y3lihSpYtW', '_blank');
@@ -1638,6 +1842,13 @@
                                 successModal.hide();
                             }
                         }, 1000);
+                    }, 100);
+                @elseif(session('error'))
+                    // If there are validation errors, show form tab but don't reset
+                    setTimeout(() => {
+                        showTab('form');
+                        // Keep current step and form values intact
+                        // Don't reset anything, just show the form with errors
                     }, 100);
                 @endif
                 
@@ -2034,6 +2245,9 @@
                 setupUploadArea('akteUploadArea', 'akte_lahir', 'akteFileInfo');
                 setupUploadArea('ktpUploadArea', 'ktp', 'ktpFileInfo');
                 setupUploadArea('sertifikatUploadArea', 'sertifikat', 'sertifikatFileInfo');
+                
+                // Setup real-time validation for NIK, WhatsApp, and NISN
+                setupRealtimeValidation();
                 
                 // Handle multiple files for sertifikat
                 const sertifikatInput = document.getElementById('sertifikat');

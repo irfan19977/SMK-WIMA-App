@@ -7,6 +7,7 @@ use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -21,6 +22,14 @@ class TeacherController extends Controller
      */
     public function index(Request $request)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         $this->authorize('teachers.index');
 
         $query = Teacher::with(['user', 'user.roles']);
@@ -30,11 +39,24 @@ class TeacherController extends Controller
             $searchTerm = $request->q;
             $query->where(function($q) use ($searchTerm) {
                 $q->where('name', 'LIKE', '%' . $searchTerm . '%')
-                ->orWhere('nip', 'LIKE', '%' . $searchTerm . '%');
+                  ->orWhere('nip', 'LIKE', '%' . $searchTerm . '%')
+                  ->orWhereHas('user', function($u) use ($searchTerm) {
+                      $u->where('email', 'like', "%{$searchTerm}%");
+                  });
             });
         }
         
-        $teachers = $query->paginate(10);
+        $teachers = $query->paginate($request->get('per_page', 10));
+        
+        // Handle export
+        if ($request->has('export') && $request->export === 'excel') {
+            return $this->exportExcel($teachers);
+        }
+
+        // Handle print
+        if ($request->has('print') && $request->print === 'pdf') {
+            return $this->printPDF($teachers);
+        }
         
         // Jika request AJAX, return JSON
         if ($request->ajax() || $request->expectsJson()) {
@@ -63,15 +85,13 @@ class TeacherController extends Controller
             
             return response()->json([
                 'success' => true,
-                'teachers' => $teachersData,
+                'data' => $teachersData,
                 'pagination' => [
                     'current_page' => $teachers->currentPage(),
                     'per_page' => $teachers->perPage(),
                     'total' => $teachers->total(),
                     'last_page' => $teachers->lastPage(),
-                ],
-                'currentPage' => $teachers->currentPage(),
-                'perPage' => $teachers->perPage(),
+                ]
             ]);
         }
         
@@ -84,7 +104,15 @@ class TeacherController extends Controller
      */
     public function create()
     {
-        return view('teachers.create');
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
+        return view('teachers.addEdit');
     }
 
     /**
@@ -174,8 +202,16 @@ class TeacherController extends Controller
      */
     public function edit(string $id)
     {
-        $teachers = Teacher::with('user')->findOrFail($id);
-        return view('teachers.edit', compact('teachers'));
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
+        $teacher = Teacher::with('user')->findOrFail($id);
+        return view('teachers.addEdit', ['teacher' => $teacher]);
     }
 
     /**
@@ -320,5 +356,29 @@ class TeacherController extends Controller
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Export teachers to Excel
+     */
+    private function exportExcel($teachers)
+    {
+        // Implementation for Excel export
+        // You can use Laravel Excel package here
+        return response()->json([
+            'message' => 'Export Excel feature coming soon!'
+        ]);
+    }
+
+    /**
+     * Print teachers to PDF
+     */
+    private function printPDF($teachers)
+    {
+        // Implementation for PDF print
+        // You can use DomPDF or similar package here
+        return response()->json([
+            'message' => 'Print PDF feature coming soon!'
+        ]);
     }
 }

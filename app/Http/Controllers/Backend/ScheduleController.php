@@ -13,6 +13,8 @@ use App\Helpers\AcademicYearHelper;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\App;
 
 class ScheduleController extends Controller
 {
@@ -20,9 +22,23 @@ class ScheduleController extends Controller
 
     public function index(Request $request)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         $this->authorize('schedules.index');
-        // Get all classes
-        $classes = Classes::with(['students'])->orderBy('name')->get();
+        // Get all active classes (not archived)
+        $classes = Classes::with(['students'])
+                        ->where(function($query) {
+                            $query->whereNull('is_archived')
+                                  ->orWhere('is_archived', false);
+                        })
+                        ->orderBy('name')
+                        ->get();
         
         // Get selected class (default to first class if exists)
         $selectedClassId = $request->get('class_id', $classes->first()?->id);
@@ -114,7 +130,9 @@ class ScheduleController extends Controller
             $query->orderByRaw("FIELD(day, 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu')")
                   ->orderBy('start_time');
             
-            $schedules = $query->paginate(10);
+            // Support per_page parameter
+            $perPage = $request->get('per_page', 10);
+            $schedules = $query->paginate($perPage);
         }
         
         // Jika request AJAX, return JSON
@@ -202,8 +220,46 @@ class ScheduleController extends Controller
      * Show the form for creating a new resource.
      */
     public function create()
-    { 
-        // 
+    {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
+        if (request()->ajax()) {
+            $classes = Classes::where(function($query) {
+                            $query->whereNull('is_archived')
+                                  ->orWhere('is_archived', false);
+                        })
+                        ->orderBy('name')
+                        ->get();
+            $subjects = Subject::orderBy('name')->get();
+            $teachers = Teacher::whereHas('user', function($query) {
+                $query->where('status', 1);
+            })->get();
+            
+            $view = view('schedules._form', [
+                'schedule' => null,
+                'action' => route('schedules.store'),
+                'method' => 'POST',
+                'title' => __('index.add_schedule'),
+                'classes' => $classes,
+                'subjects' => $subjects,
+                'teachers' => $teachers,
+                'activeSemester' => Semester::getCurrentActiveSemester()
+            ])->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $view,
+                'title' => __('index.add_schedule')
+            ]);
+        }
+        
+        return view('schedules.create');
     }
 
     /**
@@ -211,21 +267,43 @@ class ScheduleController extends Controller
      */
     public function store(Request $request)
     {
+        \Log::info('Schedule store request', [
+            'request_data' => $request->all(),
+            'request_method' => $request->method(),
+            'is_ajax' => $request->ajax()
+        ]);
+
         $validated = $request->validate([
             'subject_id' => 'required',
             'teacher_id' => 'required',
             'class_id' => 'required',
-            'day' => 'required|in:senin,selasa,rabu,kamis,jumat,sabtu',
+            'day' => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
+            'academic_year' => 'sometimes|required',
+            'semester' => 'sometimes|required|in:Ganjil,Genap',
         ]);
 
-        // Set academic_year default menggunakan AcademicYearHelper jika tidak ada
-        $validated['academic_year'] = $request->input('academic_year', AcademicYearHelper::getCurrentAcademicYear());
+        \Log::info('Validation passed', [
+            'validated_data' => $validated
+        ]);
+
+        // Set academic_year dan semester dari semester aktif jika tidak ada
+        $activeSemester = Semester::getCurrentActiveSemester();
+        if ($activeSemester) {
+            $validated['academic_year'] = $validated['academic_year'] ?? $activeSemester->academic_year;
+            $validated['semester'] = $validated['semester'] ?? ucfirst($activeSemester->semester_type);
+        } else {
+            // Fallback ke helper jika tidak ada semester aktif
+            $validated['academic_year'] = $validated['academic_year'] ?? AcademicYearHelper::getCurrentAcademicYear();
+            $validated['semester'] = $validated['semester'] ?? 'Ganjil';
+        }
 
         // Cek apakah jadwal bentrok dengan jadwal lain (guru mengajar di kelas lain pada waktu yang sama)
         $conflictingTeacherSchedule = Schedule::where('teacher_id', $request->teacher_id)
         ->where('day', $request->day)
+        ->where('academic_year', $validated['academic_year'])
+        ->where('semester', $validated['semester'])
         ->where(function ($query) use ($request) {
             $query->where(function($q) use ($request) {
                     $q->where('start_time', '<', $request->end_time)
@@ -248,6 +326,8 @@ class ScheduleController extends Controller
         // Cek apakah kelas sudah memiliki jadwal pada waktu yang sama
         $conflictingClassSchedule = Schedule::where('class_id', $request->class_id)
             ->where('day', $request->day)
+            ->where('academic_year', $validated['academic_year'])
+            ->where('semester', $validated['semester'])
             ->where(function ($query) use ($request) {
                 $query->where(function($q) use ($request) {
                         $q->where('start_time', '<', $request->end_time)
@@ -267,20 +347,45 @@ class ScheduleController extends Controller
                 ->withInput();
         }
 
-        $schedules = Schedule::create($validated);
-
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Data berhasil disimpan',
-                'data' => $schedules
+        try {
+            $schedules = Schedule::create($validated);
+            
+            \Log::info('Schedule created successfully', [
+                'schedule_id' => $schedules->id,
+                'validated_data' => $validated
             ]);
-        }
 
-        if ($schedules) {
-            return redirect()->route('schedules.index')->with('success', 'Data Berhasil Disimpan');
-        } else {
-            return redirect()->route('schedules.index')->with('error', 'Data Gagal Disimpan');
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data berhasil disimpan',
+                    'data' => $schedules
+                ]);
+            }
+
+            if ($schedules) {
+                return redirect()->route('schedules.index')->with('success', 'Data Berhasil Disimpan');
+            } else {
+                return redirect()->route('schedules.index')->with('error', 'Data Gagal Disimpan');
+            }
+        } catch (\Exception $e) {
+            \Log::error('Schedule creation failed', [
+                'error' => $e->getMessage(),
+                'validated_data' => $validated,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menyimpan data: ' . $e->getMessage(),
+                    'errors' => ['general' => ['Terjadi kesalahan saat menyimpan data. Silakan coba lagi.']]
+                ], 500);
+            }
+            
+            return redirect()->back()
+                ->with('error', 'Gagal menyimpan data: ' . $e->getMessage())
+                ->withInput();
         }
     }
 
@@ -289,8 +394,46 @@ class ScheduleController extends Controller
      */
     public function edit($id)
     {
+        // Set language based on user preference
+        if (Auth::check()) {
+            $user = Auth::user();
+            $language = $user && $user->language ? $user->language : 'id';
+            App::setLocale($language);
+            session(['locale' => $language]);
+        }
+        
         try {
             $schedule = Schedule::with(['classRoom', 'subject', 'teacher'])->findOrFail($id);
+            
+            if (request()->ajax()) {
+                $classes = Classes::where(function($query) {
+                                $query->whereNull('is_archived')
+                                      ->orWhere('is_archived', false);
+                            })
+                            ->orderBy('name')
+                            ->get();
+                $subjects = Subject::orderBy('name')->get();
+                $teachers = Teacher::whereHas('user', function($query) {
+                    $query->where('status', 1);
+                })->get();
+                
+                $view = view('schedules._form', [
+                    'schedule' => $schedule,
+                    'action' => route('schedules.update', $schedule->id),
+                    'method' => 'PUT',
+                    'title' => __('index.edit_schedule'),
+                    'classes' => $classes,
+                    'subjects' => $subjects,
+                    'teachers' => $teachers,
+                    'activeSemester' => Semester::getCurrentActiveSemester()
+                ])->render();
+                
+                return response()->json([
+                    'success' => true,
+                    'html' => $view,
+                    'title' => __('index.edit_schedule')
+                ]);
+            }
             
             return response()->json([
                 'success' => true,
@@ -324,13 +467,23 @@ class ScheduleController extends Controller
             'subject_id' => 'required',
             'teacher_id' => 'required',
             'class_id' => 'required',
-            'day' => 'required|in:senin,selasa,rabu,kamis,jumat,sabtu',
-            'start_time' => 'required',
-            'end_time' => 'required|after:start_time',
+            'day' => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'academic_year' => 'sometimes|required',
+            'semester' => 'sometimes|required|in:Ganjil,Genap',
         ]);
 
-        // Set academic_year default menggunakan AcademicYearHelper jika tidak ada
-        $validated['academic_year'] = $request->input('academic_year', AcademicYearHelper::getCurrentAcademicYear());
+        // Set academic_year dan semester dari semester aktif jika tidak ada
+        $activeSemester = Semester::getCurrentActiveSemester();
+        if ($activeSemester) {
+            $validated['academic_year'] = $validated['academic_year'] ?? $activeSemester->academic_year;
+            $validated['semester'] = $validated['semester'] ?? ucfirst($activeSemester->semester_type);
+        } else {
+            // Fallback ke helper jika tidak ada semester aktif
+            $validated['academic_year'] = $validated['academic_year'] ?? AcademicYearHelper::getCurrentAcademicYear();
+            $validated['semester'] = $validated['semester'] ?? 'Ganjil';
+        }
 
         try {
             $schedules = Schedule::findOrFail($id);
@@ -339,6 +492,8 @@ class ScheduleController extends Controller
             // Kecualikan jadwal yang sedang diedit dari pengecekan
             $conflictingTeacherSchedule = Schedule::where('teacher_id', $request->teacher_id)
                 ->where('day', $request->day)
+                ->where('academic_year', $validated['academic_year'])
+                ->where('semester', $validated['semester'])
                 ->where('id', '!=', $id)
                 ->where(function ($query) use ($request) {
                     $query->where(function($q) use ($request) {
@@ -363,6 +518,8 @@ class ScheduleController extends Controller
             // Kecualikan jadwal yang sedang diedit dari pengecekan
             $conflictingClassSchedule = Schedule::where('class_id', $request->class_id)
                 ->where('day', $request->day)
+                ->where('academic_year', $validated['academic_year'])
+                ->where('semester', $validated['semester'])
                 ->where('id', '!=', $id)
                 ->where(function ($query) use ($request) {
                     $query->where(function($q) use ($request) {
@@ -421,16 +578,48 @@ class ScheduleController extends Controller
             $schedules = Schedule::findOrFail($id);
             $schedules->delete();
             
-            return response()->json([
-                'success' => true,
-                'message' => 'Data berhasil dihapus'
-            ]);
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data berhasil dihapus'
+                ]);
+            }
+            
+            return redirect()->route('schedules.index')->with('success', 'Data berhasil dihapus');
             
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menghapus data: ' . $e->getMessage()
-            ], 500);
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menghapus data: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->route('schedules.index')->with('error', 'Gagal menghapus data: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Export schedules to Excel
+     */
+    public function exportExcel(Request $request)
+    {
+        // TODO: Implement Excel export functionality
+        return response()->json([
+            'success' => false,
+            'message' => 'Export Excel functionality coming soon!'
+        ]);
+    }
+
+    /**
+     * Print schedules to PDF
+     */
+    public function printPDF(Request $request)
+    {
+        // TODO: Implement PDF print functionality
+        return response()->json([
+            'success' => false,
+            'message' => 'Print PDF functionality coming soon!'
+        ]);
     }
 }

@@ -6,12 +6,12 @@
             <div class="container">
                 <div class="banner-content-2">
                     <div class="content">
-                        <span data-aos="fade-zoom-in" data-aos-delay="300">Sekolah Menengah Kejuruan Unggulan di Lawang</span>
-                        <h1 data-aos="fade-up" data-aos-delay="200">SMK PGRI Lawang</h1>
-                        <p data-aos="fade-up" data-aos-delay="300">Berkomitmen untuk memberikan pendidikan vokasi berkualitas tinggi yang mempersiapkan siswa untuk menjadi tenaga terampil siap kerja.</p>
+                        <span data-aos="fade-zoom-in" data-aos-delay="300">{{ __('home.banner_subtitle') }}</span>
+                        <h1 data-aos="fade-up" data-aos-delay="200">{{ __('home.banner_title') }}</h1>
+                        <p data-aos="fade-up" data-aos-delay="300">{{ __('home.banner_description') }}</p>
                         <div class="buttons-action" data-aos="fade-up" data-aos-delay="100">
-                            <a class="default-btn" href="{{ route('pendaftaran.index') }}">Daftar Sekarang</a>
-                            <a class="default-btn btn-style-2" href="{{ route('contact.index') }}">Hubungi Kami</a>
+                            <a class="default-btn" href="{{ route('pendaftaran.index') }}">{{ __('home.register_now') }}</a>
+                            <a class="default-btn btn-style-2" href="{{ route('contact.index') }}">{{ __('home.contact_us') }}</a>
                         </div>
 
                         <div class="scroll-down" data-aos="fade-down" data-aos-delay="100">
@@ -27,48 +27,48 @@
         <div id="about" class="about-us-area-2 ptb-100">
             <div class="container">
                 <div class="section-title" data-aos="fade-up" data-aos-delay="100">
-                    <h2>Tentang SMK PGRI Lawang</h2>
-                    <p>SMK PGRI Lawang adalah lembaga pendidikan vokasional yang berdedikasi untuk menghasilkan lulusan berkualitas, siap kerja, dan berdaya saing global.</p>
+                    <h2>{{ __('home.about_title') }}</h2>
+                    <p>{{ __('home.about_description') }}</p>
                 </div>
                 <div class="about-content-courser owl-carousel owl-theme">
                     <div class="content-items" data-dot="<button>01</button>">
                         <div class="image ct-bg-1" data-aos="fade-zoom-in" data-aos-delay="100">
                         </div>
                         <div class="content" data-aos="fade-up" data-aos-delay="200">
-                            <span>Visi & Misi</span>
-                            <h2>Mencetak Lulusan Berkualitas</h2>
-                            <p>Visi kami menjadi sekolah vokasional unggulan yang menghasilkan lulusan berkarakter, kompeten, dan siap bersaing di era global.</p>
-                            <a class="default-btn" href="{{ route('contact.index') }}">Jadwalkan Kunjungan</a>
+                            <span>{{ __('home.vision_mission') }}</span>
+                            <h2>{{ __('home.vision_mission_title') }}</h2>
+                            <p>{{ __('home.vision_mission_description') }}</p>
+                            <a class="default-btn" href="{{ route('contact.index') }}">{{ __('home.schedule_visit') }}</a>
                         </div>
                     </div>
                     <div class="content-items" data-dot="<button>02</button>">
                         <div class="image ct-bg-2" data-aos="fade-zoom-in" data-aos-delay="100">
                         </div>
                         <div class="content" data-aos="fade-up" data-aos-delay="200">
-                            <span>Program Unggulan</span>
-                            <h2>Berbagai Jurusan Pilihan</h2>
-                            <p>Tersedia 4 jurusan unggulan: Teknik Kimia Industri, Teknik Komputer dan Jaringan, Teknik Sepeda Motor, dan Teknik Kendaraan Ringan.</p>
-                            <a class="default-btn" href="{{ route('contact.index') }}">Jadwalkan Kunjungan</a>
+                            <span>{{ __('home.featured_programs') }}</span>
+                            <h2>{{ __('home.featured_programs_title') }}</h2>
+                            <p>{{ __('home.featured_programs_description') }}</p>
+                            <a class="default-btn" href="{{ route('contact.index') }}">{{ __('home.schedule_visit') }}</a>
                         </div>
                     </div>
                     <div class="content-items" data-dot="<button>03</button>">
                         <div class="image ct-bg-3" data-aos="fade-zoom-in" data-aos-delay="100">
                         </div>
                         <div class="content" data-aos="fade-up" data-aos-delay="200">
-                            <span>Fasilitas Modern</span>
-                            <h2>Lingkungan Belajar Digital</h2>
-                            <p>Dilengkapi laboratorium komputer, bengkel praktik, laboratorium kimia, ruang kelas, akses internet, dan fasilitas lainnya untuk mendukung pembelajaran modern.</p>
-                            <a class="default-btn" href="{{ route('contact.index') }}">Jadwalkan Kunjungan</a>
+                            <span>{{ __('home.modern_facilities') }}</span>
+                            <h2>{{ __('home.modern_facilities_title') }}</h2>
+                            <p>{{ __('home.modern_facilities_description') }}</p>
+                            <a class="default-btn" href="{{ route('contact.index') }}">{{ __('home.schedule_visit') }}</a>
                         </div>
                     </div>
                     <div class="content-items" data-dot="<button>04</button>">
                         <div class="image ct-bg-2" data-aos="fade-zoom-in" data-aos-delay="100">
                         </div>
                         <div class="content" data-aos="fade-up" data-aos-delay="200">
-                            <span>Prestasi & Alumni</span>
-                            <h2>Membangun Karir Sukses</h2>
-                            <p>Alumni kami tersebar di berbagai industri dan banyak yang telah menjadi wirausaha sukses di bidangnya masing-masing.</p>
-                            <a class="default-btn" href="{{ route('contact.index') }}">Jadwalkan Kunjungan</a>
+                            <span>{{ __('home.achievements_alumni') }}</span>
+                            <h2>{{ __('home.achievements_alumni_title') }}</h2>
+                            <p>{{ __('home.achievements_alumni_description') }}</p>
+                            <a class="default-btn" href="{{ route('contact.index') }}">{{ __('home.schedule_visit') }}</a>
                         </div>
                     </div>
                 </div>
@@ -84,17 +84,17 @@
                     <div class="row">
                         <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
                             <div class="sub-title">
-                                <p>Program Unggulan Kami</p>
+                                <p>{{ __('home.our_featured_programs') }}</p>
                             </div>
                             <div class="content">
-                                <h2>Siswa kami menciptakan lingkungan yang inklusif dan berprestasi</h2>
+                                <h2>{{ __('home.students_create_inclusive_environment') }}</h2>
                                 <div class="item">
                                     <div class="item-content">
                                         <div class="icon">
                                             <img src="{{ asset('frontend/assets/img/icon/features-icon-2.png') }}" alt="image">
                                         </div>
-                                        <h3>Pendidikan Vokasional</h3>
-                                        <p>Program keahlian komprehensif yang disesuaikan dengan kebutuhan industri dan dunia kerja modern.</p>
+                                        <h3>{{ __('home.vocational_education') }}</h3>
+                                        <p>{{ __('home.vocational_education_description') }}</p>
                                     </div>
                                 </div>
                                 <div class="item">
@@ -102,11 +102,11 @@
                                         <div class="icon">
                                             <img src="{{ asset('frontend/assets/img/icon/features-icon-1.png') }}" alt="image">
                                         </div>
-                                        <h3>Jurusan Unggulan</h3>
-                                        <p>Teknik Kimia Industri, Teknik Komputer dan Jaringan, Teknik Sepeda Motor, dan Teknik Kendaraan Ringan.</p>
+                                        <h3>{{ __('home.featured_majors') }}</h3>
+                                        <p>{{ __('home.featured_majors_description') }}</p>
                                     </div>
                                 </div>
-                                <a class="default-btn" href="{{ route('pendaftaran.index') }}">Info Pendaftaran</a>
+                                <a class="default-btn" href="{{ route('pendaftaran.index') }}">{{ __('home.registration_info') }}</a>
 
                                 <div class="arrow-icon">
                                     <img src="{{ asset('frontend/assets/img/icon/shape-1.png') }}" alt="image">
@@ -125,8 +125,8 @@
                                                 </div>
                                             </div>
                                             <div class="content">
-                                                <h4>Teknik Kimia Industri</h4>
-                                                <a class="btn" href="{{ route('kimia.index') }}">Pelajari Lebih Lanjut <i class='bx bx-right-arrow-alt'></i></a>
+                                                <h4>{{ __('home.industrial_chemistry_engineering') }}</h4>
+                                                <a class="btn" href="{{ route('kimia.index') }}">{{ __('home.learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                                             </div>
                                         </div>
                                     </div>
@@ -139,8 +139,8 @@
                                                 </div>
                                             </div>
                                             <div class="content">
-                                                <h4>Teknik Komputer & Jaringan</h4>
-                                                <a class="btn" href="{{ route('tkj.index') }}">Pelajari Lebih Lanjut <i class='bx bx-right-arrow-alt'></i></a>
+                                                <h4>{{ __('home.computer_network_engineering') }}</h4>
+                                                <a class="btn" href="{{ route('tkj.index') }}">{{ __('home.learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                                             </div>
                                         </div>
                                     </div>
@@ -153,8 +153,8 @@
                                                 </div>
                                             </div>
                                             <div class="content">
-                                                <h4>Teknik Sepeda Motor</h4>
-                                                <a class="btn" href="{{ route('tbsm.index') }}">Pelajari Lebih Lanjut <i class='bx bx-right-arrow-alt'></i></a>
+                                                <h4>{{ __('home.motorcycle_engineering') }}</h4>
+                                                <a class="btn" href="{{ route('tbsm.index') }}">{{ __('home.learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                                             </div>
                                         </div>
                                     </div>
@@ -167,8 +167,8 @@
                                                 </div>
                                             </div>
                                             <div class="content">
-                                                <h4>Teknik Kendaraan Ringan</h4>
-                                                <a class="btn" href="{{ route('tkr.index') }}">Pelajari Lebih Lanjut <i class='bx bx-right-arrow-alt'></i></a>
+                                                <h4>{{ __('home.light_vehicle_engineering') }}</h4>
+                                                <a class="btn" href="{{ route('tkr.index') }}">{{ __('home.learn_more') }} <i class='bx bx-right-arrow-alt'></i></a>
                                             </div>
                                         </div>
                                     </div>
@@ -196,9 +196,9 @@
             <div class="container">
                 <div class="section-title section-title-2" data-aos="fade-up" data-aos-delay="100">
                     <div class="sub-title">
-                        <p>Berita Sekolah</p>
+                        <p>{{ __('home.school_news') }}</p>
                     </div>
-                    <h2>Kisah Tentang Siswa, Prestasi, dan Inovasi di SMK PGRI Lawang</h2>
+                    <h2>{{ __('home.news_title') }}</h2>
                 </div>
 
                 <div class="row">
@@ -216,11 +216,11 @@
                                     </div>
                                     <div class="content">
                                         <div class="sub-title">
-                                            <i class='bx bxs-graduation'></i> <p>{{ $news->category ?? 'Berita Sekolah' }}</p>
+                                            <i class='bx bxs-graduation'></i> <p>{{ $news->category ?? __('home.technology_innovation') }}</p>
                                         </div>
                                         <h2><a href="{{ route('berita.detail', $news->slug) }}">{{ $news->title }}</a></h2>
                                         <p>{{ Str::limit(strip_tags($news->content), 100) }}</p>
-                                        <a class="btn" href="{{ route('berita.detail', $news->slug) }}">Baca Selengkapnya...</a>
+                                        <a class="btn" href="{{ route('berita.detail', $news->slug) }}">{{ __('home.read_more') }}</a>
                                     </div>
                                 </li>
                                 @empty
@@ -230,11 +230,11 @@
                                     </div>
                                     <div class="content">
                                         <div class="sub-title">
-                                            <i class='bx bxs-graduation'></i> <p>Teknologi dan Inovasi</p>
+                                            <i class='bx bxs-graduation'></i> <p>{{ __('home.technology_innovation') }}</p>
                                         </div>
-                                        <h2><a href="blog-details.html">Siswa SMK PGRI Lawang Ciptakan Robot Pembersih Ruangan</a></h2>
-                                        <p>Para siswa jurusan Teknik Elektronika berhasil menciptakan robot inovatif untuk membantu kebersihan ruangan kelas.</p>
-                                        <a class="btn" href="blog-details.html">Baca Selengkapnya...</a>
+                                        <h2><a href="blog-details.html">{{ __('home.student_robot_news_title') }}</a></h2>
+                                        <p>{{ __('home.student_robot_news_description') }}</p>
+                                        <a class="btn" href="blog-details.html">{{ __('home.read_more') }}</a>
                                     </div>
                                 </li>
                                 @endforelse
@@ -253,16 +253,16 @@
                                 <div class="content">
                                     <h3><a href="{{ route('berita.detail', $homepageNews[2]->slug) }}">{{ $homepageNews[2]->title }}</a></h3>
                                     <p>{{ Str::limit(strip_tags($homepageNews[2]->content), 80) }}</p>
-                                    <a class="btn" href="{{ route('berita.detail', $homepageNews[2]->slug) }}">Baca Selengkapnya...</a>
+                                    <a class="btn" href="{{ route('berita.detail', $homepageNews[2]->slug) }}">{{ __('home.read_more') }}</a>
                                 </div>
                             </div>
                             @else
                             <div class="content-box">
                                 <img src="{{ asset('frontend/assets/img/all-img/news-image-3.png') }}" alt="iamge">
                                 <div class="content">
-                                    <h3><a href="blog-details.html">Gender inequality in higher education persists</a></h3>
-                                    <p>Lorem ipsum dolor sit amet conse sed do eiusm tem incid idunt ut labore.</p>
-                                    <a class="btn" href="blog-details.html">Continue Reading...</a>
+                                    <h3><a href="blog-details.html">{{ __('home.gender_inequality_title') }}</a></h3>
+                                    <p>{{ __('home.gender_inequality_description') }}</p>
+                                    <a class="btn" href="blog-details.html">{{ __('home.continue_reading') }}</a>
                                 </div>
                             </div>
                             @endif
@@ -279,7 +279,7 @@
                                 </div>
                                 <div class="content">
                                     <div class="sub-title">
-                                        <i class='bx bxs-graduation'></i> <p>{{ $news->category ?? 'Berita' }}</p>
+                                        <i class='bx bxs-graduation'></i> <p>{{ $news->category ?? __('home.medicine') }}</p>
                                     </div>
                                     <h3><a href="{{ route('berita.detail', $news->slug) }}">{{ $news->title }}</a></h3>
                                 </div>
@@ -293,7 +293,7 @@
                                     <div class="sub-title">
                                         <i class='bx bxs-graduation'></i> <p>Medicine</p>
                                     </div>
-                                    <h3><a href="blog-details.html">Empowering Health, One Patient at a Time.</a></h3>
+                                    <h3><a href="blog-details.html">{{ __('home.empowering_health') }}</a></h3>
                                 </div>
                             </div>
                             <div class="content-box">
@@ -302,9 +302,9 @@
                                 </div>
                                 <div class="content">
                                     <div class="sub-title">
-                                        <i class='bx bxs-graduation'></i> <p>Student Life</p>
+                                        <i class='bx bxs-graduation'></i> <p>{{ __('home.student_life') }}</p>
                                     </div>
-                                    <h3><a href="blog-details.html">Every Student, Every Dream, Every Success.</a></h3>
+                                    <h3><a href="blog-details.html">{{ __('home.every_student_dream_success') }}</a></h3>
                                 </div>
                             </div>
                             @endforelse
@@ -313,7 +313,7 @@
                 </div>
 
                 <div class="section-btn text-center" data-aos="fade-zoom-in" data-aos-delay="100">
-                    <p>Where Dreams Take Flight. <a href="news-and-blog.html">More Campus News <i class='bx bx-right-arrow-alt'></i></a></p>
+                    <p>{{ __('home.where_dreams_take_flight') }}. <a href="news-and-blog.html">{{ __('home.more_campus_news') }} <i class='bx bx-right-arrow-alt'></i></a></p>
                 </div>
             </div>
         </div>
@@ -325,17 +325,17 @@
                 <div class="row align-items-center">
                     <div class="col-lg-3">
                         <div class="heading" data-aos="fade-up" data-aos-delay="100">
-                            <h2>Program Beasiswa</h2>
+                            <h2>{{ __('home.scholarship_programs') }}</h2>
                         </div>
                     </div>
                     <div class="col-lg-7" data-aos="fade-up" data-aos-delay="200">
                         <div class="content">
-                            <p>SMK PGRI Lawang menyediakan berbagai program beasiswa untuk siswa berprestasi dan kurang mampu, demi mendukung pendidikan yang berkualitas dan merata.</p>
+                            <p>{{ __('home.scholarship_description') }}</p>
                         </div>
                     </div>
                     <div class="col-lg-2" data-aos="fade-up" data-aos-delay="300">
                         <div class="button">
-                            <a class="default-btn" href="{{ route('pendaftaran.index') }}">Bantuan Keuangan</a>
+                            <a class="default-btn" href="{{ route('pendaftaran.index') }}">{{ __('home.financial_aid') }}</a>
                         </div>
                     </div>
                 </div>
@@ -349,83 +349,83 @@
                 <div class="row align-items-center">
                     <div class="col-lg-6">
                         <div class="course-search-box" data-aos="fade-right">
-                            <h4>Cari Program Keahlian</h4>
+                            <h4>{{ __('home.search_vocational_program') }}</h4>
                             <div class="search-key">
-                                <input class="form-control" placeholder="Kata Kunci" type="search" value="" id="searchKey1">
-                                <input class="form-control" placeholder="Kode Program" type="search" value="" id="searchKey">
+                                <input class="form-control" placeholder="{{ __('home.keyword') }}" type="search" value="" id="searchKey1">
+                                <input class="form-control" placeholder="{{ __('home.program_code') }}" type="search" value="" id="searchKey">
                                 
                                 <select class="form-select" aria-label="Default select example" id="searchKey2">
-                                    <option selected>Jurusan</option>
-                                    <option value="1">Teknik Kimia Industri</option>
-                                    <option value="2">Teknik Komputer dan Jaringan</option>
-                                    <option value="3">Teknik Sepeda Motor</option>
-                                    <option value="4">Teknik Kendaraan Ringan</option>
+                                    <option selected>{{ __('home.major') }}</option>
+                                    <option value="1">{{ __('home.industrial_chemistry_engineering') }}</option>
+                                    <option value="2">{{ __('home.computer_network_engineering') }}</option>
+                                    <option value="3">{{ __('home.motorcycle_engineering') }}</option>
+                                    <option value="4">{{ __('home.light_vehicle_engineering') }}</option>
                                 </select>
 
                                 <select class="form-select" aria-label="Default select example" id="searchKey3">
-                                    <option selected>Lokasi</option>
-                                    <option value="1">Kampus Utama</option>
-                                    <option value="2">Kampus 2</option>
-                                    <option value="3">Workshop</option>
+                                    <option selected>{{ __('home.location') }}</option>
+                                    <option value="1">{{ __('home.main_campus') }}</option>
+                                    <option value="2">{{ __('home.campus_2') }}</option>
+                                    <option value="3">{{ __('home.workshop') }}</option>
                                 </select>
 
                                 <select class="form-select" aria-label="Default select example" id="searchKey4">
-                                    <option selected>Tingkat</option>
+                                    <option selected>{{ __('home.level') }}</option>
                                     <option value="1">X</option>
                                     <option value="2">XI</option>
                                     <option value="3">XII</option>
                                 </select>
 
                                 <select class="form-select" aria-label="Default select example" id="searchKey5">
-                                    <option selected>Guru</option>
-                                    <option value="1">Pak Budi</option>
-                                    <option value="2">Bu Siti</option>
-                                    <option value="3">Pak Ahmad</option>
+                                    <option selected>{{ __('home.teacher') }}</option>
+                                    <option value="1">{{ __('home.mr_budi') }}</option>
+                                    <option value="2">{{ __('home.mrs_siti') }}</option>
+                                    <option value="3">{{ __('home.mr_ahmad') }}</option>
                                 </select>
 
                                 <select class="form-select" aria-label="Default select example" id="searchKey6">
-                                    <option selected>Semester</option>
-                                    <option value="1">Ganjil</option>
-                                    <option value="2">Genap</option>
-                                    <option value="3">Pendek</option>
+                                    <option selected>{{ __('home.semester') }}</option>
+                                    <option value="1">{{ __('home.odd_semester') }}</option>
+                                    <option value="2">{{ __('home.even_semester') }}</option>
+                                    <option value="3">{{ __('home.short_semester') }}</option>
                                 </select>
 
                                 <select class="form-select" aria-label="Default select example" id="searchKey7">
-                                    <option selected>SKS</option>
+                                    <option selected>{{ __('home.credits') }}</option>
                                     <option value="1">2</option>
                                     <option value="3">4</option>
                                     <option value="6">6</option>
                                 </select>
 
-                                <a class="default-btn" href="#">Cari Program</a>
+                                <a class="default-btn" href="#">{{ __('home.search_program') }}</a>
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-6">
                         <div class="quick-content" data-aos="fade-up" data-aos-delay="200">
                             <div class="sub-title">
-                                <p>Berita Sekolah</p>
+                                <p>{{ __('home.school_news') }}</p>
                             </div>
-                            <h2>Mulai Karirmu & Kejar Passionmu</h2>
-                            <p>SMK PGRI Lawang memberikan pendidikan vokasional yang relevan dengan kebutuhan industri, mempersiapkan siswa untuk menjadi tenaga terampil yang siap kerja dan berdaya saing.</p>
+                            <h2>{{ __('home.start_your_career') }}</h2>
+                            <p>{{ __('home.career_description') }}</p>
 
                             <div class="list">
                                 <div class="row">
                                     <div class="col-lg-6 col-sm-6 col-md-6">
                                         <div class="list-items">
                                             <ul>
-                                                <li><i class='bx bx-right-arrow-circle'></i> Alumni & Donatur</li>
-                                                <li><i class='bx bx-right-arrow-circle'></i> Kalender Akademik</li>
-                                                <li><i class='bx bx-right-arrow-circle'></i> Semua Acara Sekolah</li>
+                                                <li><i class='bx bx-right-arrow-circle'></i> {{ __('home.alumni_donors') }}</li>
+                                                <li><i class='bx bx-right-arrow-circle'></i> {{ __('home.academic_calendar') }}</li>
+                                                <li><i class='bx bx-right-arrow-circle'></i> {{ __('home.all_school_events') }}</li>
                                             </ul>
                                         </div>
                                     </div>
                                     <div class="col-lg-6 col-sm-6 col-md-6">
                                         <div class="list-items">
                                             <ul>
-                                                <li><i class='bx bx-right-arrow-circle'></i> Kemitraan & Kerjasama</li>
-                                                <li><i class='bx bx-right-arrow-circle'></i> Program Akademik</li>
-                                                <li><i class='bx bx-right-arrow-circle'></i> Biaya Pendidikan</li>
+                                                <li><i class='bx bx-right-arrow-circle'></i> {{ __('home.partnerships_collaboration') }}</li>
+                                                <li><i class='bx bx-right-arrow-circle'></i> {{ __('home.academic_programs') }}</li>
+                                                <li><i class='bx bx-right-arrow-circle'></i> {{ __('home.education_costs') }}</li>
                                             </ul>
                                         </div>
                                     </div>
@@ -436,10 +436,10 @@
                             <div class="apply-banner">
                                 <div class="row align-items-center">
                                     <div class="col-lg-6 col-sm-6 col-md-6">
-                                        <p>Daftar Sekarang</p>
+                                        <p>{{ __('home.register_now_short') }}</p>
                                     </div>
                                     <div class="col-lg-6 col-sm-6 col-md-6 text-end">
-                                        <a class="default-btn" href="{{ route('pendaftaran.index') }}">Daftar Sekarang</a>
+                                        <a class="default-btn" href="{{ route('pendaftaran.index') }}">{{ __('home.register_now_short') }}</a>
                                     </div>
                                 </div>
                             </div>
@@ -452,8 +452,8 @@
                                                 <img src="assets/img/all-img/admin-image.png" alt="image">
                                             </div>
                                             <div class="text">
-                                                <h4>Kepala Sekolah</h4>
-                                                <p>Drs. Budi Santoso, M.Pd.</p>
+                                                <h4>{{ __('home.principal') }}</h4>
+                                                <p>{{ __('home.principal_name') }}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -464,7 +464,7 @@
                                             </div>
                                             <div class="text">
                                                 <h4>25</h4>
-                                                <p>Tahun <br> Pengalaman</p>
+                                                <p>{{ __('home.years') }} <br> {{ __('home.experience') }}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -483,9 +483,9 @@
             <div class="container">
                 <div class="section-title section-title-2" data-aos="fade-up" data-aos-delay="100">
                     <div class="sub-title">
-                        <p>Prestasi Siswa, Guru, dan Alumni</p>
+                        <p>{{ __('home.student_teacher_alumni_achievements') }}</p>
                     </div>
-                    <h2>Merayakan Warisan, Merangkul Masa Depan</h2>
+                    <h2>{{ __('home.celebrating_legacy_embracing_future') }}</h2>
                 </div>
     
                 <div class="row justify-content-center">
@@ -499,7 +499,7 @@
                                     <a class="popup-youtube" href="https://www.youtube.com/watch?v=LlCwHnp3kL4"><i class='bx bx-play'></i></a>
                                 </div>
                                 <ul>
-                                    <li><a href="university-life.html"><h3>Amelia Sari '23 (Teknik Kimia Industri)</h3></a></li>
+                                    <li><a href="university-life.html"><h3>{{ __('home.amelia_sari') }}</h3></a></li>
                                     <li class="link"><a href="university-life.html"><i class='bx bx-link-external'></i></a></li>
                                 </ul>
                             </div>
@@ -515,7 +515,7 @@
                                     <a class="popup-youtube" href="https://www.youtube.com/watch?v=LlCwHnp3kL4"><i class='bx bx-play'></i></a>
                                 </div>
                                 <ul>
-                                    <li><a href="university-life.html"><h3>Oliver Pratama '23 (Teknik Komputer & Jaringan)</h3></a></li>
+                                    <li><a href="university-life.html"><h3>{{ __('home.oliver_pratama') }}</h3></a></li>
                                     <li class="link"><a href="university-life.html"><i class='bx bx-link-external'></i></a></li>
                                 </ul>
                             </div>
@@ -531,7 +531,7 @@
                                     <a class="popup-youtube" href="https://www.youtube.com/watch?v=LlCwHnp3kL4"><i class='bx bx-play'></i></a>
                                 </div>
                                 <ul>
-                                    <li><a href="university-life.html"><h3>Sofia Putri '15 (Teknik Sepeda Motor)</h3></a></li>
+                                    <li><a href="university-life.html"><h3>{{ __('home.sofia_putri') }}</h3></a></li>
                                     <li class="link"><a href="university-life.html"><i class='bx bx-link-external'></i></a></li>
                                 </ul>
                             </div>
@@ -540,7 +540,7 @@
                 </div>
 
                 <div class="section-btn text-center" data-aos="fade-zoom-in" data-aos-delay="100">
-                    <p>Inspirasi untuk Masa Depan. <a href="undergraduate.html">Pelajari Tentang Program Unggulan <i class='bx bx-right-arrow-alt'></i></a></p>
+                    <p>{{ __('home.inspiration_for_future') }}. <a href="undergraduate.html">{{ __('home.learn_about_featured_programs') }} <i class='bx bx-right-arrow-alt'></i></a></p>
                 </div>
             </div>
         </div>
@@ -551,13 +551,13 @@
             <div class="container">
                 <div class="section-title section-title-2" data-aos="fade-up" data-aos-delay="100">
                     <div class="sub-title">
-                        <p>Informasi Pendaftaran</p>
+                        <p>{{ __('home.registration_information') }}</p>
                     </div>
-                    <h2>Bergabung dengan SMK PGRI Lawang untuk Masa Depan yang Cerah</h2>
+                    <h2>{{ __('home.join_bright_future') }}</h2>
                 </div>
 
                 <div class="subscribe-btn text-center" data-aos="fade-up" data-aos-delay="200">
-                    <a class="default-btn" href="application-form.html">Daftar Sekarang</a>
+                    <a class="default-btn" href="application-form.html">{{ __('home.register_now_button') }}</a>
                 </div>
             </div>
         </div> 

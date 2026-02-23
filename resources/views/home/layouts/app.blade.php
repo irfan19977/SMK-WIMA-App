@@ -17,7 +17,7 @@
         <link rel="stylesheet" href="{{ asset('frontend/assets/css/header.css') }}">
         <link rel="stylesheet" href="{{ asset('frontend/assets/css/responsive.css') }}">
 
-        <title>SMK PGRI Lawang - Sekolah Menengah Kejuruan Unggulan di Lawang</title>
+        <title>{{ __('index.smk_pgri_lawang') }} - {{ __('index.school_tagline') }}</title>
         <link rel="icon" type="image/png" href="{{ asset('frontend/assets/img/logo/logo 1.png') }}">
 
         @stack('style')
@@ -55,43 +55,61 @@
                 <div class="collapse navbar-collapse justify-content-between">
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
-                            <a href="{{ route('/') }}" class="nav-link {{ request()->is('/') ? 'active' : '' }}">Home</a>
+                            <a href="{{ route('/') }}" class="nav-link {{ request()->is('/') ? 'active' : '' }}">{{ __('index.home') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('about') }}" class="nav-link {{ request()->is('about') ? 'active' : '' }}">About</a>
+                            <a href="{{ route('about') }}" class="nav-link {{ request()->is('about') ? 'active' : '' }}">{{ __('index.about') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('pendaftaran.index') }}" class="nav-link {{ request()->is('pendaftaran') ? 'active' : '' }}">Pendaftaran</a>
+                            <a href="{{ route('pendaftaran.index') }}" class="nav-link {{ request()->is('pendaftaran') ? 'active' : '' }}">{{ __('index.registration') }}</a>
                         </li>
                         <li class="nav-item">
                             <a href="javascript:void(0)" class="dropdown-toggle nav-link">
-                                Jurusan
+                                {{ __('index.majors') }}
                             </a>
                             <ul class="dropdown-menu">
-                                <li class="nav-item"><a href="{{ route('kimia.index') }}" class="nav-link">Teknik Kimia Industri</a></li>
-                                <li class="nav-item"><a href="{{ route('tkj.index') }}" class="nav-link">Teknik Komputer dan Jaringan</a></li>
-                                <li class="nav-item"><a href="{{ route('tbsm.index') }}" class="nav-link">Teknik Sepeda Motor</a></li>
-                                <li class="nav-item"><a href="{{ route('tkr.index') }}" class="nav-link">Teknik Kendaraan Ringan</a></li>
+                                <li class="nav-item"><a href="{{ route('kimia.index') }}" class="nav-link">{{ __('index.chemical_engineering') }}</a></li>
+                                <li class="nav-item"><a href="{{ route('tkj.index') }}" class="nav-link">{{ __('index.computer_engineering') }}</a></li>
+                                <li class="nav-item"><a href="{{ route('tbsm.index') }}" class="nav-link">{{ __('index.motorcycle_engineering') }}</a></li>
+                                <li class="nav-item"><a href="{{ route('tkr.index') }}" class="nav-link">{{ __('index.light_vehicle_engineering') }}</a></li>
                             </ul>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('berita.index') }}" class="nav-link">Berita</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('contact.index') }}" class="nav-link">
-                                Contact
-                            </a>
+                            <a href="{{ route('berita.index') }}" class="nav-link">{{ __('index.news') }}</a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('login') }}" class="nav-link">
-                                Login
+                                {{ __('index.login') }}
                             </a>
                         </li>
                     </ul>
                     <div class="others-option d-flex align-items-center">
+                        <!-- Language Switcher -->
                         <div class="option-item">
                             <div class="nav-btn">
-                                <a href="contact-us.html" class="default-btn">Contact Us</a>
+                                <div class="dropdown">
+                                    <button class="nav-link dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bx bx-globe"></i>
+                                        {{ strtoupper(app()->getLocale()) }}
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+                                        <li>
+                                            <a class="dropdown-item {{ app()->getLocale() == 'id' ? 'active' : '' }}" href="{{ route('language.switch', 'id') }}">
+                                                🇮🇩 Indonesia
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item {{ app()->getLocale() == 'en' ? 'active' : '' }}" href="{{ route('language.switch', 'en') }}">
+                                                🇬🇧 English
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="option-item">
+                            <div class="nav-btn">
+                                <a href="{{ route('contact.index') }}" class="default-btn">{{ __('index.contact_us') }}</a>
                             </div>
                         </div>
                         <div class="option-item">
@@ -117,49 +135,49 @@
             <div class="offcanvas-body">
                 <div class="accordion" id="navbarAccordion">
                     <div class="accordion-item">
-                        <a href="{{ route('/') }}" class="accordion-link without-icon {{ Request::is('/') ? 'active' : '' }}">Home</a>
+                        <a href="{{ route('/') }}" class="accordion-link without-icon {{ Request::is('/') ? 'active' : '' }}">{{ __('index.home') }}</a>
                     </div>
                     <div class="accordion-item">
-                        <a href="{{ route('about') }}" class="accordion-link without-icon {{ Request::is('about') ? 'active' : '' }}">About</a>
+                        <a href="{{ route('about') }}" class="accordion-link without-icon {{ Request::is('about') ? 'active' : '' }}">{{ __('index.about') }}</a>
                     </div>
                     <div class="accordion-item">
-                        <a href="{{ route('pendaftaran.index') }}" class="accordion-link without-icon {{ Request::is('pendaftaran*') ? 'active' : '' }}">Pendaftaran</a>
+                        <a href="{{ route('pendaftaran.index') }}" class="accordion-link without-icon {{ Request::is('pendaftaran*') ? 'active' : '' }}">{{ __('index.registration') }}</a>
                     </div>
                     <div class="accordion-item">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseJurusan" aria-expanded="false" aria-controls="collapseJurusan">
-                            Jurusan
+                            {{ __('index.majors') }}
                         </button>
                         <div id="collapseJurusan" class="accordion-collapse collapse" data-bs-parent="#navbarAccordion">
                             <div class="accordion-body">
                                 <div class="accordion" id="navbarAccordionJurusan">
                                     <div class="accordion-item">
-                                        <a href="javascript:void(0)" class="accordion-link {{ Request::is('jurusan/teknik-kimia-industri') ? 'active' : '' }}">Teknik Kimia Industri</a>
+                                        <a href="javascript:void(0)" class="accordion-link {{ Request::is('jurusan/teknik-kimia-industri') ? 'active' : '' }}">{{ __('index.chemical_engineering') }}</a>
                                     </div>
                                     <div class="accordion-item">
-                                        <a href="javascript:void(0)" class="accordion-link {{ Request::is('jurusan/teknik-komputer-dan-jaringan') ? 'active' : '' }}">Teknik Komputer dan Jaringan</a>
+                                        <a href="javascript:void(0)" class="accordion-link {{ Request::is('jurusan/teknik-komputer-dan-jaringan') ? 'active' : '' }}">{{ __('index.computer_engineering') }}</a>
                                     </div>
                                     <div class="accordion-item">
-                                        <a href="javascript:void(0)" class="accordion-link {{ Request::is('jurusan/teknik-sepeda-motor') ? 'active' : '' }}">Teknik Sepeda Motor</a>
+                                        <a href="javascript:void(0)" class="accordion-link {{ Request::is('jurusan/teknik-sepeda-motor') ? 'active' : '' }}">{{ __('index.motorcycle_engineering') }}</a>
                                     </div>
                                     <div class="accordion-item">
-                                        <a href="javascript:void(0)" class="accordion-link {{ Request::is('jurusan/teknik-kendaraan-ringan') ? 'active' : '' }}">Teknik Kendaraan Ringan</a>
+                                        <a href="javascript:void(0)" class="accordion-link {{ Request::is('jurusan/teknik-kendaraan-ringan') ? 'active' : '' }}">{{ __('index.light_vehicle_engineering') }}</a>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="accordion-item">
-                        <a href="{{ route('berita.index') }}" class="accordion-link without-icon">Berita</a>
+                        <a href="{{ route('berita.index') }}" class="accordion-link without-icon">{{ __('index.news') }}</a>
                     </div>
                     <div class="accordion-item">
-                        <a href="{{ route('contact.index') }}" class="accordion-link without-icon">Contact</a>
+                        <a href="{{ route('contact.index') }}" class="accordion-link without-icon">{{ __('index.contact') }}</a>
                     </div>
                     <div class="accordion-item">
-                        <a href="{{ route('login') }}" class="accordion-link without-icon">Login</a>
+                        <a href="{{ route('login') }}" class="accordion-link without-icon">{{ __('index.login') }}</a>
                     </div>
                 </div>
                 <div class="offcanvas-contact-info">
-                    <h4>Contact Info</h4>
+                    <h4>{{ __('index.contact_info') }}</h4>
                     <ul class="contact-info list-style">
                         <li>
                             <i class="bx bxs-envelope"></i>
@@ -167,7 +185,7 @@
                         </li>
                         <li>
                             <i class="bx bxs-time"></i>
-                            <p>Senin - Jumat: 07:00 - 16:00</p>
+                            <p>{{ __('index.monday_friday_hours') }}</p>
                         </li>
                     </ul>
                     <ul class="social-profile list-style">
@@ -178,7 +196,7 @@
                 </div>
                 <div class="offcanvas-other-options">
                     <div class="option-item">
-                        <a href="{{ route('contact.index') }}" class="default-btn">Contact</a>
+                        <a href="{{ route('contact.index') }}" class="default-btn">{{ __('index.contact') }}</a>
                     </div>
                 </div>
             </div>
@@ -198,9 +216,9 @@
                     <div class="searchwrapper"> 
                         <div class="searchbox"> 
                             <div class="row align-items-center"> 
-                                <div class="col-md-9"><input type="text" class="form-control" placeholder="Fiend Your Course Here!"></div> 
+                                <div class="col-md-9"><input type="text" class="form-control" placeholder="{{ __('index.find_your_course_here') }}"></div> 
                                 <div class="col-lg-3"> 
-                                    <a class="btn" href="#">Search</a> 
+                                    <a class="btn" href="#">{{ __('index.search') }}</a> 
                                 </div> 
                             </div> 
                         </div>
@@ -208,20 +226,20 @@
                 </div>
 
                 <div class="offcanvas-contact-info">
-                    <h4>Contact Info</h4>
+                    <h4>{{ __('index.contact_info') }}</h4>
                     <ul class="contact-info list-style">
                         <li>
                             <i class="bx bxs-time"></i>
                             <p>Senin - Jumat: 07:00 - 16:00</p>
                         </li>
-                        <li><i class="bx bxs-phone-call"></i> Informasi Umum - <a href="tel:+62341891234">(0341) 891-234</a></li>
+                        <li><i class="bx bxs-phone-call"></i> {{ __('index.general_information') }} - <a href="tel:+62341891234">(0341) 891-234</a></li>
                         <li>
                             <i class="bx bxs-envelope"></i>
                             <a href="mailto:info@smkpgrilawang.sch.id">info@smkpgrilawang.sch.id</a>
                         </li>
                         <li>
                             <i class="bx bxs-map"></i>
-                            <p>Jl. Soekarno Hatta No. 123, Lawang, Malang, Jawa Timur 65215</p>
+                            <p>{{ __('index.address') }}: Jl. Soekarno Hatta No. 123, Lawang, Malang, Jawa Timur 65215</p>
                         </li>
                     </ul>
                     <ul class="social-profile list-style">
@@ -246,45 +264,45 @@
                     <div class="row">
                         <div class="col-lg-3 col-sm-6 col-md-6">
                             <div class="footer-widget">
-                                <h4>Informasi</h4>
+                                <h4>{{ __('index.information') }}</h4>
                                 <ul>
-                                    <li><a href="{{ route('pendaftaran.index') }}"><i class='bx bx-chevron-right'></i> Pendaftaran</a></li>
-                                    <li><a href="{{ route('pendaftaran.index') }}"><i class='bx bx-chevron-right'></i> Biaya Pendidikan</a></li>
-                                    <li><a href="{{ route('pendaftaran.index') }}"><i class='bx bx-chevron-right'></i> Beasiswa</a></li>
-                                    <li><a href="{{ route('contact.index') }}"><i class='bx bx-chevron-right'></i> Kontak</a></li>
+                                    <li><a href="{{ route('pendaftaran.index') }}"><i class='bx bx-chevron-right'></i> {{ __('index.registration') }}</a></li>
+                                    <li><a href="{{ route('pendaftaran.index') }}"><i class='bx bx-chevron-right'></i> {{ __('index.education_fee') }}</a></li>
+                                    <li><a href="{{ route('pendaftaran.index') }}"><i class='bx bx-chevron-right'></i> {{ __('index.scholarship') }}</a></li>
+                                    <li><a href="{{ route('contact.index') }}"><i class='bx bx-chevron-right'></i> {{ __('index.contact') }}</a></li>
                                 </ul>
                             </div>
                         </div>
                         <div class="col-lg-3 col-sm-6 col-md-6">
                             <div class="footer-widget">
-                                <h4>Jurusan</h4>
+                                <h4>{{ __('index.majors') }}</h4>
                                 <ul>
-                                    <li><a href="{{ route('kimia.index') }}"><i class='bx bx-chevron-right'></i> Teknik Kimia Industri</a></li>
-                                    <li><a href="{{ route('tkj.index') }}"><i class='bx bx-chevron-right'></i> Teknik Komputer & Jaringan</a></li>
-                                    <li><a href="{{ route('tbsm.index') }}"><i class='bx bx-chevron-right'></i> Teknik Sepeda Motor</a></li>
-                                    <li><a href="{{ route('tkr.index') }}"><i class='bx bx-chevron-right'></i> Teknik Kendaraan Ringan</a></li>
+                                    <li><a href="{{ route('kimia.index') }}"><i class='bx bx-chevron-right'></i> {{ __('index.chemical_engineering') }}</a></li>
+                                    <li><a href="{{ route('tkj.index') }}"><i class='bx bx-chevron-right'></i> {{ __('index.computer_engineering') }}</a></li>
+                                    <li><a href="{{ route('tbsm.index') }}"><i class='bx bx-chevron-right'></i> {{ __('index.motorcycle_engineering') }}</a></li>
+                                    <li><a href="{{ route('tkr.index') }}"><i class='bx bx-chevron-right'></i> {{ __('index.light_vehicle_engineering') }}</a></li>
                                 </ul>
                             </div>
                         </div>
                         <div class="col-lg-3 col-sm-6 col-md-6">
                             <div class="footer-widget">
-                                <h4>Akademik</h4>
+                                <h4>{{ __('index.academic') }}</h4>
                                 <ul>
-                                    <li><a href="#"><i class='bx bx-chevron-right'></i> E-Learning</a></li>
-                                    <li><a href="#"><i class='bx bx-chevron-right'></i> Perpustakaan</a></li>
-                                    <li><a href="#"><i class='bx bx-chevron-right'></i> Jadwal Pelajaran</a></li>
-                                    <li><a href="#"><i class='bx bx-chevron-right'></i> Kegiatan Siswa</a></li>
+                                    <li><a href="#"><i class='bx bx-chevron-right'></i> {{ __('index.e_learning') }}</a></li>
+                                    <li><a href="#"><i class='bx bx-chevron-right'></i> {{ __('index.curriculum') }}</a></li>
+                                    <li><a href="#"><i class='bx bx-chevron-right'></i> {{ __('index.academic_calendar') }}</a></li>
+                                    <li><a href="#"><i class='bx bx-chevron-right'></i> {{ __('index.student_activities') }}</a></li>
                                 </ul>
                             </div>
                         </div>
                         <div class="col-lg-3 col-sm-6 col-md-6">
                             <div class="footer-widget">
-                                <h4>Layanan</h4>
+                                <h4>{{ __('index.services') }}</h4>
                                 <ul>
-                                    <li><a href="{{ route('contact.index') }}"><i class='bx bx-chevron-right'></i> Bimbingan & Konseling</a></li>
-                                    <li><a href="{{ route('contact.index') }}"><i class='bx bx-chevron-right'></i> Jadwalkan Kunjungan</a></li>
-                                    <li><a href="#"><i class='bx bx-chevron-right'></i> Guru & Staff</a></li>
-                                    <li><a href="#"><i class='bx bx-chevron-right'></i> Alumni</a></li>
+                                    <li><a href="#"><i class='bx bx-chevron-right'></i> {{ __('index.counseling') }}</a></li>
+                                    <li><a href="#"><i class='bx bx-chevron-right'></i> {{ __('index.library') }}</a></li>
+                                    <li><a href="#"><i class='bx bx-chevron-right'></i> {{ __('index.facilities') }}</a></li>
+                                    <li><a href="#"><i class='bx bx-chevron-right'></i> {{ __('index.sports') }}</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -296,14 +314,14 @@
                     <div class="row align-items-center">
                         <div class="col-lg-4">
                             <div class="cpr-left">
-                                <p>Copyright© <a href="#">SMK PGRI Lawang</a>, Semua hak dilindungi.</p>
+                                <p>{{ __('index.copyright') }}© <a href="#">{{ __('index.smk_pgri_lawang') }}</a>, {{ __('index.all_rights_reserved') }}.</p>
                             </div>
                         </div>
                         <div class="col-lg-8">
                             <div class="cpr-right">
                                 <ul>
-                                    <li><a href="#">Kebijakan Privasi</a></li>
-                                    <li><a href="#">Kebijakan Cookie</a></li>
+                                    <li><a href="#">{{ __('index.privacy_policy') }}</a></li>
+                                    <li><a href="#">{{ __('index.cookie_policy') }}</a></li>
                                 </ul>
                                 <ul class="social-list">
                                     <li><a href="#"><i class='bx bxl-facebook'></i></a></li>

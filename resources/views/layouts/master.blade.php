@@ -15,6 +15,11 @@
 
     <!-- include head css -->
     @include('layouts.head-css')
+    
+    <!-- User Preferences Script -->
+    @auth
+    <script src="{{ asset('js/user-preferences.js') }}"></script>
+    @endauth
 </head>
 
 @yield('body')
@@ -34,6 +39,53 @@
 
                 <div class="page-content">
                     <div class="container-fluid">
+                        <!-- Notifikasi -->
+                        @if(session('success'))
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    Swal.fire({
+                                        title: 'Berhasil!',
+                                        text: '{{ addslashes(session('success')) }}',
+                                        icon: 'success',
+                                        confirmButtonText: 'OK'
+                                    });
+                                });
+                            </script>
+                        @endif
+                        
+                        @if(session('error'))
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    Swal.fire({
+                                        title: 'Gagal!',
+                                        text: '{{ addslashes(session('error')) }}',
+                                        icon: 'error',
+                                        confirmButtonColor: '#d33',
+                                        confirmButtonText: 'OK'
+                                    });
+                                });
+                            </script>
+                        @endif
+                        
+                        @if($errors->any())
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    let errorMessage = '';
+                                    @foreach($errors->all() as $error)
+                                        errorMessage += '• {{ addslashes($error) }}\n';
+                                    @endforeach
+                                    
+                                    Swal.fire({
+                                        title: 'Terjadi Kesalahan!',
+                                        text: errorMessage,
+                                        icon: 'error',
+                                        confirmButtonColor: '#d33',
+                                        confirmButtonText: 'OK'
+                                    });
+                                });
+                            </script>
+                        @endif
+                        
                         @yield('content')
                     </div>
                     <!-- container-fluid -->
