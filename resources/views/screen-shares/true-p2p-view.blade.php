@@ -1,208 +1,218 @@
-@extends('layouts.app')
+@extends('layouts.master')
+@section('title')
+    View Screen Sharing
+@endsection
+@section('css')
+    <!-- Sweet Alert-->
+    <link href="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
+    <style>
+        #remoteVideo {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f8f9fa;
+            max-width: 100%;
+            height: auto;
+        }
+        .session-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .room-code-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .p2p-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(40, 167, 69, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+    </style>
+@endsection
+@section('page-title')
+    View Screen Sharing
+@endsection
+@section('body')
 
-@section('title', 'View Screen Sharing')
+    <body data-sidebar="colored">
+    @endsection
 
-@push('styles')
-<style>
-    #remoteVideo {
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;
-        background: #f8f9fa;
-        max-width: 100%;
-        height: auto;
-    }
-    .session-info {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-    .room-code-display {
-        font-family: 'Courier New', monospace;
-        font-size: 1.2rem;
-        font-weight: bold;
-        letter-spacing: 2px;
-    }
-    .p2p-indicator {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: rgba(40, 167, 69, 0.9);
-        color: white;
-        padding: 10px 15px;
-        border-radius: 8px;
-        font-size: 14px;
-        z-index: 1000;
-    }
-</style>
-@endpush
-
-@section('content')
-<div class="page-header">
-    <div class="page-header-content header-elements-md-inline">
-        <div class="page-title">
-            <h4><i class="fas fa-desktop mr-2"></i>Screen Sharing Session</h4>
-            <a href="#" class="header-elements-toggle text-default d-md-none"><i class="icon-more"></i></a>
-        </div>
-        <div class="header-elements d-none">
-            <a href="{{ route('screen-shares.join') }}" class="btn btn-secondary btn-sm">
-                <i class="fas fa-arrow-left mr-2"></i>Leave Session
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- P2P Indicator -->
-<div class="p2p-indicator" id="p2pIndicator" style="display: none;">
-    <i class="fas fa-network-wired mr-2"></i>
-    <span id="p2pStatus">P2P Active</span>
-</div>
-
-<div class="content">
-    <div class="row">
-        <!-- Main Content -->
-        <div class="col-lg-9">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
-                        {{ $screenShare->title ?: 'Screen Sharing Session' }}
-                        @if($screenShare->status == 'active')
-                            <span class="badge badge-success ml-2">LIVE</span>
-                        @else
-                            <span class="badge badge-danger ml-2">ENDED</span>
-                        @endif
-                    </h5>
-                    <div class="d-flex align-items-center">
-                        <span class="text-muted mr-3">
-                            <i class="fas fa-users mr-1"></i>
-                            {{ $screenShare->participants->count() }} viewers
-                        </span>
-                        @if($screenShare->status == 'active')
-                            <span id="connectionStatus" class="badge badge-warning">
-                                <i class="fas fa-circle mr-1"></i>P2P Connecting...
-                            </span>
-                        @endif
-                    </div>
-                </div>
-                <div class="card-body text-center p-0">
-                    <video id="remoteVideo" autoplay playsinline style="width: 100%; max-height: 600px;"></video>
-                    <canvas id="screenCanvas" width="800" height="450" style="width: 100%; max-height: 600px; display: none;"></canvas>
-                    
-                    @if($screenShare->status != 'active')
-                        <div class="p-4">
-                            <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                This screen sharing session has ended. The teacher is no longer sharing their screen.
+    @section('content')
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-9">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h4 class="card-title mb-1">
+                                    {{ $screenShare->title ?: 'Screen Sharing Session' }}
+                                    @if($screenShare->status == 'active')
+                                        <span class="badge rounded-pill bg-success ms-2">LIVE</span>
+                                    @else
+                                        <span class="badge rounded-pill bg-danger ms-2">ENDED</span>
+                                    @endif
+                                </h4>
+                                <p class="text-muted mb-0">
+                                    <i class="mdi mdi-account-group me-1"></i>
+                                    {{ $screenShare->participants->count() }} viewers
+                                    @if($screenShare->status == 'active')
+                                        <span class="mx-2">|</span>
+                                        <span id="connectionStatus" class="badge rounded-pill bg-warning">
+                                            <i class="mdi mdi-circle me-1"></i>P2P Connecting...
+                                        </span>
+                                    @endif
+                                </p>
                             </div>
+                            <a href="{{ route('screen-shares.join') }}" class="btn btn-secondary">
+                                <i class="mdi mdi-arrow-left"></i> Leave Session
+                            </a>
                         </div>
-                    @endif
-                </div>
-            </div>
-        </div>
 
-        <!-- Sidebar -->
-        <div class="col-lg-3">
-            <!-- Session Info -->
-            <div class="card mb-3">
-                <div class="card-header session-info">
-                    <h6 class="card-title mb-0 text-white">Session Details</h6>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <p class="mb-1 font-weight-bold text-muted">Teacher:</p>
-                        <p class="mb-2">{{ $screenShare->teacher->name }}</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <p class="mb-1 font-weight-bold text-muted">Room Code:</p>
-                        <div class="room-code-display text-primary">{{ $screenShare->room_code }}</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <p class="mb-1 font-weight-bold text-muted">Title:</p>
-                        <p class="mb-0">{{ $screenShare->title ?: 'Untitled Session' }}</p>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="small text-muted">
-                        <p class="mb-1">
-                            <strong>Started:</strong> {{ $screenShare->started_at ? $screenShare->started_at->format('M d, Y H:i') : 'Unknown' }}
-                        </p>
-                        <p class="mb-1">
-                            <strong>You joined:</strong> {{ $participant->joined_at ? $participant->joined_at->format('H:i:s') : 'Unknown' }}
-                        </p>
-                        <p class="mb-0">
-                            <strong>Status:</strong> 
-                            @if($screenShare->status == 'active')
-                                <span class="badge badge-success">Active</span>
-                            @else
-                                <span class="badge badge-danger">Ended</span>
+                        <div class="text-center p-0 position-relative">
+                            <!-- Screen Share Video -->
+                            <video id="remoteVideo" autoplay playsinline style="width: 100%; max-height: 600px;"></video>
+                            <canvas id="screenCanvas" width="800" height="450" style="width: 100%; max-height: 600px; display: none;"></canvas>
+                            
+                            <!-- Teacher Camera Video (Picture-in-Picture) -->
+                            <video id="teacherCameraVideo" autoplay playsinline 
+                                   style="position: absolute; bottom: 20px; right: 20px; width: 200px; height: 150px; border: 2px solid #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); display: none; z-index: 10;">
+                            </video>
+                            
+                            @if($screenShare->status != 'active')
+                                <div class="p-4">
+                                    <div class="alert alert-warning d-flex align-items-center">
+                                        <i class="mdi mdi-alert-triangle me-2"></i>
+                                        <div>
+                                            This screen sharing session has ended. The teacher is no longer sharing their screen.
+                                        </div>
+                                    </div>
+                                </div>
                             @endif
-                        </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- True P2P Status -->
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">True P2P Connection</h6>
-                </div>
-                <div class="card-body">
-                    <div class="text-center">
-                        <div id="p2pInfo">
-                            <div class="text-warning">
-                                <i class="fas fa-network-wired fa-2x mb-2"></i>
-                                <p class="mb-0">Connecting to teacher...</p>
-                                <small>Direct peer-to-peer</small>
-                            </div>
+            <!-- Sidebar -->
+            <div class="col-lg-3">
+                <!-- Session Info -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">Session Details</h6>
+                        <div class="mb-3">
+                            <p class="mb-1 fw-bold text-muted">Teacher:</p>
+                            <p class="mb-2">{{ $screenShare->teacher->name }}</p>
                         </div>
                         
-                        <div id="connectionDetails" class="small text-muted mt-2" style="display: none;">
+                        <div class="mb-3">
+                            <p class="mb-1 fw-bold text-muted">Room Code:</p>
+                            <div class="room-code-display text-primary">{{ $screenShare->room_code }}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <p class="mb-1 fw-bold text-muted">Title:</p>
+                            <p class="mb-0">{{ $screenShare->title ?: 'Untitled Session' }}</p>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="small text-muted">
                             <p class="mb-1">
-                                <i class="fas fa-wifi text-success mr-1"></i>
-                                Direct P2P connection
+                                <strong>Started:</strong> {{ $screenShare->started_at ? $screenShare->started_at->format('M d, Y H:i') : 'Unknown' }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>You joined:</strong> {{ $participant->joined_at ? $participant->joined_at->format('H:i:s') : 'Unknown' }}
                             </p>
                             <p class="mb-0">
-                                Quality: <span id="videoQuality">Excellent</span>
+                                <strong>Status:</strong> 
+                                @if($screenShare->status == 'active')
+                                    <span class="badge rounded-pill bg-success">Active</span>
+                                @else
+                                    <span class="badge rounded-pill bg-danger">Ended</span>
+                                @endif
                             </p>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Instructions -->
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">Instructions</h6>
+                <!-- True P2P Status -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">True P2P Connection</h6>
+                        <div class="text-center">
+                            <div id="p2pInfo">
+                                <div class="text-warning">
+                                    <i class="mdi mdi-network-wired mdi-36px mb-2"></i>
+                                    <p class="mb-0">Connecting to teacher...</p>
+                                    <small>Direct peer-to-peer</small>
+                                </div>
+                            </div>
+                            
+                            <div id="connectionDetails" class="small text-muted mt-2" style="display: none;">
+                                <p class="mb-1">
+                                    <i class="mdi mdi-wifi text-success me-1"></i>
+                                    Direct P2P connection
+                                </p>
+                                <p class="mb-0">
+                                    Quality: <span id="videoQuality">Excellent</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success mr-2"></i>
-                            <span>True P2P connection</span>
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success mr-2"></i>
-                            <span>Zero server polling</span>
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success mr-2"></i>
-                            <span>Ultra-low latency</span>
-                        </li>
-                        <li class="mb-0">
-                            <i class="fas fa-info-circle text-info mr-2"></i>
-                            <span>Double-click for fullscreen</span>
-                        </li>
-                    </ul>
+
+                <!-- Instructions -->
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">Instructions</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="mdi mdi-check-circle text-success me-2"></i>
+                                <span>True P2P connection</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="mdi mdi-check-circle text-success me-2"></i>
+                                <span>Zero server polling</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="mdi mdi-check-circle text-success me-2"></i>
+                                <span>Ultra-low latency</span>
+                            </li>
+                            <li class="mb-2">
+                                <i class="mdi mdi-check-circle text-success me-2"></i>
+                                <span>Teacher may show camera</span>
+                            </li>
+                            <li class="mb-0">
+                                <i class="mdi mdi-information text-info me-2"></i>
+                                <span>Double-click for fullscreen</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-@endsection
+        <!-- end row -->
 
-@push('scripts')
-<script>
+        <!-- P2P Indicator -->
+        <div class="p2p-indicator" id="p2pIndicator" style="display: none;">
+            <i class="mdi mdi-network-wired me-2"></i>
+            <span id="p2pStatus">P2P Active</span>
+        </div>
+    @endsection
+
+    @section('scripts')
+        <!-- Sweet Alerts js -->
+        <script src="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.js') }}"></script>
+        
+        <script>
 let remoteVideo = document.getElementById('remoteVideo');
 let canvas = document.getElementById('screenCanvas');
 let ctx = canvas.getContext('2d');
@@ -210,6 +220,10 @@ let screenShareId = '{{ $screenShare->id }}';
 let peerConnection = null;
 let isConnecting = false;
 let userId = '{{ Auth::id() }}';
+
+// Teacher camera variables
+let teacherCameraVideo = document.getElementById('teacherCameraVideo');
+let teacherCameraStream = null;
 
 // True P2P WebRTC configuration
 const configuration = {
@@ -262,8 +276,13 @@ function startStreamPolling() {
         fetch(`/screen-shares/${screenShareId}/update`)
             .then(response => response.json())
             .then(data => {
-                if (data.success && data.image_data) {
-                    displayTeacherFrame(data.image_data);
+                if (data.success) {
+                    if (data.image_data) {
+                        displayTeacherFrame(data.image_data);
+                    }
+                    if (data.camera_data) {
+                        handleTeacherCameraStream(data.camera_data);
+                    }
                 }
             })
             .catch(error => {
@@ -321,6 +340,77 @@ function displayTeacherFrame(imageData) {
     }
 }
 
+// Function to handle teacher camera stream
+function handleTeacherCameraStream(cameraStreamData) {
+    if (!cameraStreamData) {
+        teacherCameraVideo.style.display = 'none';
+        teacherCameraVideo.srcObject = null;
+        return;
+    }
+    
+    try {
+        // Create a blob from the base64 data
+        const img = new Image();
+        img.onload = function() {
+            // For now, we'll show a placeholder or handle camera stream differently
+            // In a real implementation, this would be a WebRTC stream
+            console.log('📹 Teacher camera stream received');
+            teacherCameraVideo.style.display = 'block';
+        };
+        
+        img.src = cameraStreamData;
+    } catch (error) {
+        console.error('Error displaying teacher camera:', error);
+    }
+}
+
+// Make teacher camera draggable for student view
+let isTeacherCameraDragging = false;
+let teacherDragOffsetX = 0;
+let teacherDragOffsetY = 0;
+
+teacherCameraVideo.addEventListener('mousedown', function(e) {
+    isTeacherCameraDragging = true;
+    teacherDragOffsetX = e.clientX - teacherCameraVideo.offsetLeft;
+    teacherDragOffsetY = e.clientY - teacherCameraVideo.offsetTop;
+    teacherCameraVideo.style.cursor = 'grabbing';
+});
+
+document.addEventListener('mousemove', function(e) {
+    if (isTeacherCameraDragging) {
+        const parentRect = teacherCameraVideo.parentElement.getBoundingClientRect();
+        let newX = e.clientX - parentRect.left - teacherDragOffsetX;
+        let newY = e.clientY - parentRect.top - teacherDragOffsetY;
+        
+        // Keep within bounds
+        newX = Math.max(0, Math.min(newX, parentRect.width - teacherCameraVideo.offsetWidth));
+        newY = Math.max(0, Math.min(newY, parentRect.height - teacherCameraVideo.offsetHeight));
+        
+        teacherCameraVideo.style.left = newX + 'px';
+        teacherCameraVideo.style.top = newY + 'px';
+        teacherCameraVideo.style.right = 'auto';
+        teacherCameraVideo.style.bottom = 'auto';
+    }
+});
+
+document.addEventListener('mouseup', function() {
+    isTeacherCameraDragging = false;
+    teacherCameraVideo.style.cursor = 'grab';
+});
+
+teacherCameraVideo.style.cursor = 'grab';
+
+// Double click to toggle teacher camera size
+teacherCameraVideo.addEventListener('dblclick', function() {
+    if (teacherCameraVideo.style.width === '200px') {
+        teacherCameraVideo.style.width = '300px';
+        teacherCameraVideo.style.height = '225px';
+    } else {
+        teacherCameraVideo.style.width = '200px';
+        teacherCameraVideo.style.height = '150px';
+    }
+});
+
 function showConnectingMessage() {
     ctx.fillStyle = '#f8f9fa';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -360,31 +450,31 @@ function updateP2PStatus(connected) {
     const p2pIndicator = document.getElementById('p2pIndicator');
     const p2pStatus = document.getElementById('p2pStatus');
     
-    if (connected) {
+        if (connected) {
         statusDiv.innerHTML = `
             <div class="text-success">
-                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <i class="mdi mdi-check-circle mdi-36px mb-2"></i>
                 <p class="mb-0">P2P Connected</p>
                 <small>Direct peer-to-peer</small>
             </div>
         `;
         detailsDiv.style.display = 'block';
-        statusBadge.className = 'badge badge-success';
-        statusBadge.innerHTML = '<i class="fas fa-circle mr-1"></i>P2P Connected';
+        statusBadge.className = 'badge rounded-pill bg-success';
+        statusBadge.innerHTML = '<i class="mdi mdi-circle me-1"></i>P2P Connected';
         p2pIndicator.style.display = 'block';
         p2pStatus.textContent = 'P2P Active';
         p2pIndicator.className = 'p2p-indicator';
     } else {
         statusDiv.innerHTML = `
             <div class="text-warning">
-                <i class="fas fa-network-wired fa-2x mb-2"></i>
+                <i class="mdi mdi-network-wired mdi-36px mb-2"></i>
                 <p class="mb-0">Connecting to teacher...</p>
                 <small>Direct peer-to-peer</small>
             </div>
         `;
         detailsDiv.style.display = 'none';
-        statusBadge.className = 'badge badge-warning';
-        statusBadge.innerHTML = '<i class="fas fa-circle mr-1"></i>P2P Connecting...';
+        statusBadge.className = 'badge rounded-pill bg-warning';
+        statusBadge.innerHTML = '<i class="mdi mdi-circle me-1"></i>P2P Connecting...';
         p2pIndicator.style.display = 'none';
     }
 }
@@ -438,7 +528,10 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
-// Log that we're using true P2P
-console.log('🚀 True P2P WebRTC Viewer - Zero server polling!');
-</script>
-@endpush
+        // Log that we're using true P2P
+        console.log('🚀 True P2P WebRTC Viewer - Zero server polling!');
+        </script>
+        
+        <!-- App js -->
+        <script src="{{ URL::asset('build/js/app.js') }}"></script>
+    @endsection

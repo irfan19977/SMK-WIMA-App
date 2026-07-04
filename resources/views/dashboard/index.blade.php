@@ -235,7 +235,7 @@
                                         <td><img src="{{ URL::asset('build/images/users/avatar-2.jpg') }}"
                                                 class="avatar-xs rounded-circle me-2" alt="..."> {{ $student->name }}</td>
                                         <td>
-                                            <p class="mb-0">{{ $student->class }}</p>
+                                            <p class="mb-0">{{ $student->class ?? '-' }}</p>
                                         </td>
                                         <td>
                                             {{ date('d M, Y', strtotime($student->date)) }}
@@ -280,14 +280,35 @@
         <script src="{{ URL::asset('build/libs/jsvectormap/jsvectormap.min.js') }}"></script>
         <script src="{{ URL::asset('build/libs/jsvectormap/maps/world-merc.js') }}"></script>
 
-        <!-- Pass data to JavaScript -->
+        <!-- Load data and translations for JavaScript -->
         <script>
             window.lateStatistics = @json($lateStatistics);
             window.donutStatistics = @json($donutStatistics);
-            
+            window.translations = {
+                on_time_students: "{{ __('index.on_time_students') }}",
+                late_students: "{{ __('index.late_students') }}",
+                on_time: "{{ __('index.on_time') }}",
+                late: "{{ __('index.late') }}",
+                very_late: "{{ __('index.very_late') }}",
+                others: "{{ __('index.others') }}",
+                permission: "{{ __('index.permission') }}",
+                sick: "{{ __('index.sick') }}",
+                absent: "{{ __('index.absent') }}",
+                total_attendance: "{{ __('index.total_attendance') }}",
+                minutes: "{{ __('index.minutes') }}",
+                no_late_students: "{{ __('index.no_late_students') }}",
+                for_today: "{{ __('index.for_today') }}"
+            };
+        </script>
+
+        <script src="{{ URL::asset('js/dashboard.init.js') }}"></script>
+
+        <!-- Filter chart buttons -->
+        <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const filterButtons = document.querySelectorAll('[data-period]');
                 const columnChart = ApexCharts.getChartByID('column-chart');
+                const donutChart = ApexCharts.getChartByID('donut-chart');
                 
                 filterButtons.forEach(button => {
                     button.addEventListener('click', function() {
@@ -317,43 +338,24 @@
                                     },
                                     series: [{
                                         name: '{{ __('index.on_time_students') }}',
-                                        data: data.onTimeCount
+                                        data: data.onTimePercentage
                                     }, {
                                         name: '{{ __('index.late_students') }}',
-                                        data: data.lateCount
+                                        data: data.latePercentage
                                     }]
+                                });
+                            }
+                            
+                            if (donutChart && data.donut) {
+                                donutChart.updateOptions({
+                                    series: data.donut.data,
+                                    labels: data.donut.labels
                                 });
                             }
                         })
                         .catch(error => console.error('Error loading chart data:', error));
                 }
             });
-        </script>
-
-        <script src="{{ URL::asset('js/dashboard.init.js') }}"></script>
-        
-        <!-- Load data from controller to JavaScript -->
-        <script>
-        console.log('Late Statistics:', {{ json_encode($lateStatistics) }});
-        console.log('Donut Statistics:', {{ json_encode($donutStatistics) }});
-        window.lateStatistics = {{ json_encode($lateStatistics) }};
-        window.donutStatistics = {{ json_encode($donutStatistics) }};
-        </script>
-        
-        <!-- Load translations for JavaScript -->
-        <script>
-        window.translations = {
-            on_time_students: "{{ __('index.on_time_students') }}",
-            late_students: "{{ __('index.late_students') }}",
-            on_time: "{{ __('index.on_time') }}",
-            late: "{{ __('index.late') }}",
-            very_late: "{{ __('index.very_late') }}",
-            others: "{{ __('index.others') }}",
-            total_attendance: "{{ __('index.total_attendance') }}",
-            minutes: "{{ __('index.minutes') }}",
-            no_late_students: "{{ __('index.no_late_students') }}",
-            for_today: "{{ __('index.for_today') }}"
-        };
         </script>
         
         <!-- App js -->

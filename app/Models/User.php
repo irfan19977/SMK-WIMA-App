@@ -25,10 +25,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'phone',
         'status',
         'photo_path',
-        'face_descriptor',
         'theme_mode',
         'language',
     ];
@@ -82,6 +80,11 @@ class User extends Authenticatable
         return $this->hasOne(Administrator::class, 'user_id');
     }
 
+    public function parent()
+    {
+        return $this->hasOne(ParentModel::class, 'user_id');
+    }
+
     public function getProfileData()
     {
         if ($this->hasRole('admin') || $this->hasRole('Super Admin')) {
@@ -90,8 +93,10 @@ class User extends Authenticatable
             return $this->teacher;
         } elseif ($this->hasRole('student') || $this->hasRole('Student')) {
             return $this->student;
+        } elseif ($this->hasRole('Parent')) {
+            return $this->parent;
         }
-        
+
         return null;
     }
 

@@ -45,9 +45,10 @@
                             <div class="col-md-3">
                                 <select class="form-select" id="academic-year-filter">
                                     @php
-                                        $currentYear = \App\Helpers\AcademicYearHelper::getCurrentAcademicYear();
+                                        // Untuk pendaftaran, default ke tahun akademik berikutnya (tahun ajaran baru)
+                                        $nextYear = \App\Helpers\AcademicYearHelper::getNextAcademicYear();
                                         $academicYears = \App\Helpers\AcademicYearHelper::generateAcademicYears(1, 3);
-                                        $selectedYear = request('tahun_akademik', $currentYear);
+                                        $selectedYear = request('tahun_akademik', $nextYear);
                                     @endphp
                                     @foreach($academicYears as $year)
                                         <option value="{{ $year }}" {{ $year === $selectedYear ? 'selected' : '' }}>
@@ -163,9 +164,20 @@
                 if (perPageSelect) {
                     perPageSelect.addEventListener('change', function() {
                         const url = new URL(window.location.href);
-                        url.searchParams.set('per_page', this.value);
+                        url.searchParams.delete('per_page');
                         url.searchParams.delete('page');
-                        window.location.href = url.toString();
+                        
+                        // Save per_page to session via AJAX
+                        fetch('{{ route("pendaftaran-siswa.set-per-page") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({ per_page: this.value })
+                        }).then(() => {
+                            window.location.href = url.toString();
+                        });
                     });
                 }
 

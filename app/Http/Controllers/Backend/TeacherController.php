@@ -65,6 +65,7 @@ class TeacherController extends Controller
                 return [
                     'id' => $teacher->id,
                     'name' => $teacher->name,
+                    'phone' => $teacher->phone,
                     'nip' => $teacher->nip,
                     'no_card' => $teacher->no_card,
                     'education_level' => $teacher->education_level,
@@ -72,7 +73,6 @@ class TeacherController extends Controller
                     'user' => [
                         'id' => $teacher->user->id,
                         'email' => $teacher->user->email,
-                        'phone' => $teacher->user->phone,
                         'status' => $teacher->user->status,
                         'roles' => $teacher->user->roles->map(function($role) {
                             return [
@@ -147,7 +147,6 @@ class TeacherController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => $request->password ? Hash::make($request->password) : null,
-            'phone' => $request->phone,
             'status' => $request->status ? true : false,
         ]);
         $teachers->assignRole('teacher');
@@ -160,6 +159,7 @@ class TeacherController extends Controller
             'id' => Str::uuid(),
             'user_id' => $teachers->id,
             'name' => $request->name,
+            'phone' => $request->phone,
             'nip' => $request->nip,
             'qrcode' => $qrcode,
             'no_card' => $request->no_card,
@@ -257,7 +257,6 @@ class TeacherController extends Controller
             $teachersData = [
                 'name' => $request->name,
                 'email' => $request->email,
-                'phone' => $request->phone,
                 'status' => $request->status ? true : false,
                 'photo' => $photoPath,
             ];
@@ -269,9 +268,10 @@ class TeacherController extends Controller
 
             $teachers->user->update($teachersData);
 
-            // Update student data
+            // Update teacher data
             $teachers->update([
                 'name' => $request->name,
+                'phone' => $request->phone,
                 'nip' => $request->nip,
                 'no_card' => $request->no_card,
                 'education_level' => $request->education_level,

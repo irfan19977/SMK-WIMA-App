@@ -20,7 +20,8 @@
         "pusher/pusher-php-server": "^7.2",
         "rappasoft/laravel-livewire-tables": "^3.7",
         "simplesoftwareio/simple-qrcode": "^4.2",
-        "spatie/laravel-permission": "^6.18"
+        "spatie/laravel-permission": "^6.18",
+        "spatie/laravel-sitemap": "^7.4"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -37,7 +38,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/Helpers/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

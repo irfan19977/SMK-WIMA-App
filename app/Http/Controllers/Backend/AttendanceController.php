@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Classes;
 use App\Models\Student;
+use App\Models\StudentPermission;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Services\WhatsAppService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class AttendanceController extends Controller
@@ -40,7 +42,7 @@ class AttendanceController extends Controller
             ->select([
                 'a1.id as attendance_id',
                 'a1.student_id',
-                'a1.class_id', 
+                'a1.class_id',
                 'a1.date',
                 's.name as student_name',
                 's.user_id',
@@ -48,10 +50,10 @@ class AttendanceController extends Controller
                 // Data check in
                 'a1.check_in',
                 'a1.check_in_status',
-                // Data check out
-                'a2.check_out',
-                'a2.check_out_status',
-                'a2.id as checkout_id'
+                // Data check out (fallback to a1 for auto-generated permission records)
+                DB::raw('COALESCE(a2.check_out, a1.check_out) as check_out'),
+                DB::raw('COALESCE(a2.check_out_status, a1.check_out_status) as check_out_status'),
+                DB::raw('COALESCE(a2.id, a1.id) as checkout_id')
             ])
             ->leftJoin('attendance as a2', function($join) {
                 $join->on('a1.student_id', '=', 'a2.student_id')
@@ -61,7 +63,7 @@ class AttendanceController extends Controller
             })
             ->join('student as s', 'a1.student_id', '=', 's.id')
             ->join('classes as c', 'a1.class_id', '=', 'c.id')
-            ->whereNotNull('a1.check_in')
+            ->whereNotNull('a1.check_in_status')
             ->whereNull('a1.deleted_at')
             ->whereNull('s.deleted_at')
             ->whereNull('c.deleted_at');
@@ -119,7 +121,7 @@ class AttendanceController extends Controller
         }
         
         $students = Student::with('classes')->get();
-        $classes = Classes::all();
+        $classes = Classes::orderByGrade()->get();
         
         $view = view('attendances._form', [
             'action' => route('attendances.store'),
@@ -213,6 +215,15 @@ class AttendanceController extends Controller
             'check_out_status' => 'nullable|in:tepat,lebih_awal,tidak_absen,izin,sakit,alpha'
         ]);
 
+        // Block if student has an active full-absence permission
+        $activePermission = StudentPermission::getActivePermission($request->student_id, $request->date);
+        if ($activePermission && in_array($activePermission->type, ['sakit', 'agenda'])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Siswa memiliki izin aktif ({$activePermission->type_label}) pada tanggal ini, tidak dapat melakukan absensi."
+            ], 422);
+        }
+
         try {
             DB::beginTransaction();
 
@@ -256,13 +267,22 @@ class AttendanceController extends Controller
                     $checkOutTimeCarbon = Carbon::createFromFormat('H:i', $checkOutTime, 'Asia/Jakarta');
                     $scheduleEndTimeCarbon = Carbon::createFromFormat('H:i:s', $schedule->end_time, 'Asia/Jakarta');
                     
+                    // Cek apakah siswa memiliki izin aktif untuk hari ini
+                    $activePermission = StudentPermission::getActivePermission($existingAttendance->student_id, $existingAttendance->date);
+                    
                     // Tentukan status check_out otomatis
                     $checkOutStatus = $request->check_out_status;
                     if (!$checkOutStatus) {
-                        if ($checkOutTimeCarbon->lt($scheduleEndTimeCarbon)) {
-                            $checkOutStatus = 'lebih_awal';
+                        if ($activePermission) {
+                            // Gunakan status checkout berdasarkan jenis izin
+                            $checkOutStatus = $activePermission->checkout_status;
                         } else {
-                            $checkOutStatus = 'tepat';
+                            // Logic normal jika tidak ada izin
+                            if ($checkOutTimeCarbon->lt($scheduleEndTimeCarbon)) {
+                                $checkOutStatus = 'lebih_awal';
+                            } else {
+                                $checkOutStatus = 'tepat';
+                            }
                         }
                     }
                     
@@ -274,6 +294,22 @@ class AttendanceController extends Controller
                     ]);
                     
                     DB::commit();
+
+                    // Kirim notifikasi WA check-out ke orang tua
+                    $studentId = $existingAttendance->student_id;
+                    $attendanceId = $existingAttendance->id;
+                    dispatch(function () use ($studentId, $attendanceId) {
+                        try {
+                            $student = Student::find($studentId);
+                            $attendance = Attendance::find($attendanceId);
+                            if ($student && $attendance) {
+                                $wa = app(WhatsAppService::class);
+                                $wa->sendCheckOutNotification($student, $attendance);
+                            }
+                        } catch (\Exception $e) {
+                            \Log::warning('WA notification failed after manual checkout: ' . $e->getMessage());
+                        }
+                    })->afterResponse();
                     
                     return response()->json([
                         'success' => true,
@@ -338,21 +374,30 @@ class AttendanceController extends Controller
                     ->where('day', $dayName)
                     ->first();
 
+                // Cek apakah siswa memiliki izin aktif untuk hari ini
+                $activePermission = StudentPermission::getActivePermission($request->student_id, $request->date);
+                
                 // Tentukan status check_out otomatis jika tidak diset manual
                 $checkOutStatus = $request->check_out_status;
-                if (!$checkOutStatus && $schedule) {
-                    $checkOutTime = Carbon::createFromFormat('H:i', $request->check_out, 'Asia/Jakarta');
-                    $scheduleEndTime = Carbon::createFromFormat('H:i:s', $schedule->end_time, 'Asia/Jakarta');
-                    
-                    // Jika check_out kurang dari waktu selesai jadwal, maka lebih awal
-                    if ($checkOutTime->lt($scheduleEndTime)) {
-                        $checkOutStatus = 'lebih_awal';
+                if (!$checkOutStatus) {
+                    if ($activePermission) {
+                        // Gunakan status checkout berdasarkan jenis izin
+                        $checkOutStatus = $activePermission->checkout_status;
+                    } elseif ($schedule) {
+                        // Logic normal jika tidak ada izin
+                        $checkOutTime = Carbon::createFromFormat('H:i', $request->check_out, 'Asia/Jakarta');
+                        $scheduleEndTime = Carbon::createFromFormat('H:i:s', $schedule->end_time, 'Asia/Jakarta');
+                        
+                        // Jika check_out kurang dari waktu selesai jadwal, maka lebih awal
+                        if ($checkOutTime->lt($scheduleEndTime)) {
+                            $checkOutStatus = 'lebih_awal';
+                        } else {
+                            $checkOutStatus = 'tepat';
+                        }
                     } else {
+                        // Jika tidak ada jadwal dan tidak ada izin, default tepat
                         $checkOutStatus = 'tepat';
                     }
-                } else if (!$checkOutStatus) {
-                    // Jika tidak ada jadwal dan tidak ada status manual, default tepat
-                    $checkOutStatus = 'tepat';
                 }
 
                 $attendanceData['check_out'] = $request->check_out;
@@ -360,9 +405,29 @@ class AttendanceController extends Controller
             }
 
             // Buat record attendance baru
-            Attendance::create($attendanceData);
+            $attendance = Attendance::create($attendanceData);
 
             DB::commit();
+
+            // Kirim notifikasi WhatsApp ke orang tua (async)
+            $studentId = $request->student_id;
+            $attendanceId = $attendance->id;
+            dispatch(function () use ($studentId, $attendanceId) {
+                try {
+                    $student = Student::find($studentId);
+                    $attendance = Attendance::find($attendanceId);
+                    if ($student && $attendance && $attendance->check_in_status) {
+                        $wa = app(WhatsAppService::class);
+                        if ($attendance->check_in_status === 'terlambat') {
+                            $wa->sendLateNotification($student, $attendance);
+                        } else {
+                            $wa->sendAttendanceNotification($student, $attendance);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('WA notification failed after manual attendance: ' . $e->getMessage());
+                }
+            })->afterResponse();
 
             return response()->json([
                 'success' => true,
@@ -440,7 +505,7 @@ class AttendanceController extends Controller
         $checkOut = $allAttendances->where('check_out', '!=', null)->first();
 
         $students = Student::with('classes')->get();
-        $classes = Classes::all();
+        $classes = Classes::orderByGrade()->get();
         
         // Get student info for NISN
         $student = Student::find($attendance->student_id);
@@ -485,6 +550,17 @@ class AttendanceController extends Controller
             'check_in_status' => 'nullable|in:tepat,terlambat,izin,sakit,alpha',
             'check_out_status' => 'nullable|in:tepat,lebih_awal,tidak_absen,izin,sakit,alpha'
         ]);
+
+        // Block if the update would override an active full-absence permission
+        $activePermission = StudentPermission::getActivePermission($request->student_id, $request->date);
+        if ($activePermission
+            && in_array($activePermission->type, ['sakit', 'agenda'])
+            && !in_array($request->check_in_status, ['sakit', 'izin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Siswa memiliki izin aktif ({$activePermission->type_label}) pada tanggal ini, tidak dapat diubah menjadi hadir."
+            ], 422);
+        }
 
         try {
             DB::beginTransaction();

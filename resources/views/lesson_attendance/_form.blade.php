@@ -38,14 +38,8 @@
         </div>
     </div>
     
-    <!-- Name and Class Section -->
+    <!-- Class and Student Section -->
     <div class="row mb-3">
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label for="student_name" class="form-label">Nama</label>
-                <input type="text" class="form-control" id="student_name" readonly>
-            </div>
-        </div>
         <div class="col-md-6">
             <div class="mb-3">
                 <label for="class_id" class="form-label">{{ __('index.class') }} <span class="text-danger">*</span></label>
@@ -62,7 +56,29 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="student_id" class="form-label">{{ __('index.student_name') }} <span class="text-danger">*</span></label>
+                <select class="form-select form-control" id="student_id" name="student_id" required data-bs-container="body" {{ $lessonAttendance ? '' : 'disabled' }}>
+                    <option value="">{{ $lessonAttendance ? __('index.select_student') : __('index.select_class_first') }}</option>
+                    @if($lessonAttendance)
+                        @foreach($students as $student)
+                            <option value="{{ $student->id }}" data-nisn="{{ $student->nisn ?? '' }}" {{ $lessonAttendance->student_id == $student->id ? 'selected' : '' }}>
+                                {{ $student->name }}
+                            </option>
+                        @endforeach
+                    @endif
+                </select>
+                <div class="invalid-feedback">
+                    {{ __('index.please_select_student') }}
+                </div>
+                <div class="form-text" id="student-help-text">
+                    {{ $lessonAttendance ? '' : __('index.select_class_first') }}
+                </div>
+            </div>
+        </div>
     </div>
+    <input type="hidden" id="student_name" value="{{ $lessonAttendance ? $lessonAttendance->student_name : '' }}">
     
     <!-- Subject and Date Section -->
     <div class="row mb-3">
@@ -99,7 +115,8 @@
         <div class="col-md-6">
             <div class="mb-3">
                 <label for="check_in" class="form-label">{{ __('index.check_in_time') }}</label>
-                <input type="time" class="form-control" id="check_in" name="check_in">
+                <input type="time" class="form-control" id="check_in" name="check_in"
+                    value="{{ $lessonAttendance ? $lessonAttendance->check_in : '' }}">
                 <div class="form-text">
                     {{ __('index.optional_fill_check_in_time') }}
                 </div>
@@ -139,82 +156,4 @@
     </div>
 </form>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const classSelect = document.getElementById('class_id');
-    const subjectSelect = document.getElementById('subject_id');
-    
-    // Note: studentsTableBody no longer exists since we removed the students table
-    
-    // Auto-load if preselected values exist
-    const preselectedClass = classSelect.value;
-    const preselectedSubject = subjectSelect.value;
-    
-    if (preselectedClass) {
-        loadSubjects();
-    }
-    
-    function loadSubjects() {
-        const classId = classSelect.value;
-        
-        if (!classId) {
-            // Reset subject dropdown properly
-            subjectSelect.innerHTML = '<option value="">Pilih Mata Pelajaran</option>';
-            subjectSelect.disabled = false;
-            // Reinitialize Bootstrap dropdown
-            const bsSelect = new bootstrap.Select(subjectSelect);
-            return;
-        }
-        
-        // Show loading state
-        subjectSelect.innerHTML = '<option value="">Loading...</option>';
-        subjectSelect.disabled = true;
-        
-        fetch('/lesson-attendances/get-subjects-by-class', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-                class_id: classId
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            subjectSelect.disabled = false;
-            if (data.success && data.data.length > 0) {
-                let html = '<option value="">Pilih Mata Pelajaran</option>';
-                data.data.forEach(subject => {
-                    const selected = subject.id == '{{ $preselectedSubjectId ?? "" }}' ? 'selected' : '';
-                    html += `<option value="${subject.id}" ${selected}>${subject.name}</option>`;
-                });
-                subjectSelect.innerHTML = html;
-            } else {
-                subjectSelect.innerHTML = '<option value="">Tidak ada mata pelajaran untuk kelas ini</option>';
-            }
-            
-            // Reinitialize Bootstrap dropdown after content change
-            const bsSelect = new bootstrap.Select(subjectSelect);
-        })
-        .catch(error => {
-            console.error('Error loading subjects:', error);
-            subjectSelect.innerHTML = '<option value="">Gagal memuat mata pelajaran</option>';
-            subjectSelect.disabled = false;
-            // Reinitialize Bootstrap dropdown after error
-            const bsSelect = new bootstrap.Select(subjectSelect);
-        });
-    }
-    
-    // Event listeners
-    classSelect.addEventListener('change', function() {
-        loadSubjects();
-    });
-});
-
-// Initialize form submission handler
-if (typeof initializeLessonAttendanceForm === 'function') {
-    initializeLessonAttendanceForm();
-}
-</script>
+<!-- Script logic is handled in index.blade.php since innerHTML doesn't execute script tags -->

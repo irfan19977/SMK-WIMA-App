@@ -16,6 +16,7 @@ return new class extends Migration
             $table->uuid('user_id')->unique();
             $table->uuid('student_id')->nullable();
             $table->string('name');
+            $table->string('phone')->nullable();
             $table->enum('jenis_kelamin', ['laki-laki', 'perempuan'])->nullable();
             $table->enum('status', ['ayah', 'ibu', 'wali'])->default('ayah');
             $table->string('province')->nullable();

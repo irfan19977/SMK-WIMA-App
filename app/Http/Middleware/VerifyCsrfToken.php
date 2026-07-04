@@ -9,6 +9,7 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         '/rfid-detect',
         '/clear-rfid-cache',
-        '/get-latest-rfid'
+        '/get-latest-rfid',
+        'rfid/*'
     ];
 }

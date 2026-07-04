@@ -29,22 +29,27 @@ class CompleteSchoolSeeder extends Seeder
         // Create users with roles
         $adminUser = $this->createAdministrator();
         $teachers = $this->createTeachers();
-        $students = $this->createStudents();
 
         // Create classes
         $classes = $this->createClasses();
 
+        // Create students
+        $students = $this->createStudents($classes);
+
+        // Create attendance
+        $this->createAttendance($classes);
+
         // Create subjects
         $subjects = $this->createSubjects();
-
-        // Assign students to classes
-        $this->assignStudentsToClasses($students, $classes);
 
         // Create schedules
         $this->createSchedules($classes, $subjects, $teachers);
 
-        // Create attendances
-        $this->createAttendances($students, $classes);
+        // Create lesson attendance
+        $this->createLessonAttendance($classes);
+
+        // Create parents
+        $this->createParents($students);
 
         // Re-enable foreign key checks
         Schema::enableForeignKeyConstraints();
@@ -61,6 +66,7 @@ class CompleteSchoolSeeder extends Seeder
             'subject',
             'classes',
             'student',
+            'parent',
             'teacher',
             'administrator',
             'model_has_permissions',
@@ -81,9 +87,10 @@ class CompleteSchoolSeeder extends Seeder
         // Create permissions
         $permissions = [
             'dashboard.view', 'dashboard.index',
-            'users.create', 'users.view', 'users.edit', 'users.delete',
+            'users.create', 'users.view', 'users.edit', 'users.delete', 'users.index',
             'students.create', 'students.view', 'students.edit', 'students.delete', 'students.index',
             'teachers.create', 'teachers.view', 'teachers.edit', 'teachers.delete', 'teachers.index',
+            'parents.create', 'parents.view', 'parents.edit', 'parents.delete', 'parents.index',
             'classes.create', 'classes.view', 'classes.edit', 'classes.delete', 'classes.index', 'classes.show',
             'subjects.create', 'subjects.view', 'subjects.edit', 'subjects.delete', 'subjects.index',
             'schedules.create', 'schedules.view', 'schedules.edit', 'schedules.delete', 'schedules.index',
@@ -101,7 +108,6 @@ class CompleteSchoolSeeder extends Seeder
             'permissions.create', 'permissions.view', 'permissions.edit', 'permissions.delete', 'permissions.index',
             'settings.create', 'settings.view', 'settings.edit', 'settings.delete', 'settings.index',
             'setting-schedule.create', 'setting-schedule.view', 'setting-schedule.edit', 'setting-schedule.delete', 'setting-schedule.index',
-            'parents.create', 'parents.view', 'parents.edit', 'parents.delete', 'parents.index',
             'student-grades.create', 'student-grades.view', 'student-grades.edit', 'student-grades.delete', 'student-grades.index',
         ];
 
@@ -114,13 +120,16 @@ class CompleteSchoolSeeder extends Seeder
         $adminRole = Role::create(['name' => 'Admin']);
         $teacherRole = Role::create(['name' => 'Teacher']);
         $studentRole = Role::create(['name' => 'Student']);
+        $parentRole = Role::create(['name' => 'Parent']);
 
         // Assign permissions to roles
         $superAdminRole->givePermissionTo(Permission::all());
         $adminRole->givePermissionTo([
             'dashboard.view',
+            'users.view', 'users.create', 'users.edit', 'users.delete',
             'students.view', 'students.create', 'students.edit', 'students.delete',
             'teachers.view', 'teachers.create', 'teachers.edit', 'teachers.delete',
+            'parents.view', 'parents.create', 'parents.edit', 'parents.delete',
             'classes.view', 'classes.create', 'classes.edit', 'classes.delete',
             'subjects.view', 'subjects.create', 'subjects.edit', 'subjects.delete',
             'schedules.view', 'schedules.create', 'schedules.edit', 'schedules.delete',
@@ -133,10 +142,24 @@ class CompleteSchoolSeeder extends Seeder
             'subjects.view',
             'schedules.view',
             'attendances.view', 'attendances.create', 'attendances.edit',
+            'exams.view', 'exams.create', 'exams.edit',
+            'questions.view', 'questions.create', 'questions.edit',
+            'student-grades.view', 'student-grades.create', 'student-grades.edit',
         ]);
         $studentRole->givePermissionTo([
             'dashboard.view',
             'attendances.view',
+            'exams.view',
+            'schedules.view',
+            'student-grades.view',
+        ]);
+        $parentRole->givePermissionTo([
+            'dashboard.view',
+            'students.view',
+            'attendances.view',
+            'exams.view',
+            'student-grades.view',
+            'schedules.view',
         ]);
     }
 
@@ -149,7 +172,6 @@ class CompleteSchoolSeeder extends Seeder
             'name' => 'Super Admin',
             'email' => 'admin@smkwima.sch.id',
             'password' => Hash::make('password'),
-            'phone' => '08123456789',
             'status' => true,
             'join_date' => now()->format('Y-m-d'),
             'created_at' => now(),
@@ -159,6 +181,7 @@ class CompleteSchoolSeeder extends Seeder
         $adminId = DB::table('administrator')->insertGetId([
             'id' => Str::uuid(),
             'name' => 'Super Admin',
+            'phone' => '08123456789',
             'user_id' => $userUuid,
             'birth_place' => 'Jakarta',
             'birth_date' => '1990-01-01',
@@ -238,7 +261,6 @@ class CompleteSchoolSeeder extends Seeder
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make('password'),
-                'phone' => '0812345678' . rand(0, 9),
                 'status' => true,
                 'join_date' => now()->format('Y-m-d'),
                 'created_at' => now(),
@@ -249,6 +271,7 @@ class CompleteSchoolSeeder extends Seeder
                 'id' => $teacherUuid,
                 'user_id' => $userUuid,
                 'name' => $data['name'],
+                'phone' => '0812345678' . rand(0, 9),
                 'nip' => $data['nip'],
                 'education_level' => $data['education_level'],
                 'education_major' => $data['education_major'],
@@ -277,108 +300,44 @@ class CompleteSchoolSeeder extends Seeder
         return $teachers;
     }
 
-    private function createStudents(): array
-    {
-        $students = [];
-        $studentNames = [
-            'Ahmad Rizki', 'Siti Nurhaliza', 'Budi Santoso', 'Dewi Lestari', 'Rudi Hartono',
-            'Maya Sari', 'Joko Widodo', 'Ani Susanti', 'Eko Prasetyo', 'Rina Wijaya',
-            'Doni Pratama', 'Lisa Permata', 'Hendra Gunawan', 'Fitri Handayani', 'Andi Wijaya',
-            'Sri Wahyuni', 'Bambang Sutrisno', 'Yuni Astuti', 'Dedi Kurniawan', 'Nina Kartika',
-        ];
-
-        foreach ($studentNames as $index => $name) {
-            $userUuid = Str::uuid();
-            $studentUuid = Str::uuid();
-            
-            DB::table('users')->insert([
-                'id' => $userUuid,
-                'name' => $name,
-                'email' => strtolower(str_replace(' ', '.', $name)) . '@student.smkwima.sch.id',
-                'password' => Hash::make('password'),
-                'phone' => '081234567' . sprintf('%02d', $index + 1),
-                'status' => true,
-                'join_date' => now()->format('Y-m-d'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            DB::table('student')->insert([
-                'id' => $studentUuid,
-                'user_id' => $userUuid,
-                'no_absen' => sprintf('%03d', $index + 1),
-                'name' => $name,
-                'nisn' => '00' . sprintf('%08d', $index + 1),
-                'nik' => '320101' . sprintf('%08d', $index + 100000001),
-                'gender' => $index % 2 == 0 ? 'laki-laki' : 'perempuan',
-                'birth_date' => now()->subYears(rand(15, 18))->format('Y-m-d'),
-                'birth_place' => 'Jakarta',
-                'religion' => 'Islam',
-                'address' => 'Jl. Pelajar No. ' . ($index + 1),
-                'status' => 'siswa',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            // Assign Student role
-            $userModel = \App\Models\User::find($userUuid);
-            $userModel->assignRole('Student');
-
-            $students[] = [
-                'user_id' => $userUuid,
-                'student_id' => $studentUuid, // Use correct UUID
-                'name' => $name,
-                'nisn' => '00' . sprintf('%08d', $index + 1),
-            ];
-        }
-
-        return $students;
-    }
-
+    
     private function createClasses(): array
     {
         $classes = [];
-        $classData = [
-            ['name' => 'X IPA 1 2025/2026', 'code' => 'XIPA1', 'grade' => '10', 'major' => 'IPA'],
-            ['name' => 'X IPA 2 2025/2026', 'code' => 'XIPA2', 'grade' => '10', 'major' => 'IPA'],
-            ['name' => 'X IPS 1 2025/2026', 'code' => 'XIPS1', 'grade' => '10', 'major' => 'IPS'],
-            // ['name' => 'X IPS 2 2025/2026', 'code' => 'XIPS2', 'grade' => '10', 'major' => 'IPS'],
-            // ['name' => 'XI IPA 1 2025/2026', 'code' => 'XIIPA1', 'grade' => '11', 'major' => 'IPA'],
-            // ['name' => 'XI IPA 2 2025/2026', 'code' => 'XIIPA2', 'grade' => '11', 'major' => 'IPA'],
-            // ['name' => 'XI IPS 1 2025/2026', 'code' => 'XIIPS1', 'grade' => '11', 'major' => 'IPS'],
-            // ['name' => 'XI IPS 2 2025/2026', 'code' => 'XIIPS2', 'grade' => '11', 'major' => 'IPS'],
-            // ['name' => 'XII IPA 1 2025/2026', 'code' => 'XIIIPA1', 'grade' => '12', 'major' => 'IPA'],
-            // ['name' => 'XII IPA 2 2025/2026', 'code' => 'XIIIPA2', 'grade' => '12', 'major' => 'IPA'],
-            // ['name' => 'XII IPS 1 2025/2026', 'code' => 'XIIIPS1', 'grade' => '12', 'major' => 'IPS'],
-            // ['name' => 'XII IPS 2 2025/2026', 'code' => 'XIIIPS2', 'grade' => '12', 'major' => 'IPS'],
-            // ['name' => 'X TKJ 1 2025/2026', 'code' => 'XTKJ1', 'grade' => '10', 'major' => 'TKJ'],
-            // ['name' => 'X MM 1 2025/2026', 'code' => 'XMM1', 'grade' => '10', 'major' => 'MM'],
-            // ['name' => 'XI RPL 1 2025/2026', 'code' => 'XIRPL1', 'grade' => '11', 'major' => 'RPL'],
-            // ['name' => 'XI RPL 2 2025/2026', 'code' => 'XIRPL2', 'grade' => '11', 'major' => 'RPL'],
-            // ['name' => 'XII AK 1 2025/2026', 'code' => 'XIIAK1', 'grade' => '12', 'major' => 'AK'],
+        $majors = [
+            'Teknik Kimia Industri',
+            'Teknik Komputer dan Jaringan',
+            'Teknik Kendaraan Ringan',
+            'Teknik Sepeda Motor'
         ];
+        $grades = ['10', '11', '12'];
+        $gradePrefixes = ['X', 'XI', 'XII'];
 
-        foreach ($classData as $data) {
-            $classUuid = Str::uuid();
-            
-            DB::table('classes')->insert([
-                'id' => $classUuid,
-                'name' => $data['name'],
-                'code' => $data['code'],
-                'grade' => $data['grade'],
-                'major' => $data['major'],
-                'academic_year' => '2025/2026',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        foreach ($grades as $gradeIndex => $grade) {
+            $prefix = $gradePrefixes[$gradeIndex];
+            foreach ($majors as $majorIndex => $major) {
+                $classUuid = Str::uuid();
+                $code = $prefix . strtoupper(substr(str_replace(' ', '', $major), 0, 3)) . ($majorIndex + 1);
 
-            $classes[] = [
-                'id' => $classUuid,
-                'name' => $data['name'],
-                'code' => $data['code'],
-                'grade' => $data['grade'],
-                'major' => $data['major'],
-            ];
+                DB::table('classes')->insert([
+                    'id' => $classUuid,
+                    'name' => $prefix . ' ' . $major . ' 2025/2026',
+                    'code' => $code,
+                    'grade' => $grade,
+                    'major' => $major,
+                    'academic_year' => '2025/2026',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $classes[] = [
+                    'id' => $classUuid,
+                    'name' => $prefix . ' ' . $major . ' 2025/2026',
+                    'code' => $code,
+                    'grade' => $grade,
+                    'major' => $major,
+                ];
+            }
         }
 
         return $classes;
@@ -435,33 +394,560 @@ class CompleteSchoolSeeder extends Seeder
         return $subjects;
     }
 
-    private function assignStudentsToClasses(array $students, array $classes): void
+    
+    private function createStudents(array $classes): array
     {
-        $studentChunks = array_chunk($students, 5); // 5 students per class
+        $majors = [
+            'Teknik Kimia Industri',
+            'Teknik Komputer dan Jaringan',
+            'Teknik Kendaraan Ringan',
+            'Teknik Sepeda Motor'
+        ];
 
-        foreach ($studentChunks as $index => $chunk) {
-            if (isset($classes[$index])) {
-                foreach ($chunk as $student) {
+        // Student distribution per grade and major
+        $distribution = [
+            '10' => [13, 12, 13, 12], // Total 50
+            '11' => [12, 13, 12, 12], // Total 49
+            '12' => [4, 4, 4, 3],     // Total 15
+        ];
+
+        $firstNames = ['Ahmad', 'Budi', 'Citra', 'Dewi', 'Eko', 'Fajar', 'Gita', 'Hana', 'Indra', 'Joko', 'Kartika', 'Lina', 'Made', 'Nina', 'Oscar', 'Putri', 'Rizky', 'Siti', 'Tono', 'Utami', 'Vina', 'Wahyu', 'Xena', 'Yani', 'Zainal'];
+        $lastNames = ['Santoso', 'Wijaya', 'Kusuma', 'Pratama', 'Hidayat', 'Saputra', 'Putra', 'Putri', 'Nugraha', 'Permana', 'Ramadhan', 'Suryadi', 'Wibowo', 'Yuliana', 'Zulkifli', 'Anggraini', 'Budiman', 'Cahyono', 'Darmawan', 'Efendi', 'Firmansyah', 'Gunawan', 'Hartono', 'Irawan', 'Junaedi'];
+
+        // RFID cards to assign
+        $rfidCards = [
+            'B3:7B:49:FE',
+            '73:CB:D9:07',
+            '43:40:CE:11',
+            '93:34:A8:07',
+            'C0:AD:04:58',
+            '63:0F:A0:F7'
+        ];
+
+        // Shuffle RFID cards for random assignment
+        shuffle($rfidCards);
+
+        // Track students by grade for RFID assignment
+        $studentsByGrade = [
+            '10' => [],
+            '11' => [],
+            '12' => []
+        ];
+
+        // Reorganize classes by grade and major for easy lookup
+        $classesByGradeAndMajor = [];
+        foreach ($classes as $class) {
+            $classesByGradeAndMajor[$class['grade']][$class['major']] = $class;
+        }
+
+        $studentCounter = 1;
+
+        // === Siswa Khusus: Putri Anggraini - X Teknik Kimia Industri ===
+        $putriUserUuid = Str::uuid();
+        $putriStudentUuid = Str::uuid();
+        $putriClass = $classesByGradeAndMajor['10']['Teknik Kimia Industri'] ?? null;
+
+        if ($putriClass) {
+            DB::table('users')->insert([
+                'id' => $putriUserUuid,
+                'name' => 'Putri Anggraini',
+                'email' => 'putri.anggraini@smkwima.sch.id',
+                'password' => Hash::make('password'),
+                'status' => true,
+                'join_date' => now()->format('Y-m-d'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('student')->insert([
+                'id' => $putriStudentUuid,
+                'user_id' => $putriUserUuid,
+                'name' => 'Putri Anggraini',
+                'phone' => '081200000001',
+                'nisn' => '20250001',
+                'nik' => '317' . str_pad(rand(100000000000000, 999999999999999), 15, '0', STR_PAD_LEFT),
+                'gender' => 'perempuan',
+                'birth_place' => 'Surabaya',
+                'birth_date' => now()->subYears(16)->format('Y-m-d'),
+                'address' => 'Jl. Merdeka No. 1',
+                'parent_name' => 'Ibu Anggraini',
+                'parent_phone' => '082233088346',
+                'no_card' => '73:CB:D9:07',
+                'status' => 'siswa',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('student_class')->insert([
+                'id' => Str::uuid(),
+                'student_id' => $putriStudentUuid,
+                'class_id' => $putriClass['id'],
+                'academic_year' => '2025/2026',
+                'semester' => (date('n') >= 7) ? 'ganjil' : 'genap',
+                'start_date' => now()->format('Y-m-d'),
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $userModel = \App\Models\User::find($putriUserUuid);
+            $userModel->assignRole('Student');
+
+            $studentsByGrade['10'][] = [
+                'student_uuid' => $putriStudentUuid,
+                'name' => 'Putri Anggraini',
+                'nisn' => '20250001',
+            ];
+
+            $this->command->info('Created specific student: Putri Anggraini - X Teknik Kimia Industri (RFID: 73:CB:D9:07)');
+            $studentCounter++;
+        }
+        // === End Siswa Khusus ===
+
+        foreach ($distribution as $grade => $counts) {
+            foreach ($majors as $majorIndex => $major) {
+                $count = $counts[$majorIndex];
+
+                // Kurangi 1 untuk grade 10 Teknik Kimia Industri karena Putri sudah dibuat
+                if ($grade === '10' && $major === 'Teknik Kimia Industri' && $putriClass) {
+                    $count = $count - 1;
+                }
+
+                // Get the class for this grade and major
+                $class = $classesByGradeAndMajor[$grade][$major] ?? null;
+                
+                if (!$class) {
+                    $this->command->error("Class not found for grade {$grade} and major {$major}");
+                    continue;
+                }
+
+                for ($i = 1; $i <= $count; $i++) {
+                    $userUuid = Str::uuid();
+                    $studentUuid = Str::uuid();
+                    $firstName = $firstNames[array_rand($firstNames)];
+                    $lastName = $lastNames[array_rand($lastNames)];
+                    $fullName = $firstName . ' ' . $lastName;
+                    $nis = '2025' . str_pad($studentCounter, 4, '0', STR_PAD_LEFT);
+                    $email = strtolower(str_replace(' ', '.', $fullName)) . '.' . $studentCounter . '@smkwima.sch.id';
+
+                    // Create user
+                    $studentPhone = '081234567' . str_pad($studentCounter % 1000, 3, '0', STR_PAD_LEFT);
+
+                    DB::table('users')->insert([
+                        'id' => $userUuid,
+                        'name' => $fullName,
+                        'email' => $email,
+                        'password' => Hash::make('password'),
+                        'status' => true,
+                        'join_date' => now()->format('Y-m-d'),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    // Create student
+                    DB::table('student')->insert([
+                        'id' => $studentUuid,
+                        'user_id' => $userUuid,
+                        'name' => $fullName,
+                        'phone' => $studentPhone,
+                        'nisn' => $nis,
+                        'nik' => '317' . str_pad(rand(100000000000000, 999999999999999), 15, '0', STR_PAD_LEFT),
+                        'gender' => rand(0, 1) === 1 ? 'laki-laki' : 'perempuan',
+                        'birth_place' => 'Jakarta',
+                        'birth_date' => now()->subYears(rand(15, 18))->format('Y-m-d'),
+                        'address' => 'Jl. Siswa No. ' . $studentCounter,
+                        'status' => 'siswa',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    // Assign student to class
                     DB::table('student_class')->insert([
                         'id' => Str::uuid(),
-                        'class_id' => $classes[$index]['id'],
-                        'student_id' => $student['student_id'],
+                        'student_id' => $studentUuid,
+                        'class_id' => $class['id'],
                         'academic_year' => '2025/2026',
-                        'semester' => 'ganjil',
+                        'semester' => (date('n') >= 7) ? 'ganjil' : 'genap',
                         'start_date' => now()->format('Y-m-d'),
-                        'end_date' => now()->addMonths(6)->format('Y-m-d'),
                         'status' => 'active',
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
+
+                    // Assign Student role using Spatie
+                    $userModel = \App\Models\User::find($userUuid);
+                    $userModel->assignRole('Student');
+
+                    // Store student info for RFID assignment
+                    $studentsByGrade[$grade][] = [
+                        'student_uuid' => $studentUuid,
+                        'name' => $fullName,
+                        'nisn' => $nis,
+                    ];
+
+                    $studentCounter++;
                 }
             }
         }
+
+        // Assign RFID cards ensuring each grade gets at least 1
+        // Remove Putri's card since it's already assigned
+        $rfidCards = array_values(array_filter($rfidCards, fn($card) => $card !== '73:CB:D9:07'));
+        $rfidIndex = 0;
+        $rfidDistribution = [
+            '10' => 2, // 2 cards for grade 10
+            '11' => 2, // 2 cards for grade 11
+            '12' => min(1, count($rfidCards) - 4), // remaining cards for grade 12
+        ];
+
+        foreach ($rfidDistribution as $grade => $cardCount) {
+            if ($rfidIndex >= count($rfidCards)) break;
+
+            $gradeStudents = $studentsByGrade[$grade];
+            if (empty($gradeStudents)) continue;
+
+            // Randomly select students from this grade
+            $selectedStudentIndices = array_rand($gradeStudents, min($cardCount, count($gradeStudents)));
+
+            // Handle single selection (array_rand returns int, not array)
+            if (!is_array($selectedStudentIndices)) {
+                $selectedStudentIndices = [$selectedStudentIndices];
+            }
+
+            foreach ($selectedStudentIndices as $studentIndex) {
+                if ($rfidIndex >= count($rfidCards)) break;
+
+                $student = $gradeStudents[$studentIndex];
+                $rfidCard = $rfidCards[$rfidIndex];
+
+                // Update student with RFID card
+                DB::table('student')
+                    ->where('id', $student['student_uuid'])
+                    ->update([
+                        'no_card' => $rfidCard,
+                        'updated_at' => now(),
+                    ]);
+
+                $this->command->info("Assigned RFID {$rfidCard} to student {$student['name']} (NISN: {$student['nisn']}) - Grade {$grade}");
+                $rfidIndex++;
+            }
+        }
+
+        $this->command->info('Created ' . ($studentCounter - 1) . ' students across all grades and majors.');
+
+        return $studentsByGrade;
+    }
+
+    private function createParents(array $studentsByGrade): void
+    {
+        // Get 2 students from different grades to link parents to
+        $selectedStudents = [];
+
+        // Get 1 student from grade 10
+        if (!empty($studentsByGrade['10'])) {
+            $selectedStudents[] = $studentsByGrade['10'][0];
+        }
+
+        // Get 1 student from grade 11
+        if (!empty($studentsByGrade['11'])) {
+            $selectedStudents[] = $studentsByGrade['11'][0];
+        }
+
+        // If we don't have enough students, use what we have
+        if (count($selectedStudents) < 2 && !empty($studentsByGrade['12'])) {
+            $selectedStudents[] = $studentsByGrade['12'][0];
+        }
+
+        // === Parent khusus: Orang tua Putri Anggraini ===
+        $putriStudent = null;
+        foreach ($studentsByGrade['10'] as $s) {
+            if ($s['name'] === 'Putri Anggraini') {
+                $putriStudent = $s;
+                break;
+            }
+        }
+
+        if ($putriStudent) {
+            $putriParentUserUuid = Str::uuid();
+            $putriParentUuid = Str::uuid();
+
+            DB::table('users')->insert([
+                'id' => $putriParentUserUuid,
+                'name' => 'Ibu Anggraini',
+                'email' => 'parent.putri@parent.com',
+                'password' => Hash::make('password'),
+                'status' => true,
+                'join_date' => now()->format('Y-m-d'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('parent')->insert([
+                'id' => $putriParentUuid,
+                'user_id' => $putriParentUserUuid,
+                'student_id' => $putriStudent['student_uuid'],
+                'name' => 'Ibu Anggraini',
+                'phone' => '082233088346',
+                'jenis_kelamin' => 'perempuan',
+                'status' => 'ibu',
+                'province' => 'Jawa Timur',
+                'regency' => 'Surabaya',
+                'district' => 'Gubeng',
+                'village' => 'Gubeng',
+                'address' => 'Jl. Merdeka No. 1',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $userModel = \App\Models\User::find($putriParentUserUuid);
+            $userModel->assignRole('Parent');
+
+            $this->command->info('Created parent for Putri Anggraini: Ibu Anggraini (082233088346)');
+        }
+        // === End Parent khusus ===
+
+        $parentData = [
+            [
+                'name' => 'Hendra Wijaya',
+                'email' => 'parent1@parent.com',
+                'phone' => '081234567890',
+                'gender' => 'laki-laki',
+                'status' => 'ayah',
+            ],
+            [
+                'name' => 'Sri Mulyani',
+                'email' => 'parent2@parent.com',
+                'phone' => '081234567891',
+                'gender' => 'perempuan',
+                'status' => 'ibu',
+            ],
+        ];
+
+        foreach ($parentData as $index => $data) {
+            if (!isset($selectedStudents[$index])) {
+                $this->command->warn("Not enough students to create parent " . ($index + 1));
+                continue;
+            }
+
+            $student = $selectedStudents[$index];
+            $userUuid = Str::uuid();
+            $parentUuid = Str::uuid();
+
+            // Create user
+            DB::table('users')->insert([
+                'id' => $userUuid,
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make('password'),
+                'status' => true,
+                'join_date' => now()->format('Y-m-d'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Create parent
+            DB::table('parent')->insert([
+                'id' => $parentUuid,
+                'user_id' => $userUuid,
+                'student_id' => $student['student_uuid'],
+                'name' => $data['name'],
+                'phone' => $data['phone'],
+                'jenis_kelamin' => $data['gender'],
+                'status' => $data['status'],
+                'province' => 'DKI Jakarta',
+                'regency' => 'Jakarta Pusat',
+                'district' => 'Menteng',
+                'village' => 'Menteng',
+                'address' => 'Jl. Orang Tua No. ' . ($index + 1),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Assign Parent role
+            $userModel = \App\Models\User::find($userUuid);
+            $userModel->assignRole('Parent');
+
+            $this->command->info("Created parent {$data['name']} ({$data['status']}) linked to student {$student['name']} (NISN: {$student['nisn']})");
+        }
+
+        $this->command->info('Created ' . count($parentData) . ' parent accounts.');
+    }
+
+    private function createAttendance(array $classes): void
+    {
+        // Get all students with their class information
+        $students = DB::table('student')
+            ->join('student_class', 'student.id', '=', 'student_class.student_id')
+            ->select('student.id as student_id', 'student_class.class_id')
+            ->get();
+
+        // Generate working days for April 2026 and May 1-15, 2026
+        $year = 2026;
+        $workingDays = [];
+        
+        // April 2026 - all working days
+        for ($day = 1; $day <= 30; $day++) {
+            $date = \Carbon\Carbon::create($year, 4, $day);
+            // Skip weekends (Saturday = 6, Sunday = 0)
+            if ($date->dayOfWeek !== 0 && $date->dayOfWeek !== 6) {
+                $workingDays[] = $date->format('Y-m-d');
+            }
+        }
+        
+        // May 2026 - days 1-15 only
+        for ($day = 1; $day <= 15; $day++) {
+            $date = \Carbon\Carbon::create($year, 5, $day);
+            // Skip weekends (Saturday = 6, Sunday = 0)
+            if ($date->dayOfWeek !== 0 && $date->dayOfWeek !== 6) {
+                $workingDays[] = $date->format('Y-m-d');
+            }
+        }
+
+        $attendanceCount = 0;
+
+        foreach ($students as $student) {
+            foreach ($workingDays as $date) {
+                // Randomly decide if student is present (85% attendance rate)
+                if (rand(1, 100) > 85) {
+                    // Absent (izin, sakit, or alpha)
+                    $status = rand(0, 1) === 0 ? 'izin' : (rand(0, 1) === 0 ? 'sakit' : 'alpha');
+                    
+                    DB::table('attendance')->insert([
+                        'id' => Str::uuid(),
+                        'student_id' => $student->student_id,
+                        'class_id' => $student->class_id,
+                        'date' => $date,
+                        'check_in' => null,
+                        'check_out' => null,
+                        'check_in_status' => $status,
+                        'check_out_status' => $status,
+                        'academic_year' => '2025/2026',
+                        'semester' => 'ganjil',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                } else {
+                    // Present - generate realistic times
+                    $checkInHour = rand(6, 7); // 6:00 - 7:59
+                    $checkInMinute = rand(0, 59);
+                    $checkInStatus = $checkInHour >= 7 ? 'terlambat' : 'tepat';
+                    
+                    $checkOutHour = rand(14, 15); // 14:00 - 15:59
+                    $checkOutMinute = rand(0, 59);
+                    $checkOutStatus = 'tepat';
+
+                    DB::table('attendance')->insert([
+                        'id' => Str::uuid(),
+                        'student_id' => $student->student_id,
+                        'class_id' => $student->class_id,
+                        'date' => $date,
+                        'check_in' => sprintf('%02d:%02d:00', $checkInHour, $checkInMinute),
+                        'check_out' => sprintf('%02d:%02d:00', $checkInHour + 7, $checkOutMinute),
+                        'check_in_status' => $checkInStatus,
+                        'check_out_status' => $checkOutStatus,
+                        'academic_year' => '2025/2026',
+                        'semester' => 'ganjil',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+                $attendanceCount++;
+            }
+        }
+
+        $this->command->info('Created ' . $attendanceCount . ' attendance records for ' . $students->count() . ' students (April + May 1-15, 2026).');
+    }
+
+    private function createLessonAttendance(array $classes): void
+    {
+        // Get all schedules
+        $schedules = DB::table('schedule')->get();
+
+        // April 2026 - all days (Monday to Sunday)
+        $year = 2026;
+        $month = 4; // April
+        $workingDays = [];
+        
+        for ($day = 1; $day <= 30; $day++) {
+            $date = \Carbon\Carbon::create($year, $month, $day);
+            $workingDays[$date->dayOfWeek] = $date->format('Y-m-d'); // Map day of week to date
+        }
+
+        // Map day names to Carbon day of week
+        $dayMap = [
+            'senin' => 1,
+            'selasa' => 2,
+            'rabu' => 3,
+            'kamis' => 4,
+            'jumat' => 5,
+            'sabtu' => 6,
+            'minggu' => 0,
+        ];
+
+        $lessonAttendanceCount = 0;
+
+        foreach ($schedules as $schedule) {
+            $dayOfWeek = $dayMap[$schedule->day] ?? null;
+            
+            if ($dayOfWeek && isset($workingDays[$dayOfWeek])) {
+                $date = $workingDays[$dayOfWeek];
+                
+                // Get all students in this class
+                $students = DB::table('student_class')
+                    ->where('class_id', $schedule->class_id)
+                    ->where('academic_year', '2025/2026')
+                    ->pluck('student_id');
+
+                foreach ($students as $studentId) {
+                    // Randomly decide if student is present (90% attendance rate for lessons)
+                    if (rand(1, 100) > 90) {
+                        // Absent (izin, sakit, or alpha)
+                        $status = rand(0, 1) === 0 ? 'izin' : (rand(0, 1) === 0 ? 'sakit' : 'alpha');
+                        
+                        DB::table('lesson_attendance')->insert([
+                            'id' => Str::uuid(),
+                            'student_id' => $studentId,
+                            'class_id' => $schedule->class_id,
+                            'subject_id' => $schedule->subject_id,
+                            'date' => $date,
+                            'check_in' => null,
+                            'check_in_status' => $status,
+                            'academic_year' => '2025/2026',
+                            'semester' => 'ganjil',
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    } else {
+                        // Present - generate realistic check-in time based on schedule
+                        $scheduleStartTime = \Carbon\Carbon::parse($schedule->start_time);
+                        $checkInTime = $scheduleStartTime->copy()->addMinutes(rand(-10, 10)); // +/- 10 minutes from start
+                        $checkInStatus = $checkInTime->gt($scheduleStartTime) ? 'terlambat' : 'hadir';
+
+                        DB::table('lesson_attendance')->insert([
+                            'id' => Str::uuid(),
+                            'student_id' => $studentId,
+                            'class_id' => $schedule->class_id,
+                            'subject_id' => $schedule->subject_id,
+                            'date' => $date,
+                            'check_in' => $checkInTime->format('H:i:s'),
+                            'check_in_status' => $checkInStatus,
+                            'academic_year' => '2025/2026',
+                            'semester' => 'ganjil',
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                    $lessonAttendanceCount++;
+                }
+            }
+        }
+
+        $this->command->info('Created ' . $lessonAttendanceCount . ' lesson attendance records for April 2026.');
     }
 
     private function createSchedules(array $classes, array $subjects, array $teachers): void
     {
-        $days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat'];
+        $days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
         $times = [
             ['start' => '07:00:00', 'end' => '08:30:00'],
             ['start' => '08:30:00', 'end' => '10:00:00'],
@@ -470,13 +956,44 @@ class CompleteSchoolSeeder extends Seeder
             ['start' => '14:00:00', 'end' => '15:30:00'],
         ];
 
-        foreach ($classes as $classIndex => $class) {
-            foreach ($days as $dayIndex => $day) {
-                foreach ($times as $timeIndex => $time) {
-                    // Skip some slots for variety
-                    if (rand(1, 10) > 7) continue;
+        // Group subjects by major for more relevant assignments
+        $subjectMap = [
+            'Teknik Kimia Industri' => ['Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'Fisika', 'Kimia', 'Kimia Industri', 'Teknik Mesin'],
+            'Teknik Komputer dan Jaringan' => ['Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'Fisika', 'Teknik Komputer Jaringan', 'Produktif TKJ'],
+            'Teknik Kendaraan Ringan' => ['Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'Fisika', 'Teknik Mesin'],
+            'Teknik Sepeda Motor' => ['Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'Fisika', 'Teknik Mesin'],
+        ];
 
-                    $subject = $subjects[array_rand($subjects)];
+        // Common subjects for all majors
+        $commonSubjects = ['Pendidikan Agama Islam', 'Pendidikan Kewarganegaraan', 'Penjaskes', 'Seni Budaya', 'Sejarah'];
+
+        foreach ($classes as $class) {
+            $major = $class['major'];
+            $grade = $class['grade'];
+            
+            // Get relevant subjects for this major
+            $relevantSubjects = collect($subjects)->filter(function ($subject) use ($subjectMap, $major, $commonSubjects) {
+                $majorSubjects = $subjectMap[$major] ?? [];
+                return in_array($subject['name'], $majorSubjects) || in_array($subject['name'], $commonSubjects);
+            })->values()->toArray();
+
+            // If no relevant subjects found, use all subjects
+            if (empty($relevantSubjects)) {
+                $relevantSubjects = $subjects;
+            }
+
+            $subjectIndex = 0;
+
+            foreach ($days as $day) {
+                foreach ($times as $timeIndex => $time) {
+                    // Skip Friday afternoon for Jumat Khusus/Keagamaan
+                    if ($day === 'jumat' && $timeIndex >= 3) continue;
+
+                    // Skip some slots for breaks (istirahat)
+                    if ($timeIndex === 2) continue; // Break after 2nd period
+
+                    // Cycle through subjects
+                    $subject = $relevantSubjects[$subjectIndex % count($relevantSubjects)];
                     $teacher = $teachers[array_rand($teachers)];
 
                     DB::table('schedule')->insert([
@@ -487,68 +1004,17 @@ class CompleteSchoolSeeder extends Seeder
                         'day' => $day,
                         'start_time' => $time['start'],
                         'end_time' => $time['end'],
-                        'semester' => 'ganjil',
+                        'semester' => (date('n') >= 7) ? 'ganjil' : 'genap',
                         'academic_year' => '2025/2026',
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
+
+                    $subjectIndex++;
                 }
             }
         }
-    }
 
-    private function createAttendances(array $students, array $classes): void
-    {
-        $dates = [];
-        for ($i = 0; $i < 7; $i++) {
-            $dates[] = now()->subDays($i)->format('Y-m-d');
-        }
-
-        foreach ($students as $student) {
-            foreach ($dates as $date) {
-                // Skip weekends
-                if (in_array(date('N', strtotime($date)), [6, 7])) continue;
-
-                $checkInStatus = 'tepat';
-                $lateDuration = 0;
-                $checkInTime = null;
-
-                // Randomly make some students late
-                if (rand(1, 10) <= 3) {
-                    $lateDuration = rand(5, 45);
-                    $hours = 7;
-                    $minutes = $lateDuration;
-                    $checkInTime = sprintf('%02d:%02d:00', $hours, $minutes);
-                    $checkInStatus = 'terlambat';
-                } else {
-                    // On time (between 06:45 and 07:00)
-                    $hours = 6;
-                    $minutes = rand(45, 59);
-                    $checkInTime = sprintf('%02d:%02d:00', $hours, $minutes);
-                    $checkInStatus = 'tepat';
-                }
-
-                // Randomly make some absent
-                if (rand(1, 10) <= 1) {
-                    $checkInStatus = 'alpha';
-                    $checkInTime = null;
-                }
-
-                DB::table('attendance')->insert([
-                    'id' => Str::uuid(),
-                    'student_id' => $student['student_id'], // Use correct UUID from students array
-                    'class_id' => $classes[array_rand($classes)]['id'],
-                    'date' => $date,
-                    'check_in' => $checkInTime,
-                    'check_out' => $checkInTime ? date('H:i:s', strtotime($checkInTime) + 8*3600) : null,
-                    'check_in_status' => $checkInStatus,
-                    'check_out_status' => 'tepat',
-                    'academic_year' => '2025/2026',
-                    'semester' => 'ganjil',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-        }
+        $this->command->info('Created schedules for ' . count($classes) . ' classes.');
     }
 }

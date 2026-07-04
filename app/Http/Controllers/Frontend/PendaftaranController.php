@@ -144,19 +144,19 @@ class PendaftaranController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'phone' => $request->phone,
                 'photo_path' => $photoPath,
                 'status' => true,
             ]);
 
             // Assign student role
-            $user->assignRole('student');
+            $user->assignRole('Student');
 
             // Create student record
             $student = Student::create([
                 'id' => Str::uuid(),
                 'user_id' => $user->id,
                 'name' => $request->name,
+                'phone' => $request->phone,
                 'nisn' => $request->nisn,
                 'nik' => $request->nik,
                 'gender' => $request->gender,
@@ -172,7 +172,7 @@ class PendaftaranController extends Controller
                 'status' => 'calon siswa',
                 'jurusan_utama' => $request->jurusan_utama,
                 'jurusan_cadangan' => $request->jurusan_cadangan,
-                'academic_year' => AcademicYearHelper::getCurrentAcademicYear(),
+                'academic_year' => AcademicYearHelper::getNextAcademicYear(),
             ]);
 
             Log::info('Student created successfully. ID: ' . $student->id);

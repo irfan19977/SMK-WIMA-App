@@ -7,6 +7,7 @@ use App\Models\Classes;
 use App\Models\Lesson;
 use App\Models\Schedule;
 use App\Models\Student;
+use App\Models\StudentPermission;
 use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
+use App\Services\WhatsAppService;
 
 class LessonAttendanceController extends Controller
 {
@@ -37,10 +39,10 @@ class LessonAttendanceController extends Controller
             // For teachers, only show classes they teach
             $classes = Classes::whereHas('schedules', function ($query) use ($user) {
                 $query->where('teacher_id', $user->id);
-            })->get();
+            })->orderByGrade()->get();
         } else {
             // For admin and other roles, show all classes
-            $classes = Classes::all();
+            $classes = Classes::orderByGrade()->get();
         }
 
         // Get all subjects (will be filtered by AJAX based on class selection)
@@ -63,7 +65,10 @@ class LessonAttendanceController extends Controller
                 'sub.name as subject_name'
             ])
             ->join('student as s', 'la.student_id', '=', 's.id')
-            ->join('student_class as sc', 's.id', '=', 'sc.student_id')
+            ->join('student_class as sc', function($join) {
+                $join->on('s.id', '=', 'sc.student_id')
+                     ->where('sc.status', '=', 'active');
+            })
             ->join('classes as c', 'sc.class_id', '=', 'c.id')
             ->join('subject as sub', 'la.subject_id', '=', 'sub.id')
             ->whereNull('la.deleted_at')
@@ -195,8 +200,11 @@ class LessonAttendanceController extends Controller
 
             // Get students in the class
             $students = DB::table('student as s')
-                ->join('student_class as sc', 's.id', '=', 'sc.student_id')
-                ->where('sc.class_id', $classId)
+                ->join('student_class as sc', function($join) use ($classId) {
+                    $join->on('s.id', '=', 'sc.student_id')
+                         ->where('sc.status', '=', 'active')
+                         ->where('sc.class_id', '=', $classId);
+                })
                 ->whereNull('s.deleted_at')
                 ->select('s.id', 's.name', 's.nisn', 's.user_id')
                 ->orderBy('s.name')
@@ -258,13 +266,13 @@ class LessonAttendanceController extends Controller
         if ($user->hasRole('teacher')) {
             $classes = Classes::whereHas('schedules', function ($query) use ($user) {
                 $query->where('teacher_id', $user->id);
-            })->get();
+            })->orderByGrade()->get();
         } else {
-            $classes = Classes::all();
+            $classes = Classes::orderByGrade()->get();
         }
 
         // Get subjects filtered by active semester
-        $activeSemester = \App\Models\Semester::where('is_active', true)->first();
+        $activeSemester = \App\Models\Semester::autoSetActiveSemester();
         $academicYear = $activeSemester ? $activeSemester->academic_year : null;
         $semesterType = $activeSemester ? $activeSemester->semester_type : null;
         
@@ -331,7 +339,10 @@ class LessonAttendanceController extends Controller
                 'sub.name as subject_name'
             ])
             ->join('student as s', 'la.student_id', '=', 's.id')
-            ->join('student_class as sc', 's.id', '=', 'sc.student_id')
+            ->join('student_class as sc', function($join) {
+                $join->on('s.id', '=', 'sc.student_id')
+                     ->where('sc.status', '=', 'active');
+            })
             ->join('classes as c', 'sc.class_id', '=', 'c.id')
             ->join('subject as sub', 'la.subject_id', '=', 'sub.id')
             ->where('la.id', $id)
@@ -351,9 +362,9 @@ class LessonAttendanceController extends Controller
         if ($user->hasRole('teacher')) {
             $classes = Classes::whereHas('schedules', function ($query) use ($user) {
                 $query->where('teacher_id', $user->id);
-            })->get();
+            })->orderByGrade()->get();
         } else {
-            $classes = Classes::all();
+            $classes = Classes::orderByGrade()->get();
         }
 
         // Get all subjects
@@ -395,9 +406,10 @@ class LessonAttendanceController extends Controller
         try {
             // Handle both GET and POST requests
             $classId = $request->class_id ?? $request->input('class_id');
-            
+            $day = $request->day ?? $request->input('day');
+
             // Get active semester's academic year and semester type instead of user input
-            $activeSemester = \App\Models\Semester::where('is_active', true)->first();
+            $activeSemester = \App\Models\Semester::autoSetActiveSemester();
             $academicYear = $activeSemester ? $activeSemester->academic_year : null;
             $semesterType = $activeSemester ? $activeSemester->semester_type : null;
             $user = Auth::user();
@@ -411,38 +423,53 @@ class LessonAttendanceController extends Controller
 
             \Log::info('getSubjectsByClass called with:', [
                 'class_id' => $classId,
+                'day' => $day,
                 'academic_year' => $academicYear,
                 'active_semester' => $activeSemester ? $activeSemester->id : 'none'
             ]);
 
             $query = Subject::query();
 
-            if ($user->hasRole('teacher')) {
-                // For teachers, only show subjects they teach for this class
-                $query->whereHas('schedules', function ($q) use ($classId, $user, $academicYear, $semesterType) {
-                    $q->where('class_id', $classId)
-                      ->where('teacher_id', $user->id);
-                    if ($academicYear) {
-                        $q->where('academic_year', $academicYear);
-                    }
-                    if ($semesterType) {
-                        $q->where('semester', $semesterType);
-                    }
-                });
-            } else {
-                // For admin, show all subjects for the class
-                $query->whereHas('schedules', function ($q) use ($classId, $academicYear, $semesterType) {
-                    $q->where('class_id', $classId);
-                    if ($academicYear) {
-                        $q->where('academic_year', $academicYear);
-                    }
-                    if ($semesterType) {
-                        $q->where('semester', $semesterType);
-                    }
-                });
-            }
+            $applyFilters = function ($q) use ($classId, $user, $academicYear, $semesterType, $day) {
+                $q->where('class_id', $classId);
+                if ($user->hasRole('teacher')) {
+                    $q->where('teacher_id', $user->id);
+                }
+                if ($academicYear) {
+                    $q->where('academic_year', $academicYear);
+                }
+                if ($semesterType) {
+                    $q->where('semester', $semesterType);
+                }
+                if ($day) {
+                    $q->whereRaw('LOWER(day) = LOWER(?)', [$day]);
+                }
+            };
 
-            $subjects = $query->get();
+            $query->whereHas('schedules', $applyFilters);
+            $subjects = $query->distinct()->get();
+
+            // Fallback: if no subjects found for this day, show all subjects for this class
+            if ($subjects->isEmpty() && $day) {
+                \Log::info('No subjects found for day ' . $day . ', falling back to all class subjects');
+
+                $fallbackQuery = Subject::query();
+                $fallbackFilters = function ($q) use ($classId, $user, $academicYear, $semesterType) {
+                    $q->where('class_id', $classId);
+                    if ($user->hasRole('teacher')) {
+                        $q->where('teacher_id', $user->id);
+                    }
+                    if ($academicYear) {
+                        $q->where('academic_year', $academicYear);
+                    }
+                    if ($semesterType) {
+                        $q->where('semester', $semesterType);
+                    }
+                };
+
+                $fallbackQuery->whereHas('schedules', $fallbackFilters);
+                $subjects = $fallbackQuery->distinct()->get();
+            }
 
             \Log::info('Subjects found: ' . $subjects->count());
 
@@ -451,6 +478,7 @@ class LessonAttendanceController extends Controller
                 'data' => $subjects,
                 'debug' => [
                     'class_id' => $classId,
+                    'day' => $day,
                     'academic_year' => $academicYear,
                     'subjects_count' => $subjects->count(),
                     'active_semester_id' => $activeSemester ? $activeSemester->id : null
@@ -472,7 +500,7 @@ class LessonAttendanceController extends Controller
             $classId = $request->class_id ?? $request->input('class_id');
             
             // Get active semester's academic year instead of user input
-            $activeSemester = \App\Models\Semester::where('is_active', true)->first();
+            $activeSemester = \App\Models\Semester::autoSetActiveSemester();
             $academicYear = $activeSemester ? $activeSemester->academic_year : null;
 
             if (!$classId) {
@@ -613,7 +641,7 @@ class LessonAttendanceController extends Controller
             DB::beginTransaction();
 
             // Get active semester's academic year
-            $activeSemester = \App\Models\Semester::where('is_active', true)->first();
+            $activeSemester = \App\Models\Semester::autoSetActiveSemester();
             $academicYear = $activeSemester ? $activeSemester->academic_year : null;
 
             if (!$academicYear) {
@@ -629,6 +657,12 @@ class LessonAttendanceController extends Controller
             foreach ($attendances as $studentId => $attendanceData) {
                 // Only save if check_in is filled
                 if (!empty($attendanceData['check_in'])) {
+                    // Skip if student has an active full-absence permission
+                    $activePermission = StudentPermission::getActivePermission($studentId, $request->date);
+                    if ($activePermission && in_array($activePermission->type, ['sakit', 'agenda'])) {
+                        continue;
+                    }
+
                     // Check if attendance already exists
                     $existingAttendance = Lesson::where([
                         'student_id' => $studentId,
@@ -652,6 +686,24 @@ class LessonAttendanceController extends Controller
                         'semester' => $this->getSemester($request->date),
                         'created_by' => Auth::id()
                     ]);
+
+                    // Kirim notifikasi WA ke orang tua
+                    $notifStudentId = $studentId;
+                    $notifSubjectId = $request->subject_id;
+                    $notifDate = $request->date;
+                    $notifStatus = $attendanceData['status'];
+                    dispatch(function () use ($notifStudentId, $notifSubjectId, $notifDate, $notifStatus) {
+                        try {
+                            $student = Student::find($notifStudentId);
+                            $subject = Subject::find($notifSubjectId);
+                            if ($student && $subject) {
+                                $wa = app(WhatsAppService::class);
+                                $wa->sendLessonAttendanceNotification($student, $subject->name, $notifDate, $notifStatus);
+                            }
+                        } catch (\Exception $e) {
+                            \Log::warning('WA notification failed after lesson attendance: ' . $e->getMessage());
+                        }
+                    })->afterResponse();
 
                     $savedCount++;
                 }
@@ -752,8 +804,11 @@ class LessonAttendanceController extends Controller
 
         // Get students in the class
         $students = DB::table('student as s')
-            ->join('student_class as sc', 's.id', '=', 'sc.student_id')
-            ->where('sc.class_id', $classId)
+            ->join('student_class as sc', function($join) use ($classId) {
+                $join->on('s.id', '=', 'sc.student_id')
+                     ->where('sc.status', '=', 'active')
+                     ->where('sc.class_id', '=', $classId);
+            })
             ->whereNull('s.deleted_at')
             ->select('s.id', 's.name', 's.nisn', 's.user_id')
             ->orderBy('s.name')
@@ -812,7 +867,7 @@ class LessonAttendanceController extends Controller
             DB::beginTransaction();
 
             // Get active semester's academic year
-            $activeSemester = \App\Models\Semester::where('is_active', true)->first();
+            $activeSemester = \App\Models\Semester::autoSetActiveSemester();
             $academicYear = $activeSemester ? $activeSemester->academic_year : null;
 
             if (!$academicYear) {
@@ -829,6 +884,14 @@ class LessonAttendanceController extends Controller
                 // Only process if check_in is filled
                 if (empty($attendanceData['check_in'])) {
                     continue; // Skip students without check-in
+                }
+
+                // Skip if student has an active full-absence permission and status is not sakit/izin
+                $activePermission = StudentPermission::getActivePermission($attendanceData['student_id'], $attendanceData['date']);
+                if ($activePermission
+                    && in_array($activePermission->type, ['sakit', 'agenda'])
+                    && !in_array($attendanceData['check_in_status'], ['sakit', 'izin'])) {
+                    continue;
                 }
                 
                 // Add academic year from active semester
@@ -913,7 +976,7 @@ class LessonAttendanceController extends Controller
             $currentDay = $this->getIndonesianDay($now->format('l'));
             
             // Get active semester
-            $activeSemester = \App\Models\Semester::where('is_active', true)->first();
+            $activeSemester = \App\Models\Semester::autoSetActiveSemester();
             $academicYear = $activeSemester ? $activeSemester->academic_year : null;
             $semesterType = $activeSemester ? $activeSemester->semester_type : null;
             

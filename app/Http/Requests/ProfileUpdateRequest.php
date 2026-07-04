@@ -15,6 +15,23 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        $user = $this->user();
+        $profile = $user->getProfileData();
+
+        $phoneRules = ['nullable', 'string', 'max:20'];
+        if ($profile) {
+            $table = match($user->roles->first()?->name) {
+                'student', 'Student' => 'student',
+                'teacher', 'Teacher' => 'teacher',
+                'admin', 'Admin', 'Super Admin' => 'administrator',
+                'parent', 'Parent' => 'parent',
+                default => null,
+            };
+            if ($table) {
+                $phoneRules[] = Rule::unique($table, 'phone')->ignore($profile->id);
+            }
+        }
+
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -23,9 +40,9 @@ class ProfileUpdateRequest extends FormRequest
                 'lowercase',
                 'email',
                 'max:255',
-                Rule::unique(User::class)->ignore($this->user()->id),
+                Rule::unique(User::class)->ignore($user->id),
             ],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'phone' => $phoneRules,
             'address' => ['nullable', 'string', 'max:500'],
             'avatar' => ['nullable', 'image', 'max:2048'], // max 2MB, will be stored in photo_path
         ];

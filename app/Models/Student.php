@@ -4,7 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+
+// Import Parent model for relationship
+use App\Models\Parent as ParentModel;
 
 class Student extends Model
 {
@@ -29,7 +33,6 @@ class Student extends Model
     }
 
     protected $casts = [
-        'face_encoding' => 'array',
         'is_active' => 'boolean',
     ];
 
@@ -40,7 +43,7 @@ class Student extends Model
 
     public function parents()
     {
-        return $this->belongsTo(Parent::class, 'student_id');
+        return $this->hasOne(ParentModel::class, 'student_id', 'id');
     }
 
     public function classes()
@@ -48,6 +51,25 @@ class Student extends Model
         return $this->belongsToMany(Classes::class, 'student_class', 'student_id', 'class_id')
                     ->withTimestamps()
                     ->withPivot('created_by', 'updated_by', 'deleted_by');
+    }
+
+    public function getCurrentClass()
+    {
+        try {
+            return $this->belongsToMany(Classes::class, 'student_class', 'student_id', 'class_id')
+                        ->where('student_class.status', 'active')
+                        ->withTimestamps()
+                        ->first();
+        } catch (\Exception $e) {
+            Log::error('Error in getCurrentClass for student ' . $this->id . ': ' . $e->getMessage());
+            // Fallback to first class if available
+            try {
+                return $this->classes->first();
+            } catch (\Exception $fallbackException) {
+                Log::error('Fallback also failed for student ' . $this->id . ': ' . $fallbackException->getMessage());
+                return null;
+            }
+        }
     }
     
     public function ekstrakurikulerAssign()

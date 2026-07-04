@@ -228,8 +228,13 @@
         <!-- Sweet Alerts js -->
         <script src="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.js') }}"></script>
         
+        <!-- Laravel Echo -->
+        <script src="{{ asset('js/app.js') }}" defer></script>
+        
         <script>
+            // Simple polling for real-time attendance updates
             document.addEventListener('DOMContentLoaded', function() {
+                
                 const searchInput = document.getElementById('search-input');
                 const searchButton = document.getElementById('search-button');
                 const perPageSelect = document.getElementById('per-page-select');
@@ -287,6 +292,161 @@
                     url.searchParams.delete('page');
                     window.location.href = url.toString();
                 }
+                // Fallback: Simple polling for testing
+                setInterval(function() {
+                    fetch('/check-new-attendance')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.has_new && data.attendance) {
+                                console.log('✅ New attendance detected via polling:', data.attendance);
+                                addNewAttendanceRow(data.attendance);
+                                // Notification removed - no more popup
+                            }
+                        })
+                        .catch(error => {
+                            // Silent error - don't spam console
+                        });
+                }, 3000); // Check every 3 seconds
+
+                function addNewAttendanceRow(attendance) {
+                    const tbody = document.querySelector('table tbody');
+                    if (!tbody) return;
+
+                    // Hide "no data" message if exists
+                    const noDataRow = tbody.querySelector('tr td[colspan="8"]');
+                    if (noDataRow) {
+                        const noDataTr = noDataRow.parentElement;
+                        noDataTr.remove();
+                    }
+
+                    // Check if attendance already exists in table
+                    const existingRow = document.querySelector(`tr[data-attendance-id="${attendance.attendance_id}"]`);
+                    if (existingRow) return;
+
+                    // Create new row
+                    const newRow = document.createElement('tr');
+                    newRow.setAttribute('data-attendance-id', attendance.attendance_id);
+                    newRow.className = 'new-attendance-row';
+                    
+                    // Determine status class and text
+                    let statusClass = 'bg-secondary';
+                    let statusText = attendance.check_in_status || '-';
+                    
+                    switch(attendance.check_in_status) {
+                        case 'tepat':
+                            statusClass = 'bg-success';
+                            statusText = '{{ __("index.on_time") }}';
+                            break;
+                        case 'terlambat':
+                            statusClass = 'bg-danger';
+                            statusText = '{{ __("index.late") }}';
+                            break;
+                        case 'izin':
+                            statusClass = 'bg-light text-dark';
+                            statusText = '{{ __("index.permission") }}';
+                            break;
+                        case 'sakit':
+                            statusClass = 'bg-light text-dark';
+                            statusText = '{{ __("index.sick") }}';
+                            break;
+                        case 'alpha':
+                            statusClass = 'bg-danger';
+                            statusText = '{{ __("index.absent") }}';
+                            break;
+                    }
+
+                    // Format date
+                    const date = new Date(attendance.date);
+                    const formattedDate = date.toLocaleDateString('id-ID', { 
+                        day: 'numeric', 
+                        month: 'short', 
+                        year: 'numeric' 
+                    });
+
+                    newRow.innerHTML = `
+                        <th scope="row">1</th>
+                        <td>${attendance.nisn || '-'}</td>
+                        <td>
+                            <a href="#" class="text-primary text-decoration-none fw-medium">
+                                <strong>${attendance.student_name || '-'}</strong>
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill bg-primary font-size-12">${attendance.class_name || '-'}</span>
+                        </td>
+                        <td>${formattedDate}</td>
+                        <td>
+                            <span class="badge rounded-pill ${statusClass} font-size-12">
+                                ${statusText}
+                            </span>
+                        </td>
+                        <td>
+                            {{ __("index.check_in") }}: ${attendance.check_in_time || '-'}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-soft-primary" onclick="editAttendance('${attendance.attendance_id}')">
+                                    <i class="mdi mdi-pencil"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-soft-danger" onclick="confirmDelete('${attendance.attendance_id}', '${attendance.student_name || ''}')">
+                                    <i class="mdi mdi-delete"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+
+                    // Add to top of table
+                    tbody.insertBefore(newRow, tbody.firstChild);
+                    
+                    // Add highlight animation
+                    newRow.style.animation = 'highlightNewRow 2s ease-out';
+                    
+                    // Update row numbers
+                    updateRowNumbers();
+                    
+                    // Remove highlight after animation
+                    setTimeout(() => {
+                        newRow.classList.remove('new-attendance-row');
+                        newRow.style.animation = '';
+                    }, 2000);
+                }
+
+                // Notification function removed - no more popups
+
+                function updateRowNumbers() {
+                    const tbody = document.querySelector('table tbody');
+                    if (!tbody) return;
+                    
+                    const rows = tbody.querySelectorAll('tr');
+                    rows.forEach((row, index) => {
+                        const th = row.querySelector('th');
+                        if (th) {
+                            th.textContent = index + 1;
+                        }
+                    });
+                }
+
+                // Add CSS animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes highlightNewRow {
+                        0% {
+                            background-color: #d4edda;
+                            transform: scale(1.02);
+                            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+                        }
+                        100% {
+                            background-color: transparent;
+                            transform: scale(1);
+                            box-shadow: none;
+                        }
+                    }
+                    
+                    .new-attendance-row {
+                        border-left: 4px solid #28a745;
+                    }
+                `;
+                document.head.appendChild(style);
             });
 
             // Open modal for create
@@ -375,7 +535,184 @@
                 const nisnInput = document.getElementById('nisn_search');
                 const studentSelect = document.getElementById('student_id');
                 const classSelect = document.getElementById('class_id');
-                
+                const studentHelpText = document.getElementById('student-help-text');
+
+                // Build class → students mapping
+                const classStudentsMap = {};
+                students.forEach(student => {
+                    if (student.classes && student.classes.length > 0) {
+                        student.classes.forEach(cls => {
+                            if (!classStudentsMap[cls.id]) {
+                                classStudentsMap[cls.id] = [];
+                            }
+                            classStudentsMap[cls.id].push({
+                                id: student.id,
+                                name: student.name,
+                                nisn: student.nisn || ''
+                            });
+                        });
+                    }
+                });
+
+                // Filter students when class changes
+                if (classSelect && !isEditMode) {
+                    classSelect.addEventListener('change', function() {
+                        const selectedClassId = this.value;
+
+                        // Reset student dropdown
+                        studentSelect.innerHTML = '';
+
+                        if (selectedClassId) {
+                            studentSelect.disabled = false;
+                            const defaultOpt = document.createElement('option');
+                            defaultOpt.value = '';
+                            defaultOpt.textContent = '{{ __("index.select_student") }}';
+                            studentSelect.appendChild(defaultOpt);
+
+                            const studentsInClass = classStudentsMap[selectedClassId] || [];
+                            studentsInClass.sort((a, b) => a.name.localeCompare(b.name));
+                            studentsInClass.forEach(s => {
+                                const opt = document.createElement('option');
+                                opt.value = s.id;
+                                opt.setAttribute('data-nisn', s.nisn);
+                                opt.textContent = s.name;
+                                studentSelect.appendChild(opt);
+                            });
+
+                            if (studentHelpText) {
+                                studentHelpText.textContent = studentsInClass.length + ' {{ __("index.student") }}';
+                            }
+                        } else {
+                            studentSelect.disabled = true;
+                            const defaultOpt = document.createElement('option');
+                            defaultOpt.value = '';
+                            defaultOpt.textContent = '{{ __("index.select_class_first") }}';
+                            studentSelect.appendChild(defaultOpt);
+
+                            if (studentHelpText) {
+                                studentHelpText.textContent = '{{ __("index.select_class_first") }}';
+                            }
+                        }
+                    });
+                }
+
+                // Check existing attendance when student is manually selected
+                if (studentSelect && !isEditMode) {
+                    studentSelect.addEventListener('change', function() {
+                        const selectedStudentId = this.value;
+                        if (!selectedStudentId) return;
+
+                        // Get NISN from selected option
+                        const selectedOption = this.options[this.selectedIndex];
+                        const nisn = selectedOption ? selectedOption.getAttribute('data-nisn') : '';
+                        if (!nisn) return;
+
+                        const dateInput = document.getElementById('date');
+                        const selectedDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+
+                        fetch('/attendances/find-existing', {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                nisn: nisn,
+                                date: selectedDate
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.found) {
+                                const attendance = data.attendance;
+
+                                // Fill check-in data
+                                const checkInInput = document.getElementById('check_in');
+                                const checkInStatusSelect = document.getElementById('check_in_status');
+                                if (checkInInput && attendance.check_in) {
+                                    checkInInput.value = attendance.check_in;
+                                    checkInInput.disabled = true;
+                                    checkInInput.setAttribute('data-disabled', 'true');
+                                }
+                                if (checkInStatusSelect && attendance.check_in_status) {
+                                    checkInStatusSelect.value = attendance.check_in_status;
+                                    checkInStatusSelect.disabled = true;
+                                    checkInStatusSelect.setAttribute('data-disabled', 'true');
+                                }
+
+                                // Update form text for check-in section
+                                const checkInSection = document.getElementById('check-in-section');
+                                if (checkInSection && attendance.check_in) {
+                                    const formTexts = checkInSection.querySelectorAll('.form-text');
+                                    formTexts.forEach(text => {
+                                        text.textContent = '{{ __("index.check_in_already_filled_cannot_be_changed") }}';
+                                        text.classList.add('text-warning');
+                                    });
+                                }
+
+                                // Fill check-out data
+                                const checkOutInput = document.getElementById('check_out');
+                                const checkOutStatusSelect = document.getElementById('check_out_status');
+                                if (checkOutInput && attendance.check_out) {
+                                    checkOutInput.value = attendance.check_out;
+                                }
+                                if (checkOutStatusSelect && attendance.check_out_status) {
+                                    checkOutStatusSelect.value = attendance.check_out_status;
+                                }
+
+                                // Change form to update mode
+                                const form = document.getElementById('attendance-form');
+                                if (form) {
+                                    form.action = `/attendances/${attendance.id}`;
+                                    const methodInput = form.querySelector('input[name="_method"]');
+                                    if (methodInput) {
+                                        methodInput.value = 'PUT';
+                                    } else {
+                                        const methodField = document.createElement('input');
+                                        methodField.type = 'hidden';
+                                        methodField.name = '_method';
+                                        methodField.value = 'PUT';
+                                        form.appendChild(methodField);
+                                    }
+                                    const submitBtn = form.querySelector('button[type="submit"]');
+                                    if (submitBtn) {
+                                        submitBtn.innerHTML = '<i class="mdi mdi-content-save"></i> Update Absensi';
+                                    }
+                                    const modalLabel = document.getElementById('attendance-modal-label');
+                                    if (modalLabel) {
+                                        modalLabel.textContent = '{{ __("index.edit_attendance") }}';
+                                    }
+                                }
+
+                                // Show notification
+                                Swal.fire({
+                                    icon: 'info',
+                                    title: '{{ __("index.attendance_data_found") }}',
+                                    html: `
+                                        <div style="text-align: left;">
+                                            <strong>{{ __("index.student") }}:</strong> ${attendance.student_name}<br>
+                                            <strong>{{ __("index.class") }}:</strong> ${attendance.class_name}<br>
+                                            <strong>{{ __("index.date") }}:</strong> ${attendance.date}<br>
+                                            <strong>Check-in:</strong> ${attendance.check_in || '{{ __("index.not_yet") }}'} (${attendance.check_in_status || '-'})<br>
+                                            <strong>Check-out:</strong> ${attendance.check_out || '{{ __("index.not_yet") }}'} (${attendance.check_out_status || '-'})<br><br>
+                                            <div class="alert alert-warning" style="padding: 10px; margin: 10px 0; border-radius: 5px;">
+                                                <i class="mdi mdi-alert"></i> <strong>{{ __("index.attention") }}:</strong> {{ __("index.check_in_already_filled_cannot_be_changed_detail") }}
+                                            </div>
+                                        </div>
+                                    `,
+                                    confirmButtonText: '{{ __("index.continue_edit_check_out") }}',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error checking existing attendance:', error);
+                        });
+                    });
+                }
+
                 // Create NISN to student data mapping
                 const nisnStudentMap = {};
                 students.forEach(student => {
@@ -395,15 +732,18 @@
                     if (nisn && nisnStudentMap[nisn]) {
                         const student = nisnStudentMap[nisn];
                         
-                        // Auto-fill student dropdown
-                        studentSelect.value = student.id;
-                        studentSelect.disabled = true;
-                        studentSelect.setAttribute('data-disabled', 'true'); // Mark as disabled by NISN search
-                        
-                        // Auto-fill class dropdown
+                        // Auto-fill class dropdown and trigger student population
                         classSelect.value = student.classId;
+                        classSelect.dispatchEvent(new Event('change'));
                         classSelect.disabled = true;
-                        classSelect.setAttribute('data-disabled', 'true'); // Mark as disabled by NISN search
+                        classSelect.setAttribute('data-disabled', 'true');
+                        
+                        // Auto-fill student dropdown (after class change populates it)
+                        setTimeout(() => {
+                            studentSelect.value = student.id;
+                            studentSelect.disabled = true;
+                            studentSelect.setAttribute('data-disabled', 'true');
+                        }, 50);
                         
                         // Cek existing attendance untuk hari ini
                         const dateInput = document.getElementById('date');

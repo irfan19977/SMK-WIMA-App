@@ -1,2 +1,33 @@
 User-agent: *
-Disallow:
+Allow: /
+
+# Prioritas halaman utama
+Allow: /berita
+Allow: /berita/*
+Allow: /
+Allow: /about
+Allow: /pendaftaran
+Allow: /kimia
+Allow: /tkj
+Allow: /tbsm
+Allow: /tkr
+Allow: /contact
+
+# Blok halaman admin
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /password
+Disallow: /logout
+
+# Blok file system
+Disallow: /storage/
+Disallow: /vendor/
+Disallow: /bootstrap/
+Disallow: /config/
+
+# Sitemap
+Sitemap: https://www.smkpgri-lawang.sch.id/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 1

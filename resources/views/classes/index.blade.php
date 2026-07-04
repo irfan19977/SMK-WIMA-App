@@ -23,22 +23,29 @@
                 <div class="card-body">
                     <div class="d-flex flex-column h-100">
                         <div>
-                            <div class="mb-3">
-                                <div class="dropdown">
-                                    <button class="btn btn-primary dropdown-toggle w-100" type="button"
-                                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <i class="mdi mdi-plus me-1"></i> {{ __('index.create_new') }}
-                                    </button>
-                                    <div class="dropdown-menu">
-                                        <a class="dropdown-item" href="#" id="btn-create"><i class="mdi mdi-folder me-1"></i>
-                                            {{ __('index.classes') }}</a>
-                                        <a class="dropdown-item" href="#" id="btn-open-next-semester-bulk"><i class="mdi mdi-swap-horizontal me-1"></i>
-                                            {{ __('index.close_open_semester') }}</a>
-                                        <a class="dropdown-item" href="#" id="btn-promote-bulk"><i class="mdi mdi-arrow-up-bold me-1"></i>
-                                            {{ __('index.promote_classes') }}</a>
+                            @can('classes.create')
+                                <div class="mb-3">
+                                    <div class="dropdown">
+                                        <button class="btn btn-primary dropdown-toggle w-100" type="button"
+                                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="mdi mdi-plus me-1"></i> {{ __('index.create_new') }}
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" href="#" id="btn-create"><i class="mdi mdi-folder me-1"></i>
+                                                {{ __('index.classes') }}</a>
+                                            @if($canPromoteClasses)
+                                                <a class="dropdown-item" href="#" id="btn-promote-bulk"><i class="mdi mdi-arrow-up-bold me-1"></i>
+                                                    {{ __('index.promote_classes') }}</a>
+                                            @else
+                                                <a class="dropdown-item disabled" href="javascript:void(0);" tabindex="-1" aria-disabled="true" title="Naik kelas hanya dapat dilakukan pada Semester Genap bulan Mei atau Juni.">
+                                                    <i class="mdi mdi-arrow-up-bold me-1"></i>
+                                                    {{ __('index.promote_classes') }}
+                                                </a>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            @endcan
                             <ul class="list-unstyled categories-list">
                                 <li>
                                     <a href="javascript: void(0);" id="toggle-active" class="text-body fw-medium py-1 d-flex align-items-center active">
@@ -137,19 +144,21 @@
                             </div>
                         </div>
 
-                        <h5 class="font-size-16 mt-4 mb-0">{{ __('index.quick_actions') }}</h5>
+                        @can('classes.create')
+                            <h5 class="font-size-16 mt-4 mb-0">{{ __('index.quick_actions') }}</h5>
 
-                        <div class="border text-center rounded p-3 mt-4">
-                            <div class="">
-                                <i class="mdi mdi-school display-4 text-primary mb-3"></i>
+                            <div class="border text-center rounded p-3 mt-4">
+                                <div class="">
+                                    <i class="mdi mdi-school display-4 text-primary mb-3"></i>
+                                </div>
+                                <h5>{{ __('index.class_management') }}</h5>
+                                <p class="pt-1">{{ __('index.manage_classes_description') }}</p>
+                                <div class="text-center pt-2">
+                                    <button type="button" class="btn btn-primary w-100" id="btn-create-quick">{{ __('index.create_class') }} <i
+                                            class="mdi mdi-plus ms-1"></i></button>
+                                </div>
                             </div>
-                            <h5>{{ __('index.class_management') }}</h5>
-                            <p class="pt-1">{{ __('index.manage_classes_description') }}</p>
-                            <div class="text-center pt-2">
-                                <button type="button" class="btn btn-primary w-100" id="btn-create-quick">{{ __('index.create_class') }} <i
-                                        class="mdi mdi-plus ms-1"></i></button>
-                            </div>
-                        </div>
+                        @endcan
                     </div>
                 </div>
             </div>
@@ -159,7 +168,13 @@
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="font-size-16 mb-0">{{ __('index.my_classes') }}</h5>
+                        <div>
+                            <h5 class="font-size-16 mb-0">{{ __('index.my_classes') }}</h5>
+                            <span class="badge bg-info mt-1">
+                                <i class="mdi mdi-calendar-check me-1"></i>
+                                Semester Aktif: {{ $activeSemesterLabel }}
+                            </span>
+                        </div>
                         <div class="d-flex gap-2">
                             <div class="input-group" style="width: 300px;">
                                 <input type="text" class="form-control" placeholder="{{ __('index.search_classes') }}" id="search-input">
@@ -175,27 +190,29 @@
                         <div class="col-xl-4 col-sm-6 class-card-item mb-4">
                             <div class="border p-3 rounded mb-3">
                                 <div class="">
-                                    <div class="dropdown float-end">
-                                        <a class="dropdown-toggle font-size-16" href="#" role="button"
-                                            data-bs-toggle="dropdown" aria-haspopup="true">
-                                            <i class="mdi mdi-dots-vertical font-size-18"></i>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a class="dropdown-item edit-class" href="#"
-                                               data-id="{{ $class->id }}"
-                                               data-name="{{ $class->name }}"
-                                               data-code="{{ $class->code }}"
-                                               data-grade="{{ $class->grade }}"
-                                               data-major="{{ $class->major }}">Edit</a>
-                                            <a class="dropdown-item" href="#" onclick="toggleArchive('{{ $class->id }}'); return false;">
-                                                {{ $class->is_archived ? 'Unarchive' : 'Archive' }}
+                                    @can('classes.edit')
+                                        <div class="dropdown float-end">
+                                            <a class="dropdown-toggle font-size-16" href="#" role="button"
+                                                data-bs-toggle="dropdown" aria-haspopup="true">
+                                                <i class="mdi mdi-dots-vertical font-size-18"></i>
                                             </a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item text-danger" href="#" onclick="confirmDelete('{{ $class->id }}'); return false;">
-                                                Remove
-                                            </a>
+                                            <div class="dropdown-menu dropdown-menu-end">
+                                                <a class="dropdown-item edit-class" href="#"
+                                                data-id="{{ $class->id }}"
+                                                data-name="{{ $class->name }}"
+                                                data-code="{{ $class->code }}"
+                                                data-grade="{{ $class->grade }}"
+                                                data-major="{{ $class->major }}">Edit</a>
+                                                <a class="dropdown-item" href="#" onclick="toggleArchive('{{ $class->id }}'); return false;">
+                                                    {{ $class->is_archived ? 'Unarchive' : 'Archive' }}
+                                                </a>
+                                                <div class="dropdown-divider"></div>
+                                                <a class="dropdown-item text-danger" href="#" onclick="confirmDelete('{{ $class->id }}'); return false;">
+                                                    Remove
+                                                </a>
+                                            </div>
                                         </div>
-                                    </div>
+                                    @endcan
                                     <div class="d-flex align-items-center overflow-hidden">
                                         <div class="flex-shrink-0 me-3">
                                             <div class="avatar-sm align-self-center">
@@ -304,14 +321,37 @@
             </div>
         </div>
     </div>
+
+    <!-- Class Modal -->
+    <div class="modal fade" id="class-modal" tabindex="-1" aria-labelledby="class-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="class-modal-label">Modal title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Form will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('scripts')
     <!-- Sweet Alerts js -->
-    <script src="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('Classes page loaded');
+        
+        // Initialize Bootstrap dropdowns
+        const dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'))
+        const dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl)
+        });
+        
         // Initialize variables
         let currentClassId = null;
         let showArchived = {{ request('show_archived') ? 'true' : 'false' }};
@@ -336,35 +376,40 @@
 
         // Create class
         const btnCreate = document.getElementById('btn-create');
+        console.log('btn-create found:', btnCreate);
         if (btnCreate) {
             btnCreate.addEventListener('click', function() {
+                console.log('btn-create clicked');
                 openClassModal();
             });
         }
 
         const btnCreateQuick = document.getElementById('btn-create-quick');
+        console.log('btn-create-quick found:', btnCreateQuick);
         if (btnCreateQuick) {
             btnCreateQuick.addEventListener('click', function() {
+                console.log('btn-create-quick clicked');
                 openClassModal();
             });
         }
 
         const btnCreateEmpty = document.getElementById('btn-create-empty');
+        console.log('btn-create-empty found:', btnCreateEmpty);
         if (btnCreateEmpty) {
             btnCreateEmpty.addEventListener('click', function() {
+                console.log('btn-create-empty clicked');
                 openClassModal();
             });
         }
-
-        // Debug: Check if edit buttons exist
-        const editButtons = document.querySelectorAll('.edit-class');
-        console.log('Edit buttons found:', editButtons.length); // Debug log
         
         // Edit class
+        const editButtons = document.querySelectorAll('.edit-class');
+        console.log('Edit buttons found:', editButtons.length);
         editButtons.forEach(function(btn) {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 const id = this.getAttribute('data-id');
+                console.log('Edit class clicked:', id);
                 editClass(id);
             });
         });
@@ -387,15 +432,16 @@
 
         // Delete confirmation
         window.confirmDelete = function(classId) {
+            console.log('Delete class:', classId);
             Swal.fire({
-                title: '{{ __("index.are_you_sure") }}',
-                text: "{{ __("index.class_will_be_deleted_permanently") }}",
+                title: 'Apakah Anda yakin?',
+                text: "Kelas akan dihapus permanen!",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
-                confirmButtonText: '{{ __("index.yes_delete") }}',
-                cancelButtonText: '{{ __("index.cancel") }}'
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
                     // Create form for delete
@@ -429,6 +475,7 @@
 
         // Toggle archive
         window.toggleArchive = function(classId) {
+            console.log('Toggle archive:', classId);
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = '/classes/' + classId + '/toggle-archive';
@@ -438,23 +485,11 @@
         };
 
         // Bulk operations
-        const btnOpenNextSemesterBulk = document.getElementById('btn-open-next-semester-bulk');
-        if (btnOpenNextSemesterBulk) {
-            btnOpenNextSemesterBulk.addEventListener('click', function() {
-                if (confirm('Are you sure you want to close current semester and open next semester for all classes?')) {
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = '/classes/open-next-semester-bulk';
-                    form.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
-                    document.body.appendChild(form);
-                    form.submit();
-                }
-            });
-        }
-
         const btnPromoteBulk = document.getElementById('btn-promote-bulk');
+        console.log('btn-promote-bulk found:', btnPromoteBulk);
         if (btnPromoteBulk) {
             btnPromoteBulk.addEventListener('click', function() {
+                console.log('Promote bulk clicked');
                 if (confirm('Are you sure you want to promote all students to next grade?')) {
                     const form = document.createElement('form');
                     form.method = 'POST';
@@ -469,6 +504,7 @@
 
     // Modal functions
     function openClassModal() {
+        console.log('Opening class modal');
         fetch('/classes/create', {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -477,25 +513,33 @@
         })
         .then(response => response.json())
         .then(data => {
+            console.log('Modal response:', data);
             if (data.success) {
                 document.getElementById('class-modal-label').textContent = data.title;
                 document.querySelector('#class-modal .modal-body').innerHTML = data.html;
                 
                 const modal = new bootstrap.Modal(document.getElementById('class-modal'));
                 modal.show();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Gagal memuat form'
+                });
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error loading modal:', error);
             Swal.fire({
                 icon: 'error',
-                title: '{{ __("index.error") }}',
-                text: '{{ __("index.failed_to_load_form") }}'
+                title: 'Error',
+                text: 'Gagal memuat form'
             });
         });
     }
 
     function editClass(id) {
+        console.log('Editing class:', id);
         fetch(`/classes/${id}/edit`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -504,38 +548,31 @@
         })
         .then(response => response.json())
         .then(data => {
+            console.log('Edit response:', data);
             if (data.success) {
                 document.getElementById('class-modal-label').textContent = data.title;
                 document.querySelector('#class-modal .modal-body').innerHTML = data.html;
                 
                 const modal = new bootstrap.Modal(document.getElementById('class-modal'));
                 modal.show();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Gagal memuat form'
+                });
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error editing class:', error);
             Swal.fire({
                 icon: 'error',
-                title: '{{ __("index.error") }}',
-                text: '{{ __("index.failed_to_load_form") }}'
+                title: 'Error',
+                text: 'Gagal memuat form'
             });
         });
     }
     </script>
-    <script src="{{ URL::asset('build/js/app.js') }}"></script>
 @endsection
 
-<!-- Class Modal -->
-<div class="modal fade" id="class-modal" tabindex="-1" aria-labelledby="class-modal-label" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="class-modal-label">Modal title</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Form will be loaded here -->
-            </div>
-        </div>
-    </div>
-</div>
+

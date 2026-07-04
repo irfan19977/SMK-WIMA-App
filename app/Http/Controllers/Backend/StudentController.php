@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Models\ParentModel;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -118,16 +120,23 @@ class StudentController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'nullable|min:8|confirmed',
-                'phone' => 'nullable|string|max:20',
                 'gender' => 'required|in:laki-laki,perempuan',
                 'birth_date' => 'required|date',
                 'birth_place' => 'required|string|max:255',
                 'religion' => 'required|string|max:255',
-                'nik' => 'required|numeric|digits:16|unique:student,nik',
+                'nik' => 'nullable|numeric|digits:16|unique:student,nik',
                 'nisn' => 'nullable|numeric|digits:10|unique:student,nisn',
                 'no_absen' => 'nullable|string|max:20',
                 'no_card' => 'nullable|string|max:20',
                 'address' => 'required|string',
+                'parent_name' => 'nullable|string|max:255',
+                'parent_phone' => [
+                    'nullable',
+                    'string',
+                    'max:20',
+                    Rule::unique('parent', 'phone'),
+                ],
+                'create_parent_account' => 'nullable|boolean',
                 'photo_path' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:500',
                 'ijazah' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:500',
                 'kartu_keluarga' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:500',
@@ -141,6 +150,7 @@ class StudentController extends Controller
                 'nik.digits' => 'NIK harus 16 digit.',
                 'nisn.digits' => 'NISN harus 10 digit.',
                 'password.confirmed' => 'Konfirmasi password tidak cocok.',
+                'parent_phone.unique' => 'Nomor HP orangtua sudah terdaftar. Gunakan nomor HP lain.',
             ]);
 
             // Simpan semua file dengan pengecekan yang lebih baik
@@ -155,7 +165,6 @@ class StudentController extends Controller
             $userData = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'phone' => $validated['phone'],
                 'photo_path' => $photoPath,
                 'status' => $request->has('status') ? $request->status : true,
             ];
@@ -179,6 +188,7 @@ class StudentController extends Controller
                 'id' => Str::uuid(),
                 'user_id' => $user->id,
                 'name' => $validated['name'],
+                'phone' => $validated['phone'],
                 'nisn' => $validated['nisn'],
                 'nik' => $validated['nik'],
                 'no_absen' => $validated['no_absen'],
@@ -188,6 +198,8 @@ class StudentController extends Controller
                 'birth_place' => $validated['birth_place'],
                 'religion' => $validated['religion'],
                 'address' => $validated['address'],
+                'parent_name' => $validated['parent_name'],
+                'parent_phone' => $validated['parent_phone'],
                 'ijazah' => $ijazahPath,
                 'kartu_keluarga' => $kartuKeluargaPath,
                 'akte_lahir' => $akteLahirPath,
@@ -195,6 +207,12 @@ class StudentController extends Controller
                 'sertifikat' => $sertifikatPath,
                 'status' => 'siswa',
             ]);
+
+            // Create parent account if checkbox is checked
+            $parentAccount = null;
+            if ($request->create_parent_account && !empty($validated['parent_name']) && !empty($validated['parent_phone'])) {
+                $parentAccount = $this->createParentAccount($validated['parent_name'], $validated['parent_phone'], $student->id);
+            }
 
             DB::commit();
 
@@ -204,10 +222,24 @@ class StudentController extends Controller
                 if ($defaultPassword) {
                     $message .= " Password default: {$defaultPassword}";
                 }
+                
+                if ($parentAccount) {
+                    $parentPassword = 'parent' . date('Ym');
+                    $message .= "\n\n📱 Akun orangtua berhasil dibuat:\n";
+                    $message .= "Login: {$parentAccount->phone}\n";
+                    $message .= "Password: {$parentPassword}";
+                }
+                
                 return response()->json([
                     'success' => true,
                     'message' => $message,
-                    'student' => $student->load('user')
+                    'student' => $student->load('user'),
+                    'parent_account' => $parentAccount ? [
+                        'email' => $parentAccount->user->email,
+                        'password' => 'parent' . date('Ym'),
+                        'name' => $parentAccount->name,
+                        'phone' => $parentAccount->phone
+                    ] : null
                 ]);
             }
 
@@ -333,6 +365,8 @@ class StudentController extends Controller
                 'birth_date' => 'nullable|date',
                 'religion' => 'nullable|string|max:100',
                 'address' => 'nullable|string|max:255',
+                'parent_name' => 'nullable|string|max:255',
+                'parent_phone' => 'nullable|string|max:20',
             ]);
         } else {
             $request->validate([
@@ -349,6 +383,8 @@ class StudentController extends Controller
                 'birth_date' => 'nullable|date',
                 'religion' => 'nullable|string|max:100',
                 'address' => 'nullable|string|max:255',
+                'parent_name' => 'nullable|string|max:255',
+                'parent_phone' => 'nullable|string|max:20',
             ]);
         }
 
@@ -423,7 +459,6 @@ class StudentController extends Controller
             $userData = [
                 'name' => $request->name,
                 'email' => $request->email,
-                'phone' => $request->phone,
                 'status' => $request->status ? true : false,
                 'photo_path' => $photoPath,
             ];
@@ -438,6 +473,7 @@ class StudentController extends Controller
             // Update student data
             $student->update([
                 'name' => $request->name,
+                'phone' => $request->phone,
                 'nisn' => $request->nisn,
                 'nik' => $request->nik,
                 'no_card' => $request->no_card,
@@ -447,6 +483,8 @@ class StudentController extends Controller
                 'birth_date' => $request->birth_date,
                 'religion' => $request->religion,
                 'address' => $request->address,
+                'parent_name' => $request->parent_name,
+                'parent_phone' => $request->parent_phone,
                 'ijazah' => $ijazahPath,
                 'kartu_keluarga' => $kartuKeluargaPath,
                 'akte_lahir' => $akteLahirPath,
@@ -625,5 +663,113 @@ class StudentController extends Controller
             return $file->storeAs($folder, $fileName, 'public');
         }
         return null;
+    }
+
+    /**
+     * Create parent account automatically
+     */
+    private function createParentAccount($parentName, $parentPhone, $studentId)
+    {
+        try {
+            // Check if parent account already exists with this phone number
+            $existingParent = ParentModel::where('phone', $parentPhone)->first();
+            if ($existingParent) {
+                $parentUser = User::find($existingParent->user_id);
+
+                // Assign Parent role if not already assigned
+                if ($parentUser && !$parentUser->hasRole('Parent')) {
+                    $parentUser->assignRole('Parent');
+                }
+
+                return $existingParent;
+            }
+
+            // Generate unique email for parent
+            $email = 'parent_' . time() . '_' . Str::random(5) . '@smkwima.sch.id';
+
+            // Generate default password
+            $defaultPassword = 'parent' . date('Ym');
+
+            // Create parent user account
+            $parentUser = User::create([
+                'name' => $parentName,
+                'email' => $email,
+                'password' => Hash::make($defaultPassword),
+                'email_verified_at' => now(),
+            ]);
+
+            // Assign Parent role
+            $parentUser->assignRole('Parent');
+
+            // Create parent record
+            $parentRecord = ParentModel::create([
+                'id' => Str::uuid(),
+                'user_id' => $parentUser->id,
+                'student_id' => $studentId,
+                'name' => $parentName,
+                'phone' => $parentPhone,
+                'status' => 'wali',
+                'created_by' => Auth::id(),
+            ]);
+
+            Log::info('Parent account created automatically', [
+                'parent_id' => $parentUser->id,
+                'parent_record_id' => $parentRecord->id,
+                'student_id' => $studentId,
+                'parent_name' => $parentName,
+                'parent_phone' => $parentPhone,
+                'email' => $email,
+                'default_password' => $defaultPassword
+            ]);
+
+            return $parentRecord;
+
+        } catch (\Exception $e) {
+            Log::error('Failed to create parent account', [
+                'parent_name' => $parentName,
+                'parent_phone' => $parentPhone,
+                'student_id' => $studentId,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Search students by NISN or name for autocomplete
+     */
+    public function search(Request $request)
+    {
+        $query = $request->get('q', '');
+        
+        if (strlen($query) < 2) {
+            return response()->json([
+                'success' => true,
+                'students' => []
+            ]);
+        }
+
+        $students = Student::where('status', 'siswa')
+            ->where(function($q) use ($query) {
+                $q->where('name', 'LIKE', '%' . $query . '%')
+                  ->orWhere('nisn', 'LIKE', '%' . $query . '%');
+            })
+            ->limit(20)
+            ->get();
+
+        $studentsData = $students->map(function($student) {
+            $currentClass = $student->getCurrentClass();
+            return [
+                'id' => $student->id,
+                'name' => $student->name,
+                'nisn' => $student->nisn,
+                'class_name' => $currentClass ? $currentClass->name : '-'
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'students' => $studentsData
+        ]);
     }
 }

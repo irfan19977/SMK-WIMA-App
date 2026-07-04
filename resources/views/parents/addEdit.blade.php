@@ -68,7 +68,7 @@
                                 <div class="mb-3">
                                     <label for="phone" class="form-label">{{ __('index.phone_number') }}</label>
                                     <input type="tel" class="form-control" id="phone" name="phone"
-                                        value="{{ old('phone', isset($parent) ? $parent->user->phone : '') }}" 
+                                        value="{{ old('phone', isset($parent) ? $parent->phone : '') }}"
                                         placeholder="{{ __('index.optional_parent_phone') }}">
                                     <div class="form-text">{{ __('index.leave_empty_if_no_parent_phone') }}</div>
                                     <div class="invalid-feedback">

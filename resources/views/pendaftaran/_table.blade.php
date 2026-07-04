@@ -17,7 +17,7 @@
     <td>{{ $student->gender ?? '-' }}</td>
     <td>{{ $student->birth_place ?? '-' }}</td>
     <td>{{ $student->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : '-' }}</td>
-    <td>{{ optional($student->user)->phone ?? '-' }}</td>
+    <td>{{ $student->phone ?? '-' }}</td>
     <td>
       @php($st = $student->status ?? 'calon siswa')
       <span class="badge rounded badge-soft-{{ $st === 'calon siswa' ? 'primary' : ($st === 'siswa' ? 'success' : 'primary') }} font-size-12">

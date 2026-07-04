@@ -7,6 +7,11 @@ use App\Models\Attendance;
 use App\Models\SettingSchedule;
 use App\Models\Student;
 use App\Models\StudentClass;
+use App\Models\Schedule;
+use App\Models\LessonAttendance;
+use App\Models\StudentPermission;
+use App\Models\Semester;
+use App\Services\WhatsAppService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,279 +21,545 @@ use Illuminate\Support\Str;
 
 class RFIDController extends Controller
 {
-    public function detectRFID(Request $request)
+    public function detect(Request $request)
     {
-        try {
-            // Validate the request
+        // Cek apakah ada UID yang dikirim dari RFID reader
+        if ($request->has('uid')) {
+            // Mode: menerima UID dari RFID reader
             $request->validate([
-                'rfid_card' => 'required|string'
+                'uid' => 'required|string',
             ]);
-            
-            $rfidCard = $request->input('rfid_card');
-            
-            // Find student by RFID card number (no_card)
-            $student = Student::where('no_card', $rfidCard)->first();
-            
-            if (!$student) {
-                // Check if the card is already registered to someone else
-                $existingStudent = Student::where('no_card', $rfidCard)->first();
-                $isUsed = $existingStudent ? true : false;
+
+            $uid = $request->input('uid');
+
+            // Log untuk debugging
+            \Log::info('RFID Scan diterima: ' . $uid);
+
+            // Simpan ke cache untuk polling
+            Cache::put('latest_rfid_uid', $uid, now()->addSeconds(30));
+
+            // Cek apakah kartu terdaftar pada siswa
+            $student = Student::where('no_card', $uid)->first();
+
+            if ($student) {
+                // Kartu terdaftar → cek absen dan auto-attendance
+                \Log::info('Kartu terdaftar pada siswa: ' . $student->name);
                 
-                // Store the RFID value in cache with timestamp
-                Cache::put('latest_rfid', [
-                    'value' => $rfidCard,
-                    'is_used' => $isUsed,
-                    'user_name' => $isUsed ? $existingStudent->name : null,
-                    'timestamp' => Carbon::now()->timestamp
-                ], now()->addMinutes(5)); // Keep in cache for 5 minutes
+                // Langsung proses auto-attendance
+                return $this->autoAttendance($request);
+            } else {
+                // Kartu tidak terdaftar → return info untuk pendaftaran
+                \Log::info('Kartu tidak terdaftar, siap untuk pendaftaran: ' . $uid);
                 
                 return response()->json([
-                    'status' => 'success',
-                    'message' => 'Kartu RFID tidak terdaftar',
-                    'rfid_value' => $rfidCard
-                ]);
+                    'status'  => 'unregistered',
+                    'message' => 'Kartu RFID tidak terdaftar pada siswa manapun',
+                    'uid'     => $uid,
+                    'timestamp' => now()->toISOString(),
+                    'action' => 'register_student',
+                    'suggestion' => 'Silakan daftarkan siswa baru dengan kartu ini'
+                ], 200);
             }
+        } else {
+            // Mode: deteksi kartu RFID untuk form siswa
+            // Cek cache untuk UID terbaru
+            $uid = Cache::get('latest_rfid_uid');
             
-            // Get current time and date using Carbon with Asia/Jakarta timezone
-            $now = Carbon::now('Asia/Jakarta');
-            $currentTime = $now->format('H:i:s');
-            $currentDate = $now->format('Y-m-d');
-            $currentDay = $this->convertDayToIndonesian($now->format('l'));
-            
-            // Get student's class ID from student_class pivot table
-            $studentClass = StudentClass::where('student_id', $student->id)->first();
-            
-            if (!$studentClass) {
-                return response()->json([
-                    'status' => 'warning',
-                    'message' => 'Siswa tidak memiliki kelas',
-                    'student' => [
-                        'name' => $student->name,
-                        'nisn' => $student->nisn,
-                    ]
-                ]);
-            }
-            
-            // Get schedule for current day
-            $schedule = SettingSchedule::where('day', $currentDay)->first();
-            
-            if (!$schedule) {
+            if (!$uid) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Tidak ada jadwal untuk hari ini',
-                    'student' => [
-                        'name' => $student->name,
-                        'nisn' => $student->nisn,
-                        'class' => $studentClass->class->name ?? 'Tidak ada kelas',
-                    ]
-                ]);
+                    'message' => 'Tidak ada kartu RFID yang terdeteksi. Silakan tempelkan kartu ke reader terlebih dahulu.',
+                ], 404);
             }
+
+            // Cek apakah nomor kartu sudah digunakan oleh siswa lain
+            $existingStudent = Student::where('no_card', $uid)->first();
+            if ($existingStudent) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Nomor kartu {$uid} sudah digunakan oleh siswa: {$existingStudent->name}",
+                ], 422);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'uid' => $uid,
+                'message' => 'Kartu RFID berhasil terdeteksi',
+                'timestamp' => now()->toISOString(),
+            ]);
+        }
+    }
+    
+    public function validateCard(Request $request)
+    {
+        $request->validate([
+            'uid' => 'required|string',
+        ]);
+
+        $uid = $request->input('uid');
+
+        // Cek apakah nomor kartu sudah digunakan oleh siswa lain
+        $existingStudent = Student::where('no_card', $uid)->first();
+        if ($existingStudent) {
+            return response()->json([
+                'valid' => false,
+                'message' => "Nomor kartu {$uid} sudah digunakan oleh siswa: {$existingStudent->name}",
+            ]);
+        }
+
+        return response()->json([
+            'valid' => true,
+            'message' => 'Kartu valid dan tersedia',
+        ]);
+    }
+
+    public function clearCache()
+    {
+        Cache::forget('latest_rfid_uid');
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Cache cleared'
+        ]);
+    }
+    
+    public function getLatest()
+    {
+        $uid = Cache::get('latest_rfid_uid');
+        return response()->json([
+            'status' => 'success',
+            'uid' => $uid,
+            'timestamp' => now()->toISOString()
+        ]);
+    }
+
+    /**
+     * Fungsi untuk membuat absensi otomatis ketika kartu RFID terdeteksi
+     */
+    public function autoAttendance(Request $request)
+    {
+        $request->validate([
+            'uid' => 'required|string',
+        ]);
+
+        $uid = $request->input('uid');
+        $currentTime = Carbon::now('Asia/Jakarta');
+        $currentDate = $currentTime->format('Y-m-d');
+        $dayName = $this->convertDayToIndonesian($currentTime->format('l'));
+
+        // Get active semester from the database (is_active = true)
+        $activeSemester = Semester::where('is_active', true)->first();
+        $academicYear = $activeSemester ? $activeSemester->academic_year : null;
+        $semesterType = $activeSemester ? $activeSemester->semester_type : null;
+
+        try {
+            DB::beginTransaction();
+
+            // Cari siswa berdasarkan nomor kartu
+            $student = Student::where('no_card', $uid)->first();
             
-            // Check existing attendance for today
+            if (!$student) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Kartu dengan UID {$uid} tidak terdaftar pada siswa manapun"
+                ], 404);
+            }
+
+            // Cari kelas aktif siswa berdasarkan semester aktif
+            $studentClassQuery = StudentClass::join('classes', 'student_class.class_id', '=', 'classes.id')
+                ->where('student_class.student_id', $student->id)
+                ->whereNull('student_class.deleted_at')
+                ->where('student_class.status', 'active')
+                ->select('classes.id as class_id', 'classes.name as class_name');
+
+            if ($academicYear) {
+                $studentClassQuery->where('student_class.academic_year', $academicYear);
+            }
+            if ($semesterType) {
+                $studentClassQuery->where('student_class.semester', $semesterType);
+            }
+
+            $studentClass = $studentClassQuery->first();
+
+            if (!$studentClass) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Siswa {$student->name} tidak memiliki kelas aktif"
+                ], 404);
+            }
+
+            // Cek apakah siswa memiliki izin aktif yang menyebabkan tidak boleh absen
+            $activePermission = StudentPermission::getActivePermission($student->id, $currentDate);
+            if ($activePermission && in_array($activePermission->type, ['sakit', 'agenda'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Siswa {$student->name} memiliki izin aktif ({$activePermission->type_label}) hari ini, tidak dapat melakukan absensi."
+                ], 422);
+            }
+
+            // Cek apakah siswa sudah absen hari ini
             $existingAttendance = Attendance::where([
                 'student_id' => $student->id,
                 'class_id' => $studentClass->class_id,
                 'date' => $currentDate
             ])->first();
-            
-            DB::beginTransaction();
-            
-            if (!$existingAttendance) {
-                // First scan - Check if it's already past end time
-                $currentTimeCarbon = Carbon::createFromFormat('H:i:s', $currentTime, 'Asia/Jakarta');
-                $scheduleEndTime = Carbon::createFromFormat('H:i:s', $schedule->end_time, 'Asia/Jakarta');
-                
-                // If current time is past end time, create Alpha attendance
-                if ($currentTimeCarbon->gte($scheduleEndTime)) {
-                    return $this->processAlphaAttendance($student, $studentClass, $schedule, $currentTime, $currentDate);
-                }
-                
-                // Otherwise, process normal check in
-                return $this->processCheckIn($student, $studentClass, $schedule, $currentTime, $currentDate);
-            } else {
-                // Second scan - Check if it's time for Check Out
+
+            if ($existingAttendance && $existingAttendance->check_in) {
+                // Jika sudah check-in dan sudah check-out
                 if ($existingAttendance->check_out) {
                     return response()->json([
-                        'status' => 'warning',
-                        'message' => 'Siswa sudah melakukan absen masuk dan pulang hari ini',
-                        'student' => [
-                            'name' => $student->name,
-                            'nisn' => $student->nisn,
-                            'class' => $studentClass->class->name ?? 'Tidak ada kelas',
-                            'check_in' => $existingAttendance->check_in,
+                        'status' => 'info',
+                        'message' => "Siswa {$student->name} sudah absen masuk dan pulang hari ini",
+                        'data' => [
+                            'student_name' => $student->name,
+                            'class_name' => $studentClass->class_name,
+                            'check_in_time' => $existingAttendance->check_in,
                             'check_in_status' => $existingAttendance->check_in_status,
-                            'check_out' => $existingAttendance->check_out,
-                            'check_out_status' => $existingAttendance->check_out_status,
+                            'check_out_time' => $existingAttendance->check_out,
+                            'check_out_status' => $existingAttendance->check_out_status
                         ]
-                    ]);
+                    ], 200);
                 }
-                
-                // Check if it's time for check out
-                $scheduleEndTime = Carbon::createFromFormat('H:i:s', $schedule->end_time, 'Asia/Jakarta');
-                $currentTimeCarbon = Carbon::createFromFormat('H:i:s', $currentTime, 'Asia/Jakarta');
-                
-                if ($currentTimeCarbon->format('H:i:s') < $schedule->end_time) {
+
+                // Prioritas 1: Cek apakah ada pelajaran aktif saat ini
+                $currentTimeOnly = $currentTime->format('H:i:s');
+                $activeScheduleQuery = Schedule::where('class_id', $studentClass->class_id)
+                    ->where('day', $dayName)
+                    ->where('start_time', '<=', $currentTimeOnly)
+                    ->where('end_time', '>=', $currentTimeOnly);
+
+                if ($academicYear) {
+                    $activeScheduleQuery->where('academic_year', $academicYear);
+                }
+                if ($semesterType) {
+                    $activeScheduleQuery->where('semester', $semesterType);
+                }
+
+                $activeSchedule = $activeScheduleQuery->first();
+
+                if ($activeSchedule) {
+                    // Ada pelajaran aktif → rekam lesson attendance jika belum ada
+                    $existingLessonAttendance = LessonAttendance::where([
+                        'student_id' => $student->id,
+                        'class_id' => $studentClass->class_id,
+                        'subject_id' => $activeSchedule->subject_id,
+                        'date' => $currentDate
+                    ])->first();
+
+                    if ($existingLessonAttendance) {
+                        return response()->json([
+                            'status' => 'info',
+                            'message' => "Siswa {$student->name} sudah tercatat hadir di pelajaran ini.",
+                            'data' => [
+                                'student_name' => $student->name,
+                                'class_name' => $studentClass->class_name,
+                                'check_in_time' => $existingAttendance->check_in,
+                                'check_in_status' => $existingAttendance->check_in_status,
+                                'lesson_already_recorded' => true,
+                            ]
+                        ], 200);
+                    }
+
+                    LessonAttendance::create([
+                        'id' => Str::uuid(),
+                        'student_id' => $student->id,
+                        'class_id' => $studentClass->class_id,
+                        'subject_id' => $activeSchedule->subject_id,
+                        'date' => $currentDate,
+                        'check_in' => $currentTimeOnly,
+                        'check_in_status' => 'hadir',
+                        'academic_year' => $academicYear ?? '2025/2026',
+                        'semester' => $semesterType ?? 'ganjil',
+                    ]);
+
+                    $lessonSubject = \App\Models\Subject::find($activeSchedule->subject_id);
+
+                    DB::commit();
+
+                    // Kirim notifikasi WA ke orang tua
+                    $studentId = $student->id;
+                    $attendanceId = $existingAttendance->id;
+                    $lessonSubjectId = $activeSchedule->subject_id;
+                    dispatch(function () use ($studentId, $attendanceId, $lessonSubjectId) {
+                        try {
+                            $student = Student::find($studentId);
+                            $attendance = Attendance::find($attendanceId);
+                            $lessonSubject = \App\Models\Subject::find($lessonSubjectId);
+                            if ($student && $attendance) {
+                                $wa = app(WhatsAppService::class);
+                                $wa->sendAttendanceNotification($student, $attendance, $lessonSubject);
+                            }
+                        } catch (\Exception $e) {
+                            \Log::warning('WA notification failed after lesson attendance: ' . $e->getMessage());
+                        }
+                    })->afterResponse();
+
                     return response()->json([
-                        'status' => 'warning',
-                        'message' => 'Siswa sudah melakukan absen masuk. Waktu pulang: ' . $scheduleEndTime->format('H:i'),
-                        'student' => [
-                            'name' => $student->name,
-                            'nisn' => $student->nisn,
-                            'class' => $studentClass->class->name ?? 'Tidak ada kelas',
-                            'check_in' => $existingAttendance->check_in,
+                        'status' => 'success',
+                        'message' => "Absensi pelajaran berhasil dicatat untuk {$student->name}" . ($lessonSubject ? " - {$lessonSubject->name}" : ""),
+                        'data' => [
+                            'student_name' => $student->name,
+                            'class_name' => $studentClass->class_name,
+                            'check_in_time' => $existingAttendance->check_in,
                             'check_in_status' => $existingAttendance->check_in_status,
+                            'lesson_attendance_created' => true,
+                            'subject_name' => $lessonSubject->name ?? null,
                         ]
-                    ]);
+                    ], 200);
                 }
-                
-                // Process Check Out
-                return $this->processCheckOut($existingAttendance, $schedule, $currentTime, $student, $studentClass);
+
+                // Prioritas 2: Tidak ada pelajaran aktif → cek apakah sudah waktunya checkout
+                $schedule = SettingSchedule::where('day', $dayName)->first();
+                if ($schedule) {
+                    $scheduleEndCarbon = Carbon::createFromTimeString($schedule->end_time, 'Asia/Jakarta');
+                    if ($currentTime->lt($scheduleEndCarbon)) {
+                        return response()->json([
+                            'status' => 'info',
+                            'message' => "Siswa {$student->name} belum bisa absen pulang. Jam pelajaran berakhir pukul " . $scheduleEndCarbon->format('H:i') . ".",
+                            'data' => [
+                                'student_name' => $student->name,
+                                'class_name' => $studentClass->class_name,
+                                'check_in_time' => $existingAttendance->check_in,
+                                'check_in_status' => $existingAttendance->check_in_status,
+                            ]
+                        ], 200);
+                    }
+                } else {
+                    // Fallback jika tidak ada setting_schedule: minimal 1 jam setelah check-in
+                    $checkInCarbon = Carbon::parse($existingAttendance->check_in, 'Asia/Jakarta');
+                    $minCheckOutTime = $checkInCarbon->copy()->addHour();
+                    if ($currentTime->lt($minCheckOutTime)) {
+                        return response()->json([
+                            'status' => 'info',
+                            'message' => "Siswa {$student->name} sudah absen masuk pukul {$existingAttendance->check_in}. Absen pulang dapat dilakukan setelah pukul " . $minCheckOutTime->format('H:i') . ".",
+                            'data' => [
+                                'student_name' => $student->name,
+                                'class_name' => $studentClass->class_name,
+                                'check_in_time' => $existingAttendance->check_in,
+                                'check_in_status' => $existingAttendance->check_in_status,
+                            ]
+                        ], 200);
+                    }
+                }
+
+                // Proses checkout
+                $checkOutTime = $currentTime->format('H:i');
+                $checkOutStatus = 'tepat';
+                if ($activePermission) {
+                    $checkOutStatus = $activePermission->checkout_status;
+                } elseif ($schedule) {
+                    $scheduleEndTime = Carbon::parse($schedule->end_time);
+                    if ($currentTime->lt($scheduleEndTime)) {
+                        $checkOutStatus = 'lebih_awal';
+                    } else {
+                        $checkOutStatus = 'tepat';
+                    }
+                }
+
+                $existingAttendance->update([
+                    'check_out' => $checkOutTime,
+                    'check_out_status' => $checkOutStatus,
+                    'updated_by' => Auth::id() ?? null,
+                ]);
+
+                DB::commit();
+
+                // Kirim notifikasi WA check-out ke orang tua
+                $studentId = $student->id;
+                $attendanceId = $existingAttendance->id;
+                dispatch(function () use ($studentId, $attendanceId) {
+                    try {
+                        $student = Student::find($studentId);
+                        $attendance = Attendance::find($attendanceId);
+                        if ($student && $attendance) {
+                            $wa = app(WhatsAppService::class);
+                            $wa->sendCheckOutNotification($student, $attendance);
+                        }
+                    } catch (\Exception $e) {
+                        \Log::warning('WA notification failed after RFID checkout: ' . $e->getMessage());
+                    }
+                })->afterResponse();
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => "Siswa {$student->name} berhasil absen pulang pada pukul {$checkOutTime} dengan status {$checkOutStatus}",
+                    'data' => [
+                        'student_name' => $student->name,
+                        'class_name' => $studentClass->class_name,
+                        'check_in_time' => $existingAttendance->check_in,
+                        'check_in_status' => $existingAttendance->check_in_status,
+                        'check_out_time' => $checkOutTime,
+                        'check_out_status' => $checkOutStatus,
+                        'permission_type' => $activePermission->type ?? null
+                    ]
+                ], 200);
+            }
+
+            // Cek jadwal untuk hari ini
+            $schedule = SettingSchedule::where('day', $dayName)->first();
+            
+            // Tentukan status check-in berdasarkan waktu
+            $checkInStatus = 'tepat';
+            $checkInTime = $currentTime->format('H:i');
+            
+            // Logika: mulai absensi 06:00, tepat waktu sebelum 07:00, terlambat setelah 07:00
+            $currentHour = $currentTime->format('H');
+            $currentMinute = $currentTime->format('i');
+            $currentTimeInMinutes = ($currentHour * 60) + $currentMinute;
+            
+            // Cek apakah sebelum 06:00 (belum bisa absensi)
+            if ($currentTimeInMinutes < 360) { // 06:00 = 360 menit
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Belum waktu absensi. Absensi dibuka mulai pukul 06:00. Waktu sekarang: " . $checkInTime,
+                ], 422);
+            }
+
+            // Cek apakah jam pelajaran sudah selesai (tidak bisa check-in setelah end_time)
+            if ($schedule) {
+                $scheduleEndCarbon = Carbon::createFromTimeString($schedule->end_time, 'Asia/Jakarta');
+                if ($currentTime->gte($scheduleEndCarbon)) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "Tidak dapat absen masuk. Jam pelajaran sudah selesai pukul " . $scheduleEndCarbon->format('H:i') . ".",
+                    ], 422);
+                }
             }
             
+            // Cek apakah terlambat (setelah 07:00)
+            if ($currentTimeInMinutes >= 420) { // 07:00 = 420 menit
+                $checkInStatus = 'terlambat';
+            } else {
+                $checkInStatus = 'tepat';
+            }
+
+            // Buat absensi baru
+            $attendance = Attendance::create([
+                'id' => Str::uuid(),
+                'student_id' => $student->id,
+                'class_id' => $studentClass->class_id,
+                'date' => $currentDate,
+                'check_in' => $checkInTime,
+                'check_in_status' => $checkInStatus,
+                'created_by' => Auth::id() ?? null, // null jika auto oleh sistem
+            ]);
+
+            // Cek apakah ada pelajaran yang sedang berjalan pada jam tersebut
+            $currentTimeOnly = $currentTime->format('H:i:s');
+            $currentScheduleQuery = Schedule::where('class_id', $studentClass->class_id)
+                ->where('day', $dayName)
+                ->where('start_time', '<=', $currentTimeOnly)
+                ->where('end_time', '>=', $currentTimeOnly);
+
+            if ($academicYear) {
+                $currentScheduleQuery->where('academic_year', $academicYear);
+            }
+            if ($semesterType) {
+                $currentScheduleQuery->where('semester', $semesterType);
+            }
+
+            $currentSchedule = $currentScheduleQuery->first();
+
+            $lessonAttendanceCreated = false;
+            if ($currentSchedule) {
+                // Cek apakah siswa sudah absen pelajaran ini hari ini
+                $existingLessonAttendance = LessonAttendance::where([
+                    'student_id' => $student->id,
+                    'class_id' => $studentClass->class_id,
+                    'subject_id' => $currentSchedule->subject_id,
+                    'date' => $currentDate
+                ])->first();
+
+                if (!$existingLessonAttendance) {
+                    // Tentukan status check-in pelajaran berdasarkan waktu berakhir pelajaran
+                    $scheduleEndTime = Carbon::parse($currentSchedule->end_time);
+                    $checkInTimeCarbon = Carbon::parse($currentTimeOnly);
+                    
+                    // Selama pelajaran masih berjalan (belum lewat end_time), dianggap hadir
+                    $lessonCheckInStatus = $checkInTimeCarbon->gt($scheduleEndTime) ? 'terlambat' : 'hadir';
+
+                    // Buat absensi pelajaran
+                    LessonAttendance::create([
+                        'id' => Str::uuid(),
+                        'student_id' => $student->id,
+                        'class_id' => $studentClass->class_id,
+                        'subject_id' => $currentSchedule->subject_id,
+                        'date' => $currentDate,
+                        'check_in' => $currentTimeOnly,
+                        'check_in_status' => $lessonCheckInStatus,
+                        'academic_year' => '2025/2026',
+                        'semester' => 'ganjil',
+                    ]);
+
+                    $lessonAttendanceCreated = true;
+                }
+            }
+
+            DB::commit();
+
+            // Kirim notifikasi WhatsApp ke orang tua (async, tidak blok response ESP)
+            $studentId = $student->id;
+            $attendanceId = $attendance->id;
+            $status = $checkInStatus;
+            $lessonSubjectId = $lessonAttendanceCreated && $currentSchedule ? $currentSchedule->subject_id : null;
+            dispatch(function () use ($studentId, $attendanceId, $status, $lessonSubjectId) {
+                try {
+                    $student = Student::find($studentId);
+                    $attendance = Attendance::find($attendanceId);
+                    if ($student && $attendance) {
+                        $wa = app(WhatsAppService::class);
+                        $lessonSubject = $lessonSubjectId ? \App\Models\Subject::find($lessonSubjectId) : null;
+                        if ($status === 'terlambat') {
+                            $wa->sendLateNotification($student, $attendance, $lessonSubject);
+                        } else {
+                            $wa->sendAttendanceNotification($student, $attendance, $lessonSubject);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('WA notification failed after RFID attendance: ' . $e->getMessage());
+                }
+            })->afterResponse();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => "Absensi berhasil dibuat untuk {$student->name} - {$studentClass->class_name}" . ($lessonAttendanceCreated ? " (termasuk absensi pelajaran)" : ""),
+                'data' => [
+                    'attendance_id' => $attendance->id,
+                    'student_name' => $student->name,
+                    'nisn' => $student->nisn,
+                    'class_name' => $studentClass->class_name,
+                    'check_in_time' => $checkInTime,
+                    'check_in_status' => $checkInStatus,
+                    'date' => $currentDate,
+                    'status_text' => $checkInStatus === 'tepat' ? 'Tepat Waktu' : 'Terlambat',
+                    'lesson_attendance_created' => $lessonAttendanceCreated,
+                    'current_schedule' => $currentSchedule ? [
+                        'subject_id' => $currentSchedule->subject_id,
+                        'start_time' => $currentSchedule->start_time,
+                        'end_time' => $currentSchedule->end_time,
+                    ] : null
+                ]
+            ], 200);
+
         } catch (\Exception $e) {
             DB::rollback();
-            // Log the error
-            \Illuminate\Support\Facades\Log::error('RFID Attendance Error: ' . $e->getMessage());
             
-            // Return error response
+            \Log::error('Auto Attendance Error: ' . $e->getMessage());
+            
             return response()->json([
                 'status' => 'error',
-                'message' => 'Gagal melakukan absensi: ' . $e->getMessage()
-            ]);
+                'message' => 'Terjadi kesalahan saat membuat absensi otomatis: ' . $e->getMessage()
+            ], 500);
         }
     }
-    
-    private function processCheckIn($student, $studentClass, $schedule, $currentTime, $currentDate)
-    {
-        // Determine check in status
-        $checkInTimeCarbon = Carbon::createFromFormat('H:i:s', $currentTime, 'Asia/Jakarta');
-        $scheduleStartTime = Carbon::createFromFormat('H:i:s', $schedule->start_time, 'Asia/Jakarta');
-        
-        $checkInStatus = 'tepat';
-        if ($checkInTimeCarbon->gt($scheduleStartTime)) {
-            $checkInStatus = 'terlambat';
-        }
-        
-        // Create attendance record
-        $attendanceData = [
-            'id' => Str::uuid(),
-            'student_id' => $student->id,
-            'class_id' => $studentClass->class_id,
-            'date' => $currentDate,
-            'check_in' => $checkInTimeCarbon->format('H:i'),
-            'check_in_status' => $checkInStatus,
-            'created_by' => Auth::id(),
-        ];
-        
-        $attendance = Attendance::create($attendanceData);
-        
-        DB::commit();
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Absen masuk berhasil dicatat',
-            'type' => 'check_in',
-            'student' => [
-                'name' => $student->name,
-                'nisn' => $student->nisn,
-                'class' => $studentClass->class->name ?? 'Tidak ada kelas',
-                'check_in' => $checkInTimeCarbon->format('H:i'),
-                'check_in_status' => $checkInStatus,
-                'schedule_start' => $scheduleStartTime->format('H:i'),
-            ]
-        ]);
-    }
-    
-    private function processCheckOut($existingAttendance, $schedule, $currentTime, $student, $studentClass)
-    {
-        // Determine check out status
-        $checkOutTimeCarbon = Carbon::createFromFormat('H:i:s', $currentTime, 'Asia/Jakarta');
-        $scheduleEndTime = Carbon::createFromFormat('H:i:s', $schedule->end_time, 'Asia/Jakarta');
-        
-        $checkOutStatus = 'tepat';
-        if ($checkOutTimeCarbon->lt($scheduleEndTime)) {
-            $checkOutStatus = 'lebih_awal';
-        }
-        
-        // Update existing attendance with check out
-        $existingAttendance->update([
-            'check_out' => $checkOutTimeCarbon->format('H:i'),
-            'check_out_status' => $checkOutStatus,
-            'updated_by' => Auth::id(),
-        ]);
-        
-        DB::commit();
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Absen pulang berhasil dicatat',
-            'type' => 'check_out',
-            'student' => [
-                'name' => $student->name,
-                'nisn' => $student->nisn,
-                'class' => $studentClass->class->name ?? 'Tidak ada kelas',
-                'check_in' => $existingAttendance->check_in,
-                'check_in_status' => $existingAttendance->check_in_status,
-                'check_out' => $checkOutTimeCarbon->format('H:i'),
-                'check_out_status' => $checkOutStatus,
-                'schedule_end' => $scheduleEndTime->format('H:i'),
-            ]
-        ]);
-    }
-    
+
     /**
-     * Process Alpha attendance when student didn't attend class
+     * Helper function untuk mengubah nama hari dalam bahasa Indonesia
      */
-    private function processAlphaAttendance($student, $studentClass, $schedule, $currentTime, $currentDate)
+    private function convertDayToIndonesian($day)
     {
-        $currentTimeCarbon = Carbon::createFromFormat('H:i:s', $currentTime, 'Asia/Jakarta');
-        $scheduleStartTime = Carbon::createFromFormat('H:i:s', $schedule->start_time, 'Asia/Jakarta');
-        $scheduleEndTime = Carbon::createFromFormat('H:i:s', $schedule->end_time, 'Asia/Jakarta');
-        
-        // Create attendance record with Alfa status for both check in and check out
-        $attendanceData = [
-            'id' => Str::uuid(),
-            'student_id' => $student->id,
-            'class_id' => $studentClass->class_id,
-            'date' => $currentDate,
-            'check_in' => $currentTimeCarbon->format('H:i'),
-            'check_in_status' => 'alpha',
-            'check_out' => $currentTimeCarbon->format('H:i'),
-            'check_out_status' => 'alpha',
-            'created_by' => Auth::id(),
-        ];
-        
-        $attendance = Attendance::create($attendanceData);
-        
-        DB::commit();
-        
-        return response()->json([
-            'status' => 'warning',
-            'message' => 'Siswa tidak mengikuti mata pelajaran hari ini (Alpha)',
-            'type' => 'alpha',
-            'student' => [
-                'name' => $student->name,
-                'nisn' => $student->nisn,
-                'class' => $studentClass->class->name ?? 'Tidak ada kelas',
-                'check_in' => $currentTimeCarbon->format('H:i'),
-                'check_in_status' => 'alpha',
-                'check_out' => $currentTimeCarbon->format('H:i'),
-                'check_out_status' => 'alpha',
-                'schedule_start' => $scheduleStartTime->format('H:i'),
-                'schedule_end' => $scheduleEndTime->format('H:i'),
-                'tap_time' => $currentTimeCarbon->format('H:i:s'),
-            ]
-        ]);
-    }
-    
-    /**
-     * Convert English day names to Indonesian
-     */
-    private function convertDayToIndonesian($englishDay)
-    {
-        $dayMap = [
+        $days = [
             'Monday' => 'Senin',
-            'Tuesday' => 'Selasa',
+            'Tuesday' => 'Selasa', 
             'Wednesday' => 'Rabu',
             'Thursday' => 'Kamis',
             'Friday' => 'Jumat',
@@ -296,59 +567,6 @@ class RFIDController extends Controller
             'Sunday' => 'Minggu'
         ];
         
-        return $dayMap[$englishDay] ?? $englishDay;
-    }
-    
-    /**
-     * Get the latest RFID card detected
-     * 
-     * @return \Illuminate\Http\Response
-     */
-    public function getLatestRFID()
-    {
-        $latestRFID = Cache::get('latest_rfid');
-        
-        if (!$latestRFID) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No RFID card detected recently',
-                'rfid' => null,
-                'is_used' => false,
-            ]);
-        }
-        
-        // Only return RFID values that are relatively new (within the last minute)
-        $now = Carbon::now()->timestamp;
-        if ($now - $latestRFID['timestamp'] > 60) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'RFID detection has expired',
-                'rfid' => null,
-                'is_used' => false,
-            ]);
-        }
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => $latestRFID['is_used'] ? 'RFID card is already in use' : 'RFID card detected',
-            'rfid' => $latestRFID['value'],
-            'is_used' => $latestRFID['is_used'],
-            'user_name' => $latestRFID['user_name'] ?? null,
-        ]);
-    }
-    
-    /**
-     * Clear the RFID cache
-     * 
-     * @return \Illuminate\Http\Response
-     */
-    public function clearRFIDCache()
-    {
-        Cache::forget('latest_rfid');
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => 'RFID cache cleared successfully'
-        ]);
+        return $days[$day] ?? $day;
     }
 }

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->uuid('class_id');
             $table->uuid('subject_id');
             $table->uuid('teacher_id');
-            $table->enum('day', ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'])->nullable();
+            $table->enum('day', ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'])->nullable();
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
             $table->string('semester')->nullable();

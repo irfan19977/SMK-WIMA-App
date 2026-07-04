@@ -47,7 +47,7 @@ class ProfileController extends Controller
         $user = $request->user();
         
         // Check if viewing another user's profile (for admin/teacher)
-        if ($request->has('user_id') && auth()->user()->hasRole(['admin', 'Super Admin', 'teacher'])) {
+        if ($request->has('user_id') && auth()->user()->hasRole(['administrator', 'Super Admin', 'teacher'])) {
             $targetUser = \App\Models\User::with('student')->find($request->input('user_id'));
             if ($targetUser) {
                 $user = $targetUser;
@@ -103,6 +103,17 @@ class ProfileController extends Controller
         } else {
             // Update profile fields
             $validated = $request->validated();
+
+            // Phone should be updated in the role-specific profile table, not users
+            if (isset($validated['phone'])) {
+                $profileData = $user->getProfileData();
+                if ($profileData) {
+                    $profileData->phone = $validated['phone'];
+                    $profileData->save();
+                }
+                unset($validated['phone']);
+            }
+
             $user->fill($validated);
 
             if ($user->isDirty('email')) {
@@ -123,11 +134,11 @@ class ProfileController extends Controller
                 $profileData = $user->getProfileData();
                 if ($profileData) {
                     $studentFields = [
-                        'no_absen', 'no_card', 'nisn', 'nik', 'gender', 
+                        'no_absen', 'no_card', 'nisn', 'nik', 'gender',
                         'birth_place', 'birth_date', 'religion',
                         'jurusan_utama', 'jurusan_cadangan', 'academic_year'
                     ];
-                    
+
                     foreach ($studentFields as $field) {
                         if (isset($validated[$field])) {
                             $profileData->$field = $validated[$field];
@@ -148,13 +159,13 @@ class ProfileController extends Controller
             $changes = [];
             if ($user->isDirty('name')) $changes[] = 'nama';
             if ($user->isDirty('email')) $changes[] = 'email';
-            if ($user->isDirty('phone')) $changes[] = 'nomor HP';
             if ($user->isDirty('photo_path')) $changes[] = 'foto';
-            
-            // Check if address was changed in profile data
-            if (isset($validated['address'])) {
-                $profileData = $user->getProfileData();
-                if ($profileData && $profileData->isDirty('address')) {
+
+            // Check if phone or address was changed in profile data
+            $profileData = $user->getProfileData();
+            if ($profileData) {
+                if ($profileData->isDirty('phone')) $changes[] = 'nomor HP';
+                if (isset($validated['address']) && $profileData->isDirty('address')) {
                     $changes[] = 'alamat';
                 }
             }

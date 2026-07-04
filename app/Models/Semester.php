@@ -139,28 +139,64 @@ class Semester extends Model
     }
 
     /**
-     * Auto-detect and set active semester based on current date
+     * Auto-detect and set active semester based on current date.
+     * Ganjil = Juli-Desember, Genap = Januari-Juni.
+     * Will auto-create the semester if it doesn't exist.
      */
     public static function autoSetActiveSemester()
     {
         $now = now();
-        
-        // Cari semester yang seharusnya aktif berdasarkan tanggal
-        $currentSemester = self::where('start_date', '<=', $now)
-            ->where('end_date', '>=', $now)
+        $month = (int) $now->format('m');
+        $year = (int) $now->format('Y');
+
+        // Determine semester type and academic year
+        if ($month >= 7) {
+            // Juli-Desember → Ganjil, tahun akademik year/(year+1)
+            $semesterType = 'ganjil';
+            $academicYear = $year . '/' . ($year + 1);
+            $startDate = $year . '-07-01';
+            $endDate = $year . '-12-31';
+        } else {
+            // Januari-Juni → Genap, tahun akademik (year-1)/year
+            $semesterType = 'genap';
+            $academicYear = ($year - 1) . '/' . $year;
+            $startDate = $year . '-01-01';
+            $endDate = $year . '-06-30';
+        }
+
+        // Check if this semester already exists
+        $currentSemester = self::where('academic_year', $academicYear)
+            ->where('semester_type', $semesterType)
             ->first();
-            
-        if ($currentSemester && !$currentSemester->is_active) {
-            // Nonaktifkan semua semester lain
-            self::where('is_active', true)->update(['is_active' => false]);
-            
-            // Aktifkan semester ini
-            $currentSemester->update(['is_active' => true]);
-            
+
+        // Create if not exists
+        if (!$currentSemester) {
+            $typeLabel = $semesterType === 'ganjil' ? 'Ganjil' : 'Genap';
+            $currentSemester = self::create([
+                'academic_year' => $academicYear,
+                'semester_type' => $semesterType,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'is_active' => true,
+                'description' => "Semester {$typeLabel} {$academicYear} (otomatis)",
+            ]);
+
+            // Deactivate other semesters
+            self::where('id', '!=', $currentSemester->id)
+                ->where('is_active', true)
+                ->update(['is_active' => false]);
+
             return $currentSemester;
         }
-        
-        return null;
+
+        // Activate if not yet active
+        if (!$currentSemester->is_active) {
+            self::where('is_active', true)->update(['is_active' => false]);
+            $currentSemester->update(['is_active' => true]);
+            return $currentSemester;
+        }
+
+        return $currentSemester;
     }
 
     /**

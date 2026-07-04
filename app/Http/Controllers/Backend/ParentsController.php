@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Str;
+use Illuminate\Support\Str;
 
 class ParentsController extends Controller
 {
@@ -65,7 +65,7 @@ class ParentsController extends Controller
                     'id' => $parent->id,
                     'name' => $parent->name,
                     'email' => $parent->user->email,
-                    'phone' => $parent->user->phone,
+                    'phone' => $parent->phone,
                     'status' => $parent->status,
                     'user_status' => $parent->user->status,
                     'user_id' => $parent->user_id,
@@ -160,16 +160,16 @@ class ParentsController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'phone' => $request->phone,
                 'status' => true,
             ]);
-            $user->assignRole('parent');
+            $user->assignRole('Parent');
 
             // Create parent record
             $parent = ParentModel::create([
                 'id' => Str::uuid(),
                 'user_id' => $user->id,
                 'name' => $request->name,
+                'phone' => $request->phone,
                 'student_id' => $request->student_id ?: null,
                 'status' => $request->status,
                 'jenis_kelamin' => $request->jenis_kelamin,
@@ -287,7 +287,6 @@ class ParentsController extends Controller
             $userData = [
                 'name' => $request->name,
                 'email' => $request->email,
-                'phone' => $request->phone,
             ];
             
             if ($request->password) {
@@ -299,6 +298,7 @@ class ParentsController extends Controller
             // Update parent data
             $parent->update([
                 'name' => $request->name,
+                'phone' => $request->phone,
                 'student_id' => $request->student_id ?: null,
                 'status' => $request->status,
                 'jenis_kelamin' => $request->jenis_kelamin,

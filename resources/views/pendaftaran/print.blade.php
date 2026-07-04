@@ -106,7 +106,7 @@
             <td>{{ $student->gender ?? '-' }}</td>
             <td>{{ $student->birth_place ?? '-' }}</td>
             <td>{{ $student->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : '-' }}</td>
-            <td>{{ $student->user->phone ?? '-' }}</td>
+            <td>{{ $student->phone ?? '-' }}</td>
           </tr>
         @empty
           <tr>

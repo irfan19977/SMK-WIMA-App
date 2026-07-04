@@ -20,28 +20,8 @@
         </div>
     </div>
 
-    <!-- Student Info Section (Auto-filled) -->
+    <!-- Class & Student Section -->
     <div class="row mb-3">
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label for="student_id" class="form-label">{{ __('index.student_name') }} <span class="text-danger">*</span></label>
-                <select class="form-select" id="student_id" name="student_id" required>
-                    <option value="">{{ __('index.select_student') }}</option>
-                    @foreach($students as $student)
-                        <option value="{{ $student->id }}" 
-                                data-nisn="{{ $student->nisn ?? '' }}"
-                                data-class-id="{{ $student->classes && $student->classes->first() ? $student->classes->first()->id : '' }}"
-                                {{ old('student_id', $attendance ? $attendance->student_id : '') == $student->id ? 'selected' : '' }}>
-                            {{ $student->name }}
-                        </option>
-                    @endforeach
-                </select>
-                <div class="invalid-feedback">
-                    {{ __('index.please_select_student') }}
-                </div>
-            </div>
-        </div>
-        
         <div class="col-md-6">
             <div class="mb-3">
                 <label for="class_id" class="form-label">{{ __('index.class') }} <span class="text-danger">*</span></label>
@@ -55,6 +35,31 @@
                 </select>
                 <div class="invalid-feedback">
                     {{ __('index.please_select_class') }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="student_id" class="form-label">{{ __('index.student_name') }} <span class="text-danger">*</span></label>
+                <select class="form-select" id="student_id" name="student_id" required {{ $attendance ? '' : 'disabled' }}>
+                    <option value="">{{ $attendance ? __('index.select_student') : __('index.select_class_first') }}</option>
+                    @if($attendance)
+                        @foreach($students as $student)
+                            <option value="{{ $student->id }}"
+                                    data-nisn="{{ $student->nisn ?? '' }}"
+                                    data-class-id="{{ $student->classes && $student->classes->first() ? $student->classes->first()->id : '' }}"
+                                    {{ old('student_id', $attendance->student_id) == $student->id ? 'selected' : '' }}>
+                                {{ $student->name }}
+                            </option>
+                        @endforeach
+                    @endif
+                </select>
+                <div class="invalid-feedback">
+                    {{ __('index.please_select_student') }}
+                </div>
+                <div class="form-text" id="student-help-text">
+                    {{ __('index.select_class_first') }}
                 </div>
             </div>
         </div>

@@ -3,6 +3,36 @@
     Register - SMK PGRI LAWANG
 @endsection
 @section('content')
+    <!-- Language Switcher Top Right -->
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+        <div class="dropdown">
+            <button class="btn btn-sm btn-success dropdown-toggle" type="button" id="registerLanguageDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="padding: 8px 15px; border-radius: 6px; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-size: 15px;">
+                <i class="mdi mdi-earth me-1"></i>
+                {{ strtoupper(app()->getLocale()) }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="registerLanguageDropdown" style="background: rgba(255,255,255,0.98); border: 1px solid #dee2e6; min-width: 160px; box-shadow: 0 6px 20px rgba(0,0,0,0.2); border-radius: 8px; margin-top: 8px;">
+                <li>
+                    <a class="dropdown-item d-flex align-items-center {{ app()->getLocale() == 'id' ? 'active' : '' }}" href="{{ route('language.switch', 'id') }}" style="color: #333; padding: 10px 15px; transition: all 0.2s;">
+                        <span style="font-size: 18px; margin-right: 10px;">🇮🇩</span>
+                        <span style="flex: 1;">Indonesia</span>
+                        @if(app()->getLocale() == 'id')
+                            <i class="mdi mdi-check-circle" style="color: #28a745; font-size: 16px;"></i>
+                        @endif
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item d-flex align-items-center {{ app()->getLocale() == 'en' ? 'active' : '' }}" href="{{ route('language.switch', 'en') }}" style="color: #333; padding: 10px 15px; transition: all 0.2s;">
+                        <span style="font-size: 18px; margin-right: 10px;">🇬🇧</span>
+                        <span style="flex: 1;">English</span>
+                        @if(app()->getLocale() == 'en')
+                            <i class="mdi mdi-check-circle" style="color: #28a745; font-size: 16px;"></i>
+                        @endif
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
     <div class="auth-maintenance d-flex align-items-center min-vh-100">
         <div class="bg-overlay bg-light"></div>
         <div class="container">
@@ -16,7 +46,7 @@
                                         <img src="{{ asset('backend/assets/img/logo 1.png') }}" alt=""
                                             height="40" class="auth-logo mx-auto">
                                     </a>
-                                    <p class="text-muted mt-2">Sistem Informasi Manajemen Sekolah</p>
+                                    <p class="text-muted mt-2">{{ __('index.school_management_system') }}</p>
                                 </div>
 
                                 <div class="card my-auto overflow-hidden">
@@ -25,8 +55,8 @@
                                             <div class="bg-overlay bg-success"></div>
                                             <div class="h-100 bg-auth align-items-end">
                                                 <div class="p-4 text-white text-center">
-                                                    <h4 class="mb-3">Bergabung dengan Kami!</h4>
-                                                    <p class="mb-4">Daftar untuk mengakses sistem informasi SMK PGRI LAWANG</p>
+                                                    <h4 class="mb-3">{{ __('index.join_us') }}</h4>
+                                                    <p class="mb-4">{{ __('index.register_description') }}</p>
                                                     <div class="mt-4">
                                                         <i class="mdi mdi-account-plus-outline display-4"></i>
                                                     </div>
@@ -38,18 +68,18 @@
                                             <div class="p-lg-5 p-4">
                                                 <div>
                                                     <div class="text-center mt-1">
-                                                        <h4 class="font-size-18">Daftar Akun Baru</h4>
-                                                        <p class="text-muted">Buat akun untuk mengakses sistem</p>
+                                                        <h4 class="font-size-18">{{ __('index.register_account') }}</h4>
+                                                        <p class="text-muted">{{ __('index.register_instruction') }}</p>
                                                     </div>
 
                                                     <form method="POST" action="{{ route('register') }}" class="auth-input">
                                                         @csrf
                                                         <div class="mb-3">
-                                                            <label for="name" class="form-label">Nama Lengkap</label>
+                                                            <label for="name" class="form-label">{{ __('index.full_name') }}</label>
                                                             <input id="name" type="text"
                                                                 class="form-control @error('name') is-invalid @enderror"
                                                                 name="name" value="{{ old('name') }}" required
-                                                                autocomplete="name" autofocus placeholder="Masukkan nama lengkap">
+                                                                autocomplete="name" autofocus placeholder="{{ __('index.enter_full_name') }}">
                                                             @error('name')
                                                                 <span class="invalid-feedback" role="alert">
                                                                     <strong>{{ $message }}</strong>
@@ -58,11 +88,11 @@
                                                         </div>
 
                                                         <div class="mb-3">
-                                                            <label for="email" class="form-label">Email</label>
+                                                            <label for="email" class="form-label">{{ __('index.email') }}</label>
                                                             <input id="email" type="email"
                                                                 class="form-control @error('email') is-invalid @enderror"
                                                                 name="email" value="{{ old('email') }}" required
-                                                                autocomplete="email" placeholder="Masukkan email">
+                                                                autocomplete="email" placeholder="{{ __('index.enter_email') }}">
                                                             @error('email')
                                                                 <span class="invalid-feedback" role="alert">
                                                                     <strong>{{ $message }}</strong>
@@ -71,12 +101,12 @@
                                                         </div>
 
                                                         <div class="mb-3">
-                                                            <label class="form-label" for="password-input">Password</label>
+                                                            <label class="form-label" for="password-input">{{ __('index.password') }}</label>
                                                             <div class="position-relative">
                                                                 <input type="password"
                                                                     class="form-control @error('password') is-invalid @enderror"
                                                                     name="password" required id="password-input"
-                                                                    placeholder="Masukkan password">
+                                                                    placeholder="{{ __('index.enter_password') }}">
                                                                 <span class="position-absolute end-0 top-50 translate-middle-y me-2" 
                                                                     id="password-addon" 
                                                                     style="cursor: pointer;">
@@ -91,12 +121,12 @@
                                                         </div>
 
                                                         <div class="mb-3">
-                                                            <label class="form-label" for="password-confirm">Konfirmasi Password</label>
+                                                            <label class="form-label" for="password-confirm">{{ __('index.confirm_password') }}</label>
                                                             <div class="position-relative">
                                                                 <input type="password"
                                                                     class="form-control @error('password_confirmation') is-invalid @enderror"
                                                                     name="password_confirmation" required id="password-confirm"
-                                                                    placeholder="Konfirmasi password">
+                                                                    placeholder="{{ __('index.enter_confirm_password') }}">
                                                                 <span class="position-absolute end-0 top-50 translate-middle-y me-2" 
                                                                     id="password-confirm-addon" 
                                                                     style="cursor: pointer;">
@@ -114,20 +144,20 @@
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox" name="terms" id="terms" required>
                                                                 <label class="form-check-label" for="terms">
-                                                                    Saya setuju dengan <a href="#" class="text-primary">Syarat & Ketentuan</a>
+                                                                    {{ __('index.i_agree_with') }} <a href="#" class="text-primary">{{ __('index.terms_and_conditions') }}</a>
                                                                 </label>
                                                             </div>
                                                         </div>
 
                                                         <div class="mt-4">
                                                             <button class="btn btn-success w-100" type="submit">
-                                                                <i class="mdi mdi-account-plus me-2"></i> Daftar Sekarang
+                                                                <i class="mdi mdi-account-plus me-2"></i> {{ __('index.register') }}
                                                             </button>
                                                         </div>
 
                                                         <div class="mt-4 pt-2 text-center">
                                                             <div class="signin-other-title">
-                                                                <h5 class="font-size-14 mb-3 title">Hubungi Administrator</h5>
+                                                                <h5 class="font-size-14 mb-3 title">{{ __('index.contact_administrator') }}</h5>
                                                             </div>
                                                             <div class="pt-2 hstack gap-2 justify-content-center">
                                                                 <a href="https://wa.me/6282233088346" class="btn btn-success btn-sm">
@@ -137,13 +167,13 @@
                                                                     <i class="mdi mdi-telegram font-size-16"></i>
                                                                 </a>
                                                             </div>
-                                                            <small class="text-muted d-block mt-2">*Hubungi hanya jika ada permasalahan</small>
+                                                            <small class="text-muted d-block mt-2">{{ __('index.contact_note') }}</small>
                                                         </div>
                                                     </form>
                                                 </div>
 
                                                 <div class="mt-4 text-center">
-                                                    <p class="mb-0">Sudah punya akun? <a href="{{ route('login') }}" class="fw-medium text-primary">Masuk</a></p>
+                                                    <p class="mb-0">{{ __('index.already_have_account') }} <a href="{{ route('login') }}" class="fw-medium text-primary">{{ __('index.sign_in_here') }}</a></p>
                                                 </div>
                                             </div>
                                         </div>

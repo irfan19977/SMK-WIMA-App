@@ -63,15 +63,15 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-muted">{{ __('index.phone_number') }}</label>
-                        <p class="mb-0">{{ $user->phone ?? '-' }}</p>
+                        <p class="mb-0">{{ $profileData->phone ?? '-' }}</p>
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-muted">{{ __('index.member_since') }}</label>
-                        <p class="mb-0">{{ $user->created_at->format('d M Y') }}</p>
+                        <p class="mb-0">{{ $user->created_at ? $user->created_at->format('d M Y') : '-' }}</p>
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-muted">{{ __('index.last_updated') }}</label>
-                        <p class="mb-0">{{ $user->updated_at->format('d M Y H:i') }}</p>
+                        <p class="mb-0">{{ $user->updated_at ? $user->updated_at->format('d M Y H:i') : '-' }}</p>
                     </div>
                 </div>
             </div>
@@ -131,7 +131,7 @@
                                     </tr>
                                     <tr>
                                         <th>{{ __('index.phone_number') }}</th>
-                                        <td>{{ $user->phone ?? '-' }}</td>
+                                        <td>{{ $profileData->phone ?? '-' }}</td>
                                     </tr>
                                     
                                     @if($user->hasRole('student') || $user->hasRole('Student'))
@@ -346,8 +346,8 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="phone" class="form-label">{{ __('index.phone_number') }}</label>
-                                        <input type="tel" class="form-control @error('phone') is-invalid @enderror" 
-                                               id="phone" name="phone" value="{{ $user->phone }}">
+                                        <input type="tel" class="form-control @error('phone') is-invalid @enderror"
+                                               id="phone" name="phone" value="{{ old('phone', $profileData->phone ?? '') }}">
                                         @error('phone')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -643,19 +643,17 @@
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title" id="imagePreviewTitle">{{ __('index.preview_file') }}</h5>
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body text-center">
-                                    <img id="imagePreviewElement" src="" alt="{{ __('index.preview') }}" class="img-fluid rounded" style="max-height: 70vh; display: none;">
+                                    <img id="imagePreviewElement" src="" alt="{{ __('index.preview') }}" class="img-fluid rounded mx-auto d-block" style="max-height: 70vh; display: none;">
                                     <iframe id="pdfPreviewElement" src="" style="width: 100%; height: 70vh; border: 1px solid #ddd; display: none;" title="{{ __('index.pdf_preview') }}"></iframe>
                                 </div>
                                 <div class="modal-footer">
                                     <a id="imagePreviewDownload" href="#" class="btn btn-primary" download>
                                         <i class="mdi mdi-download"></i> {{ __('index.download') }}
                                     </a>
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('index.close') }}</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('index.close') }}</button>
                                 </div>
                             </div>
                         </div>

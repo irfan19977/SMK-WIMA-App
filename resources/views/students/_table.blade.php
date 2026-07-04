@@ -8,7 +8,7 @@
     </td>
     <td>{{ $student->nisn ?? '-' }}</td>
     <td>{{ $student->user->email ?? '-' }}</td>
-    <td>{{ $student->user->phone ?? '-' }}</td>
+    <td>{{ $student->phone ?? '-' }}</td>
     <td>{{ $student->no_card ?? '-' }}</td>
     <td>
         <span class="badge rounded-pill {{ $student->status == 'siswa' ? 'bg-success' : 'bg-warning' }} font-size-12">

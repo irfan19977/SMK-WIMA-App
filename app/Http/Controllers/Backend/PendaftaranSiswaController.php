@@ -17,6 +17,18 @@ use Illuminate\Support\Facades\Auth;
 
 class PendaftaranSiswaController extends Controller{
     use AuthorizesRequests;
+    public function setPerPage(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+        
+        // Validate per_page value
+        if (in_array($perPage, [10, 25, 50, 100])) {
+            session(['pendaftaran_siswa_per_page' => $perPage]);
+        }
+        
+        return response()->json(['success' => true]);
+    }
+
     public function index(Request $request)
     {
         
@@ -37,7 +49,8 @@ class PendaftaranSiswaController extends Controller{
         // Filter Tahun Akademik berdasarkan kolom academic_year
         $selectedYear = $request->input('tahun_akademik');
         if (!$selectedYear) {
-            $selectedYear = AcademicYearHelper::getCurrentAcademicYear(); // default ke tahun akademik saat ini
+            // Untuk pendaftaran, default ke tahun akademik berikutnya (tahun ajaran baru)
+            $selectedYear = AcademicYearHelper::getNextAcademicYear();
         }
         $studentsQuery->where('academic_year', $selectedYear);
 
@@ -52,14 +65,14 @@ class PendaftaranSiswaController extends Controller{
                    ->orWhere('jurusan_cadangan', 'like', "%$q%")
                    ->orWhere('gender', 'like', "%$q%")
                    ->orWhere('birth_place', 'like', "%$q%")
+                   ->orWhere('phone', 'like', "%$q%")
                    ->orWhereHas('user', function ($u) use ($q) {
-                       $u->where('email', 'like', "%$q%")
-                         ->orWhere('phone', 'like', "%$q%");
+                       $u->where('email', 'like', "%$q%");
                    });
             });
         }
 
-        $students = $studentsQuery->paginate($request->get('per_page', 10));
+        $students = $studentsQuery->paginate($request->get('per_page', session('pendaftaran_siswa_per_page', 10)));
 
         // Jika request dari AJAX (partial refresh), kembalikan partial tabel saja
         if ($request->ajax() || $request->boolean('partial')) {
@@ -144,9 +157,8 @@ class PendaftaranSiswaController extends Controller{
 
         $selectedYear = $request->input('tahun_akademik');
         if (!$selectedYear) {
-            $current = AcademicYearHelper::getCurrentAcademicYear();
-            [$s, $e] = explode('/', $current);
-            $selectedYear = ((int)$s + 1) . '/' . ((int)$e + 1);
+            // Untuk pendaftaran, default ke tahun akademik berikutnya (tahun ajaran baru)
+            $selectedYear = AcademicYearHelper::getNextAcademicYear();
         }
         $studentsQuery->where('academic_year', $selectedYear);
 
@@ -160,9 +172,9 @@ class PendaftaranSiswaController extends Controller{
                    ->orWhere('jurusan_cadangan', 'like', "%$q%")
                    ->orWhere('gender', 'like', "%$q%")
                    ->orWhere('birth_place', 'like', "%$q%")
+                   ->orWhere('phone', 'like', "%$q%")
                    ->orWhereHas('user', function ($u) use ($q) {
-                       $u->where('email', 'like', "%$q%")
-                         ->orWhere('phone', 'like', "%$q%");
+                       $u->where('email', 'like', "%$q%");
                    });
             });
         }
@@ -188,7 +200,7 @@ class PendaftaranSiswaController extends Controller{
                     $s->gender ?? '-',
                     $s->birth_place ?? '-',
                     $s->birth_date ? \Carbon\Carbon::parse($s->birth_date)->format('d/m/Y') : '-',
-                    optional($s->user)->phone ?? '-',
+                    $s->phone ?? '-',
                     $s->status,
                     $s->academic_year,
                 ]);
@@ -207,9 +219,8 @@ class PendaftaranSiswaController extends Controller{
 
         $selectedYear = $request->input('tahun_akademik');
         if (!$selectedYear) {
-            $current = AcademicYearHelper::getCurrentAcademicYear();
-            [$s, $e] = explode('/', $current);
-            $selectedYear = ((int)$s + 1) . '/' . ((int)$e + 1);
+            // Untuk pendaftaran, default ke tahun akademik berikutnya (tahun ajaran baru)
+            $selectedYear = AcademicYearHelper::getNextAcademicYear();
         }
         $studentsQuery->where('academic_year', $selectedYear);
 
@@ -223,9 +234,9 @@ class PendaftaranSiswaController extends Controller{
                    ->orWhere('jurusan_cadangan', 'like', "%$q%")
                    ->orWhere('gender', 'like', "%$q%")
                    ->orWhere('birth_place', 'like', "%$q%")
+                   ->orWhere('phone', 'like', "%$q%")
                    ->orWhereHas('user', function ($u) use ($q) {
-                       $u->where('email', 'like', "%$q%")
-                         ->orWhere('phone', 'like', "%$q%");
+                       $u->where('email', 'like', "%$q%");
                    });
             });
         }
@@ -242,9 +253,8 @@ class PendaftaranSiswaController extends Controller{
 
         $selectedYear = $request->input('tahun_akademik');
         if (!$selectedYear) {
-            $current = AcademicYearHelper::getCurrentAcademicYear();
-            [$s, $e] = explode('/', $current);
-            $selectedYear = ((int)$s + 1) . '/' . ((int)$e + 1);
+            // Untuk pendaftaran, default ke tahun akademik berikutnya (tahun ajaran baru)
+            $selectedYear = AcademicYearHelper::getNextAcademicYear();
         }
         $studentsQuery->where('academic_year', $selectedYear);
 
@@ -258,9 +268,9 @@ class PendaftaranSiswaController extends Controller{
                    ->orWhere('jurusan_cadangan', 'like', "%$q%")
                    ->orWhere('gender', 'like', "%$q%")
                    ->orWhere('birth_place', 'like', "%$q%")
+                   ->orWhere('phone', 'like', "%$q%")
                    ->orWhereHas('user', function ($u) use ($q) {
-                       $u->where('email', 'like', "%$q%")
-                         ->orWhere('phone', 'like', "%$q%");
+                       $u->where('email', 'like', "%$q%");
                    });
             });
         }
@@ -344,7 +354,7 @@ class PendaftaranSiswaController extends Controller{
             $sheet->setCellValue('G' . $row, $student->gender ?? '-');
             $sheet->setCellValue('H' . $row, $student->birth_place ?? '-');
             $sheet->setCellValue('I' . $row, $student->birth_date ? \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') : '-');
-            $sheet->setCellValue('J' . $row, optional($student->user)->phone ?? '-');
+            $sheet->setCellValue('J' . $row, $student->phone ?? '-');
             $sheet->setCellValue('K' . $row, $student->status);
             $sheet->setCellValue('L' . $row, $student->academic_year);
 

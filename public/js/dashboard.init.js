@@ -14,20 +14,30 @@ console.log('Window Donut Statistics:', window.donutStatistics);
 var options = {
   series: [{
   name: window.translations ? window.translations.on_time_students : 'Siswa Tepat Waktu',
-  data: window.lateStatistics ? window.lateStatistics.onTimeCount : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  data: window.lateStatistics ? window.lateStatistics.onTimePercentage : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 }, {
   name: window.translations ? window.translations.late_students : 'Siswa Terlambat',
-  data: window.lateStatistics ? window.lateStatistics.lateCount : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  data: window.lateStatistics ? window.lateStatistics.latePercentage : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 }],
   chart: {
   type: 'bar',
   height: 350,
   stacked: true,
+  id: 'column-chart',
   toolbar: {
     show: false
   },
   zoom: {
     enabled: true
+  }
+},
+yaxis: {
+  max: 100,
+  tickAmount: 10,
+  labels: {
+    formatter: function(value) {
+      return value + '%';
+    }
   }
 },
 
@@ -61,15 +71,18 @@ chart.render();
 // donut chart
 
 var options = {
-    series: window.donutStatistics ? window.donutStatistics.data : [0, 0, 0],
+    series: window.donutStatistics ? window.donutStatistics.data : [0, 0, 0, 0, 0],
     labels: window.donutStatistics ? window.donutStatistics.labels : [
     window.translations ? window.translations.on_time : 'Tepat Waktu', 
     window.translations ? window.translations.late : 'Terlambat', 
-    window.translations ? window.translations.others : 'Lainnya'
+    window.translations ? window.translations.permission : 'Izin', 
+    window.translations ? window.translations.sick : 'Sakit', 
+    window.translations ? window.translations.absent : 'Alpha'
 ],
     chart: {
       type: "donut",
       height: 350,
+      id: 'donut-chart',
     },
 
     plotOptions: {
@@ -105,7 +118,7 @@ var options = {
               formatter: function (w) {
                 return w.globals.seriesTotals.reduce(function (a, b) {
                   return a + b;
-                }, 0);
+                }, 0) + '%';
               },
             },
           },
@@ -115,15 +128,25 @@ var options = {
     dataLabels: {
       enabled: false,
     },
+    tooltip: {
+      y: {
+        formatter: function(value) {
+          return value + '%';
+        }
+      }
+    },
     legend: {
       show: true,
       position: 'bottom',
+      formatter: function(seriesName, opts) {
+        return seriesName + ' - ' + opts.w.globals.series[opts.seriesIndex] + '%';
+      }
     },
     stroke: {
       lineCap: "round",
       width: 2,
     },
-    colors: ['#39c685', '#ed5d49', '#daeaee'],
+    colors: ['#39c685', '#ed5d49', '#f7c844', '#6c757d', '#343a40'],
   };
   var donutChart = new ApexCharts(document.querySelector("#donut-chart"), options);
   donutChart.render();
@@ -230,9 +253,11 @@ var options = {
   labels: window.donutStatistics ? window.donutStatistics.labels : [
     window.translations ? window.translations.on_time : 'Tepat Waktu', 
     window.translations ? window.translations.late : 'Terlambat', 
-    window.translations ? window.translations.others : 'Lainnya'
+    window.translations ? window.translations.permission : 'Izin', 
+    window.translations ? window.translations.sick : 'Sakit', 
+    window.translations ? window.translations.absent : 'Alpha'
 ],
-  series: window.donutStatistics ? window.donutStatistics.data : [0, 0, 0],
+  series: window.donutStatistics ? window.donutStatistics.data : [0, 0, 0, 0, 0],
   chart: {
       height: 402,
   type: 'donut',
@@ -247,7 +272,7 @@ plotOptions: {
     },
   }
 },
-colors: ['#39c685', '#ed5d49', '#daeaee'],
+colors: ['#39c685', '#ed5d49', '#f7c844', '#6c757d', '#343a40'],
 grid: {
   padding: {
     bottom: -190
@@ -282,10 +307,10 @@ window.updateChartsLanguage = function() {
     chart.updateOptions({
         series: [{
             name: window.translations.on_time_students || 'Siswa Tepat Waktu',
-            data: window.lateStatistics ? window.lateStatistics.onTimeCount : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            data: window.lateStatistics ? window.lateStatistics.onTimePercentage : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         }, {
             name: window.translations.late_students || 'Siswa Terlambat',
-            data: window.lateStatistics ? window.lateStatistics.lateCount : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            data: window.lateStatistics ? window.lateStatistics.latePercentage : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         }]
     });
     

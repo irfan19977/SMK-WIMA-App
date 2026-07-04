@@ -111,7 +111,7 @@ class NewsController extends Controller
             'category' => 'required|string|max:100',
             'content' => 'required|string',
             'excerpt' => 'nullable|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'is_published' => 'required|in:0,1',
         ]);
 
@@ -136,6 +136,9 @@ class NewsController extends Controller
             // Debug: Log hasil
             \Log::info('News created:', $news->toArray());
 
+            // Auto-generate sitemap for SEO
+            $this->generateSitemap();
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
@@ -143,7 +146,7 @@ class NewsController extends Controller
                     'data' => $news
                 ]);
             }
-
+            
             return redirect()->route('news.index')->with('success', 'Berita berhasil disimpan');
             
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -200,7 +203,7 @@ class NewsController extends Controller
             'category' => 'required|string|max:100',
             'content' => 'required|string',
             'excerpt' => 'nullable|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'is_published' => 'required|in:0,1',
         ]);
 
@@ -236,6 +239,9 @@ class NewsController extends Controller
                 ]);
             }
 
+            // Auto-generate sitemap for SEO
+            $this->generateSitemap();
+            
             return redirect()->route('news.index')->with('success', 'Berita berhasil diperbarui');
             
         } catch (\Exception $e) {
@@ -250,6 +256,38 @@ class NewsController extends Controller
         }
     }
 
+    public function uploadImage(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+        ]);
+
+        try {
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('news/content', $filename, 'public');
+                
+                return response()->json([
+                    'success' => true,
+                    'url' => asset('storage/' . $path),
+                    'filename' => $filename
+                ]);
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'No file uploaded'
+            ], 400);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
     public function destroy($id)
     {
         try {
@@ -267,6 +305,9 @@ class NewsController extends Controller
                 ]);
             }
 
+            // Auto-generate sitemap for SEO
+            $this->generateSitemap();
+            
             return redirect()->route('news.index')->with('success', 'Berita berhasil dihapus');
             
         } catch (\Exception $e) {
@@ -278,6 +319,19 @@ class NewsController extends Controller
             }
 
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Generate sitemap automatically for SEO
+     */
+    protected function generateSitemap()
+    {
+        try {
+            \Artisan::call('sitemap:generate');
+            \Log::info('Sitemap generated automatically after news operation');
+        } catch (\Exception $e) {
+            \Log::error('Failed to generate sitemap: ' . $e->getMessage());
         }
     }
     

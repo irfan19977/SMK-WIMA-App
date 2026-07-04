@@ -281,7 +281,6 @@ class ScheduleController extends Controller
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'academic_year' => 'sometimes|required',
-            'semester' => 'sometimes|required|in:Ganjil,Genap',
         ]);
 
         \Log::info('Validation passed', [
@@ -471,14 +470,13 @@ class ScheduleController extends Controller
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'academic_year' => 'sometimes|required',
-            'semester' => 'sometimes|required|in:Ganjil,Genap',
         ]);
 
         // Set academic_year dan semester dari semester aktif jika tidak ada
         $activeSemester = Semester::getCurrentActiveSemester();
         if ($activeSemester) {
             $validated['academic_year'] = $validated['academic_year'] ?? $activeSemester->academic_year;
-            $validated['semester'] = $validated['semester'] ?? ucfirst($activeSemester->semester_type);
+            $validated['semester'] = ucfirst($activeSemester->semester_type);
         } else {
             // Fallback ke helper jika tidak ada semester aktif
             $validated['academic_year'] = $validated['academic_year'] ?? AcademicYearHelper::getCurrentAcademicYear();

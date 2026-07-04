@@ -110,7 +110,7 @@
                                         </span>
                                     </td>
                                     <td>{{ $item->user->email }}</td>
-                                    <td>{{ $item->user->phone ?? '-' }}</td>
+                                    <td>{{ $item->phone ?? '-' }}</td>
                                     <td>
                                         @if($item->student)
                                             <small class="text-muted">{{ $item->student->name }} ({{ $item->student->nisn ?? 'No NISN' }})</small>

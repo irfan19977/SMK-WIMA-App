@@ -17,7 +17,7 @@
                         <h4 class="card-title">{{ isset($news) ? __('index.edit_news') : __('index.add_news') }}</h4>
                         <p class="card-title-desc">{{ isset($news) ? __('index.edit_existing_news_in_database') : __('index.add_new_news_to_database') }} {{ __('index.with_form_validation_and_various_input_types') }}</p>
                         
-                        <form class="was-validated" action="{{ isset($news) ? route('news.update', $news->id) : route('news.store') }}" method="POST">
+                        <form class="was-validated" action="{{ isset($news) ? route('news.update', $news->id) : route('news.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             @isset($news)
                                 @method('PUT')
@@ -154,14 +154,48 @@
                         ['para', ['ul', 'ol', 'paragraph']],
                         ['table', ['table']],
                         ['insert', ['link', 'picture', 'video']],
-                        ['view', ['fullscreen', 'codeview', 'help']]
+                        ['view', ['fullscreen', 'codeview', 'help']],
+                        ['para', ['height', 'align', 'paragraph']]
                     ],
                     callbacks: {
                         onInit: function() {
                             console.log('Summernote initialized');
+                        },
+                        onImageUpload: function(files) {
+                            // Upload image via AJAX instead of base64
+                            for (let i = 0; i < files.length; i++) {
+                                uploadImage(files[i]);
+                            }
                         }
                     }
                 });
+                
+                // Function to upload image via AJAX
+                function uploadImage(file) {
+                    let formData = new FormData();
+                    formData.append('image', file);
+                    
+                    $.ajax({
+                        url: '{{ route("news.upload-image") }}',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                $('#content').summernote('insertImage', response.url, response.filename);
+                            } else {
+                                alert('Gagal mengupload gambar: ' + response.message);
+                            }
+                        },
+                        error: function(xhr) {
+                            alert('Terjadi kesalahan saat mengupload gambar');
+                        }
+                    });
+                }
             });
         </script>
         

@@ -16,6 +16,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ClassesController extends Controller
 {
@@ -122,6 +128,27 @@ class ClassesController extends Controller
                     return redirect()->back()->with('error', 'Anda belum terdaftar di kelas manapun.');
                 }
             }
+            
+            // Check if user has parent role by checking if they have a parent record
+            $parent = \App\Models\ParentModel::where('user_id', Auth::id())->first();
+            if ($parent) {
+                // Get the student linked to this parent
+                $student = \App\Models\Student::where('id', $parent->student_id)->first();
+                
+                if ($student) {
+                    $studentClass = \App\Models\StudentClass::where('student_id', $student->id)->first();
+                    
+                    if ($studentClass) {
+                        return redirect()->route('classes.show', $studentClass->class_id);
+                    } else {
+                        // Jika anak parent tidak memiliki kelas, redirect dengan pesan error
+                        return redirect()->back()->with('error', 'Anak Anda belum terdaftar di kelas manapun.');
+                    }
+                } else {
+                    // Jika parent tidak memiliki anak yang terhubung, redirect dengan pesan error
+                    return redirect()->back()->with('error', 'Anda belum memiliki anak yang terdaftar.');
+                }
+            }
         }
         
         $query = Classes::query();
@@ -164,6 +191,13 @@ class ClassesController extends Controller
             $class->students_count = $class->unique_students_count;
         });
         
+        // Get active semester using the helper (based on current date)
+        $activeSemesterInfo = AcademicYearHelper::getAcademicYearInfo();
+        $activeSemesterLabel = 'Semester ' . ucfirst($activeSemesterInfo['semester']) . ' ' . $activeSemesterInfo['academic_year'];
+        
+        // Promotion can only be done in Semester Genap during May or June
+        $canPromoteClasses = AcademicYearHelper::getCurrentSemester() === 'genap' && in_array(now()->month, [5, 6]);
+        
         // Return JSON for AJAX requests
         if ($request->ajax() || $request->expectsJson()) {
             $classesData = $classes->map(function($class) {
@@ -185,7 +219,7 @@ class ClassesController extends Controller
             ]);
         }
         
-        return view('classes.index', compact('classes'));
+        return view('classes.index', compact('classes', 'activeSemesterLabel', 'canPromoteClasses'));
     }
 
     public function create()
@@ -967,6 +1001,11 @@ class ClassesController extends Controller
     {
         try {
             $this->authorize('classes.edit');
+
+            // Fitur Tutup & Buka Semester telah dinonaktifkan
+            return redirect()->route('classes.index')
+                ->with('error', 'Fitur Tutup & Buka Semester telah dinonaktifkan.');
+
             // Tentukan tahun akademik aktif berdasarkan kelas yang belum diarsip.
             // Ambil academic_year terbesar dari classes non-arsip.
             $academicYear = Classes::where('is_archived', false)->max('academic_year');
@@ -1115,6 +1154,12 @@ class ClassesController extends Controller
     {
         try {
             $this->authorize('classes.edit');
+            
+            // Naik kelas hanya diperbolehkan pada Semester Genap bulan Mei atau Juni
+            if (AcademicYearHelper::getCurrentSemester() !== 'genap' || !in_array(now()->month, [5, 6])) {
+                return redirect()->route('classes.index')
+                    ->with('error', 'Naik kelas hanya dapat dilakukan pada Semester Genap bulan Mei atau Juni.');
+            }
             
             // Tentukan tahun akademik aktif berdasarkan kelas yang belum diarsip
             $currentAcademicYear = Classes::where('is_archived', false)->max('academic_year');
@@ -1549,6 +1594,263 @@ class ClassesController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat membuka semester genap: ' . $e->getMessage());
+        }
+    }
+
+    public function exportAttendanceExcel(Request $request, $classId)
+    {
+        try {
+            $month = $request->get('month', Carbon::now()->format('Y-m'));
+            $monthDate = Carbon::createFromFormat('Y-m', $month);
+            $daysInMonth = $monthDate->daysInMonth;
+
+            $class = Classes::findOrFail($classId);
+
+            // Get students in this class
+            $students = Student::whereHas('classes', function($query) use ($classId) {
+                $query->where('classes.id', $classId);
+            })->with('user')->orderByRaw('CAST(no_absen AS UNSIGNED) ASC')->get();
+
+            // Get attendance data for the selected month and class
+            $attendanceData = Attendance::whereHas('student.classes', function($query) use ($classId) {
+                    $query->where('classes.id', $classId);
+                })
+                ->whereYear('date', $monthDate->year)
+                ->whereMonth('date', $monthDate->month)
+                ->get()
+                ->groupBy(['student_id', function($item) {
+                    return Carbon::parse($item->date)->day;
+                }]);
+
+            // Create spreadsheet
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            // Title
+            $sheet->mergeCells('A1:Z1');
+            $sheet->setCellValue('A1', 'LAPORAN ABSENSI KELAS - ' . strtoupper($class->name));
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+            $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Subtitle
+            $monthNameIndonesia = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            ];
+            $monthName = $monthNameIndonesia[$monthDate->month] . ' ' . $monthDate->year;
+
+            $sheet->mergeCells('A2:Z2');
+            $sheet->setCellValue('A2', 'Bulan: ' . $monthName);
+            $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Headers
+            $headers = ['No', 'NISN', 'Nama Siswa'];
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $headers[] = (string) $day;
+            }
+            $headers[] = 'Hadir';
+            $headers[] = 'Sakit';
+            $headers[] = 'Izin';
+            $headers[] = 'Alpha';
+
+            $rowIdx = 4;
+            foreach ($headers as $i => $h) {
+                $col = chr(65 + $i);
+                $sheet->setCellValue($col . $rowIdx, $h);
+            }
+
+            // Header style
+            $headerStyle = [
+                'font' => ['bold' => true],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                    ],
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FFEFEFEF'],
+                ],
+            ];
+            $lastCol = chr(64 + count($headers));
+            $sheet->getStyle('A4:' . $lastCol . '4')->applyFromArray($headerStyle);
+
+            // Data
+            $rowIdx = 5;
+            foreach ($students as $index => $student) {
+                $colIdx = 0;
+                $sheet->setCellValueByColumnAndRow(++$colIdx, $rowIdx, $index + 1);
+                $sheet->setCellValueByColumnAndRow(++$colIdx, $rowIdx, $student->nisn ?? '-');
+                $sheet->setCellValueByColumnAndRow(++$colIdx, $rowIdx, $student->name);
+
+                $presentCount = 0;
+                $sickCount = 0;
+                $permitCount = 0;
+                $absentCount = 0;
+
+                for ($day = 1; $day <= $daysInMonth; $day++) {
+                    $attendance = $attendanceData->get($student->id, collect())->get($day);
+                    $status = '-';
+
+                    if ($attendance && $attendance->first()) {
+                        $checkInStatus = $attendance->first()->check_in_status ?? $attendance->first()->check_out_status;
+                        switch($checkInStatus) {
+                            case 'tepat':
+                            case 'terlambat':
+                                $status = 'H';
+                                $presentCount++;
+                                break;
+                            case 'sakit':
+                                $status = 'S';
+                                $sickCount++;
+                                break;
+                            case 'izin':
+                                $status = 'I';
+                                $permitCount++;
+                                break;
+                            case 'alpha':
+                            default:
+                                $status = 'A';
+                                $absentCount++;
+                                break;
+                        }
+                    }
+
+                    $sheet->setCellValueByColumnAndRow(++$colIdx, $rowIdx, $status);
+                }
+
+                $sheet->setCellValueByColumnAndRow(++$colIdx, $rowIdx, $presentCount);
+                $sheet->setCellValueByColumnAndRow(++$colIdx, $rowIdx, $sickCount);
+                $sheet->setCellValueByColumnAndRow(++$colIdx, $rowIdx, $permitCount);
+                $sheet->setCellValueByColumnAndRow(++$colIdx, $rowIdx, $absentCount);
+
+                $rowIdx++;
+            }
+
+            // Auto-size columns
+            foreach (range('A', $lastCol) as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            // Border all data
+            $sheet->getStyle('A4:' . $lastCol . ($rowIdx - 1))->applyFromArray([
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                    ],
+                ],
+            ]);
+
+            // Download
+            $fileName = 'Absensi_' . str_replace(' ', '_', $class->name) . '_' . $month . '.xlsx';
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment;filename="' . $fileName . '"');
+            header('Cache-Control: max-age=0');
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+            exit;
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal export Excel: ' . $e->getMessage());
+        }
+    }
+
+    public function exportAttendancePdf(Request $request, $classId)
+    {
+        try {
+            $month = $request->get('month', Carbon::now()->format('Y-m'));
+            $monthDate = Carbon::createFromFormat('Y-m', $month);
+            $daysInMonth = $monthDate->daysInMonth;
+
+            $class = Classes::findOrFail($classId);
+
+            // Get students in this class
+            $students = Student::whereHas('classes', function($query) use ($classId) {
+                $query->where('classes.id', $classId);
+            })->with('user')->orderByRaw('CAST(no_absen AS UNSIGNED) ASC')->get();
+
+            // Get attendance data for the selected month and class
+            $attendanceData = Attendance::whereHas('student.classes', function($query) use ($classId) {
+                    $query->where('classes.id', $classId);
+                })
+                ->whereYear('date', $monthDate->year)
+                ->whereMonth('date', $monthDate->month)
+                ->get()
+                ->groupBy(['student_id', function($item) {
+                    return Carbon::parse($item->date)->day;
+                }]);
+
+            // Calculate summary for each student
+            $studentsWithAttendance = $students->map(function($student) use ($attendanceData, $daysInMonth, $monthDate) {
+                $presentCount = 0;
+                $sickCount = 0;
+                $permitCount = 0;
+                $absentCount = 0;
+
+                $dailyAttendance = [];
+
+                for ($day = 1; $day <= $daysInMonth; $day++) {
+                    $attendance = $attendanceData->get($student->id, collect())->get($day);
+                    $status = '-';
+
+                    if ($attendance && $attendance->first()) {
+                        $checkInStatus = $attendance->first()->check_in_status ?? $attendance->first()->check_out_status;
+                        switch($checkInStatus) {
+                            case 'tepat':
+                            case 'terlambat':
+                                $status = 'H';
+                                $presentCount++;
+                                break;
+                            case 'sakit':
+                                $status = 'S';
+                                $sickCount++;
+                                break;
+                            case 'izin':
+                                $status = 'I';
+                                $permitCount++;
+                                break;
+                            case 'alpha':
+                            default:
+                                $status = 'A';
+                                $absentCount++;
+                                break;
+                        }
+                    }
+
+                    $dailyAttendance[$day] = $status;
+                }
+
+                return [
+                    'student' => $student,
+                    'daily_attendance' => $dailyAttendance,
+                    'present_count' => $presentCount,
+                    'sick_count' => $sickCount,
+                    'permit_count' => $permitCount,
+                    'absent_count' => $absentCount,
+                ];
+            });
+
+            $monthNameIndonesia = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            ];
+            $monthName = $monthNameIndonesia[$monthDate->month] . ' ' . $monthDate->year;
+
+            return view('classes.attendance_export_pdf', compact(
+                'class',
+                'studentsWithAttendance',
+                'monthName',
+                'daysInMonth',
+                'monthDate'
+            ));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal export PDF: ' . $e->getMessage());
         }
     }
 }

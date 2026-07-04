@@ -17,6 +17,9 @@
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
     
+    <!-- Livewire Styles -->
+    @livewireStyles
+    
     @stack('styles')
 </head>
 <body class="{{ auth()->user()->theme_mode ?? 'light' }}-mode">
@@ -296,5 +299,8 @@
             }
         }
     </script>
+    
+    <!-- Livewire Scripts -->
+    @livewireScripts
 </body>
 </html>

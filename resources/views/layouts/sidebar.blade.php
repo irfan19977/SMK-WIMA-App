@@ -154,50 +154,20 @@
                 @endcan
 
                 {{-- Akademik --}}
-                @canany(['classes.index', 'subjects.index', 'schedules.index', 'student-grades.index'])
+                @canany(['classes.index', 'subjects.index', 'schedules.index', 'student-grades.index', 'exams.index'])
                     <li>
-                        <a href="javascript: void(0);" class="has-arrow waves-effect {{ Request::is('classes*') || Request::is('subjects*') || Request::is('schedules*') || Request::is('student-grades*') ? 'active' : '' }}">
+                        <a href="javascript: void(0);" class="has-arrow waves-effect {{ Request::is('classes*') || Request::is('subjects*') || Request::is('schedules*') || Request::is('student-grades*') || Request::is('exams*') ? 'active' : '' }}">
                             <i class="mdi mdi-school"></i>
                             <span>{{ __('menu.academic') }}</span>
                         </a>
-                        <ul class="sub-menu" aria-expanded="true">
-                            {{-- Menu Kelas dengan logika berbeda per role --}}
+                        <ul class="sub-menu" aria-expanded="{{ Request::is('classes*') || Request::is('subjects*') || Request::is('schedules*') || Request::is('student-grades*') || Request::is('exams*') ? 'true' : 'false' }}">
+
                             @can('classes.index')
-                                @if(auth()->user()->hasRole('student'))
-                                    {{-- STUDENT: Kelas Saya --}}
-                                    @php
-                                        $student = \App\Models\Student::where('user_id', auth()->id())->first();
-                                        $studentClass = $student ? \App\Models\StudentClass::where('student_id', $student->id)->first() : null;
-                                    @endphp
-                                    @if($studentClass)
-                                        <li>
-                                            <a href="{{ route('classes.show', $studentClass->class_id) }}" class="waves-effect {{ Request::is('classes/' . $studentClass->class_id . '*') ? 'active' : '' }}">
-                                                <i class="mdi mdi-book-open-variant"></i><span>{{ __('menu.my_class') }}</span>
-                                            </a>
-                                        </li>
-                                    @endif
-                                @elseif(auth()->user()->hasRole('parent'))
-                                    {{-- PARENT: Kelas Anak --}}
-                                    @php
-                                        $parent = \App\Models\ParentModel::where('user_id', auth()->id())->first();
-                                        $student = $parent && $parent->student_id ? \App\Models\Student::find($parent->student_id) : null;
-                                        $studentClass = $student ? \App\Models\StudentClass::where('student_id', $student->id)->first() : null;
-                                    @endphp
-                                    @if($studentClass)
-                                        <li>
-                                            <a href="{{ route('classes.show', $studentClass->class_id) }}" class="waves-effect {{ Request::is('classes/' . $studentClass->class_id . '*') ? 'active' : '' }}">
-                                                <i class="mdi mdi-book-open-variant"></i><span>{{ __('menu.child_class') }}</span>
-                                            </a>
-                                        </li>
-                                    @endif
-                                @else
-                                    {{-- ADMIN/TEACHER: Semua Kelas --}}
-                                    <li>
-                                        <a href="{{ route('classes.index') }}" class="waves-effect {{ Request::is('classes*') && !Request::is('classes/*/') ? 'active' : '' }}">
-                                            <i class="mdi mdi-book-open-variant"></i><span>{{ __('menu.classes') }}</span>
-                                        </a>
-                                    </li>
-                                @endif
+                                <li>
+                                    <a href="{{ route('classes.index') }}" class="waves-effect {{ Request::is('classes*') && !Request::is('classes/*/') ? 'active' : '' }}">
+                                        <i class="mdi mdi-book-open-variant"></i><span>{{ __('menu.classes') }}</span>
+                                    </a>
+                                </li>
                             @endcan
 
                             @can('subjects.index')
@@ -216,10 +186,18 @@
                                 </li>
                             @endcan
 
-                            @can('student-grades.index')
+                            {{-- @can('student-grades.index')
                                 <li>
                                     <a href="{{ route('student-grades.index') }}" class="waves-effect {{ Request::is('student-grades*') ? 'active' : '' }}">
                                         <i class="mdi mdi-star"></i><span>{{ __('menu.input_grades') }}</span>
+                                    </a>
+                                </li>
+                            @endcan --}}
+
+                            @can('exams.index')
+                                <li>
+                                    <a href="{{ route('exams.index') }}" class="waves-effect {{ Request::is('exams*') ? 'active' : '' }}">
+                                        <i class="mdi mdi-clipboard-list"></i><span>Ujian</span>
                                     </a>
                                 </li>
                             @endcan
@@ -234,21 +212,7 @@
                             <i class="mdi mdi-clock-outline"></i>
                             <span>{{ __('menu.attendances') }}</span>
                         </a>
-                        <ul class="sub-menu" aria-expanded="true">
-                            @can('lesson_attendances.index')
-                                <li>
-                                    @if(auth()->user()->hasRole('student'))
-                                        <a href="{{ route('face-recognition.index') }}" class="waves-effect {{ Request::is('lesson*') || Request::is('face-recognition*') ? 'active' : '' }}">
-                                            <i class="mdi mdi-camera"></i><span>{{ __('menu.face_scan_attendance') }}</span>
-                                        </a>
-                                    @else
-                                        <a href="{{ route('lesson-attendances.index') }}" class="waves-effect {{ Request::is('lesson*') || Request::is('face-recognition*') ? 'active' : '' }}">
-                                            <i class="mdi mdi-clipboard-list"></i><span>{{ __('menu.daily_attendance') }}</span>
-                                        </a>
-                                    @endif
-                                </li>
-                            @endcan
-
+                        <ul class="sub-menu" aria-expanded="{{ Request::is('attendance*') || Request::is('lesson*') || Request::is('face-recognition*') ? 'true' : 'false' }}">
                             @can('attendances.index')
                                 <li>
                                     <a href="{{ route('attendances.index') }}" class="waves-effect {{ Request::is('attendances*') ? 'active' : '' }}">
@@ -263,18 +227,82 @@
                                     </a>
                                 </li>
                             @endcan
+                            @can('lesson_attendances.index')
+                                <li>
+                                    @if(auth()->user()->hasRole('student'))
+                                        <a href="{{ route('face-recognition.index') }}" class="waves-effect {{ Request::is('lesson*') || Request::is('face-recognition*') ? 'active' : '' }}">
+                                            <i class="mdi mdi-camera"></i><span>{{ __('menu.face_scan_attendance') }}</span>
+                                        </a>
+                                    @else
+                                        <a href="{{ route('lesson-attendances.index') }}" class="waves-effect {{ Request::is('lesson*') || Request::is('face-recognition*') ? 'active' : '' }}">
+                                            <i class="mdi mdi-clipboard-list"></i><span>{{ __('menu.daily_attendance') }}</span>
+                                        </a>
+                                    @endif
+                                </li>
+                            @endcan
+                            {{-- @can('student-permissions.index') --}}
+                                <li>
+                                    <a href="{{ route('student-permissions.index') }}" class="waves-effect {{ Request::is('student-permissions*') ? 'active' : '' }}">
+                                        <i class="mdi mdi-file-document"></i><span>Perizinan Siswa</span>
+                                    </a>
+                                </li>
+                            {{-- @endcan --}}
                         </ul>
                     </li>
                 @endcanany
 
-                {{-- Non Akademik --}}
-                @can('ekstrakurikuler.index')
+                {{-- Student --}}
+                @can('exams.student')
+                    @php
+                        // Get student's current class
+                        $student = \App\Models\Student::where('user_id', auth()->id())->first();
+                        $studentClass = $student ? \App\Models\StudentClass::where('student_id', $student->id)->first() : null;
+                    @endphp
+                    @if($studentClass)
+                        <li>
+                            <a href="{{ route('classes.show', $studentClass->class_id) }}" class="waves-effect {{ Request::is('classes/' . $studentClass->class_id . '*') ? 'active' : '' }}">
+                                <i class="mdi mdi-book-open-variant"></i><span>{{ __('menu.classes') }}</span>
+                            </a>
+                        </li>
+                    @endif
+
                     <li>
-                        <a href="{{ route('ekstrakurikuler.index') }}" class="waves-effect {{ Request::is('ekstrakurikuler*') ? 'active' : '' }}">
-                            <i class="mdi mdi-soccer"></i>
-                            <span>{{ __('menu.extracurriculars') }}</span>
+                        <a href="{{ route('student.exams.index') }}" class="waves-effect {{ Request::is('student*') ? 'active' : '' }}">
+                            <i class="mdi mdi-clipboard-list"></i>
+                            <span>{{ __('menu.exams') }}</span>
                         </a>
                     </li>
+                @endcan
+
+                @can('classes.student')
+                    @if(auth()->user()->hasRole('student'))
+                        {{-- STUDENT: Kelas Saya --}}
+                        @php
+                            $student = \App\Models\Student::where('user_id', auth()->id())->first();
+                            $studentClass = $student ? \App\Models\StudentClass::where('student_id', $student->id)->first() : null;
+                        @endphp
+                        @if($studentClass)
+                            <li>
+                                <a href="{{ route('classes.show', $studentClass->class_id) }}" class="waves-effect {{ Request::is('classes/' . $studentClass->class_id . '*') ? 'active' : '' }}">
+                                    <i class="mdi mdi-book-open-variant"></i><span>{{ __('menu.my_class') }}</span>
+                                </a>
+                            </li>
+                        @endif
+                    @elseif(auth()->user()->hasRole('parent'))
+                        {{-- PARENT: Kelas Anak --}}
+                        @php
+                            $parent = \App\Models\ParentModel::where('user_id', auth()->id())->first();
+                            $student = $parent && $parent->student_id ? \App\Models\Student::find($parent->student_id) : null;
+                            $studentClass = $student ? \App\Models\StudentClass::where('student_id', $student->id)->first() : null;
+                        @endphp
+                        @if($studentClass)
+                            <li>
+                                <a href="{{ route('classes.show', $studentClass->class_id) }}" class="waves-effect {{ Request::is('classes/' . $studentClass->class_id . '*') ? 'active' : '' }}">
+                                    <i class="mdi mdi-book-open-variant"></i><span>{{ __('menu.child_class') }}</span>
+                                </a>
+                            </li>
+                        @endif
+                    @endif
                 @endcan
 
                 {{-- Manajemen Biometrik --}}
@@ -284,7 +312,7 @@
                             <i class="mdi mdi-fingerprint"></i>
                             <span>{{ __('menu.biometric_management') }}</span>
                         </a>
-                        <ul class="sub-menu" aria-expanded="true">
+                        <ul class="sub-menu" aria-expanded="false">
                             <li>
                                 <a href="{{ route('face-recognition.index') }}" class="waves-effect {{ Request::is('face-recognition/index*') ? 'active' : '' }}">
                                     <i class="mdi mdi-camera"></i><span>{{ __('menu.face_scan') }}</span>
@@ -299,39 +327,6 @@
                     </li>
                 @endcan
 
-                {{-- Ujian --}}
-                @canany(['exams.index', 'questions.index'])
-                    <li>
-                        <a href="javascript: void(0);" class="has-arrow waves-effect {{ Request::is('exams*') || Request::is('questions*') ? 'active' : '' }}">
-                            <i class="mdi mdi-format-list-checks"></i>
-                            <span>{{ __('menu.exams') }}</span>
-                        </a>
-                        <ul class="sub-menu" aria-expanded="true">
-                            @can('questions.index')
-                                <li>
-                                    <a href="#" class="waves-effect {{ Request::is('questions*') ? 'active' : '' }}">
-                                        <i class="mdi mdi-folder"></i><span>{{ __('menu.question_bank') }}</span>
-                                    </a>
-                                </li>
-                            @endcan
-
-                            @can('exams.index')
-                                <li>
-                                    <a href="#" class="waves-effect {{ Request::is('exams*') ? 'active' : '' }}">
-                                        <i class="mdi mdi-pencil"></i><span>{{ __('menu.exams') }}</span>
-                                    </a>
-                                </li>
-                            @endcan
-
-                            <li>
-                                <a href="#" class="waves-effect {{ Request::is('exam-results*') ? 'active' : '' }}">
-                                    <i class="mdi mdi-chart-bar"></i><span>{{ __('menu.exam_results') }}</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                @endcanany
-
                 {{-- Laporan --}}
                 @can('reports.index')
                     <li>
@@ -339,7 +334,7 @@
                             <i class="mdi mdi-chart-line"></i>
                             <span>{{ __('menu.reports') }}</span>
                         </a>
-                        <ul class="sub-menu" aria-expanded="true">
+                        <ul class="sub-menu" aria-expanded="false">
                             <li>
                                 <a href="#" class="waves-effect {{ Request::is('reports/attendance*') ? 'active' : '' }}">
                                     <i class="mdi mdi-clock-outline"></i><span>{{ __('menu.attendance_report') }}</span>
@@ -355,34 +350,48 @@
                 @endcan
 
                 {{-- Pengaturan --}}
-                @canany(['settings.index', 'roles.index', 'permissions.index', 'students.index', 'teachers.index', 'parents.index'])
+                @canany(['settings.index', 'roles.index', 'permissions.index', 'students.index', 'teachers.index', 'parents.index', 'users.index'])
                     <li>
-                        <a href="javascript: void(0);" class="has-arrow waves-effect {{ Request::is('settings*') || Request::is('roles*') || Request::is('permissions*') || Request::is('setting-schedule*') || Request::is('profile*') || Request::is('teachers*') || Request::is('students*') || Request::is('parents*') ? 'active' : '' }}">
+                        <a href="javascript: void(0);" class="has-arrow waves-effect {{ Request::is('settings*') || Request::is('roles*') || Request::is('permissions*') || Request::is('setting-schedule*') || Request::is('profile*') || Request::is('teachers*') || Request::is('students*') || Request::is('parents*') || Request::is('users*') ? 'active' : '' }}">
                             <i class="mdi mdi-cog"></i>
                             <span>{{ __('menu.settings') }}</span>
                         </a>
-                        <ul class="sub-menu" aria-expanded="true">
+                        <ul class="sub-menu" aria-expanded="false">
                             {{-- User Management --}}
-                            @canany(['students.index', 'teachers.index', 'parents.index'])
+                            @canany(['users.index', 'students.index', 'teachers.index', 'parents.index'])
                                 <li>
-                                    <a href="javascript: void(0);" class="has-arrow waves-effect {{ Request::is('teachers*') || Request::is('students*') || Request::is('parents*') ? 'active' : '' }}">
+                                    <a href="javascript: void(0);" class="has-arrow waves-effect {{ Request::is('users*') || Request::is('teachers*') || Request::is('students*') || Request::is('parents*') ? 'active' : '' }}">
                                         <i class="mdi mdi-account-group"></i><span>{{ __('menu.user_management') }}</span>
                                     </a>
-                                    <ul class="sub-menu" aria-expanded="true">
+                                    <ul class="sub-menu" aria-expanded="false">
+                                        {{-- Users --}}
+                                        @can('users.index')
+                                            <li>
+                                                <a href="{{ route('users.index') }}" class="waves-effect {{ Request::is('users*') ? 'active' : '' }}">
+                                                    <i class="mdi mdi-account"></i><span>{{ __('index.users') }}</span>
+                                                </a>
+                                            </li>
+                                        @endcan
+                                        
+                                        {{-- Students --}}
                                         @can('students.index')
                                             <li>
                                                 <a href="{{ route('students.index') }}" class="waves-effect {{ Request::is('students*') ? 'active' : '' }}">
-                                                    <i class="mdi mdi-account-group"></i><span>{{ __('menu.students') }}</span>
+                                                    <i class="mdi mdi-account-multiple"></i><span>{{ __('menu.students') }}</span>
                                                 </a>
                                             </li>
                                         @endcan
+                                        
+                                        {{-- Teachers --}}
                                         @can('teachers.index')
                                             <li>
                                                 <a href="{{ route('teachers.index') }}" class="waves-effect {{ Request::is('teachers*') ? 'active' : '' }}">
-                                                    <i class="mdi mdi-account"></i><span>{{ __('menu.teachers') }}</span>
+                                                    <i class="mdi mdi-account-tie"></i><span>{{ __('menu.teachers') }}</span>
                                                 </a>
                                             </li>
                                         @endcan
+                                        
+                                        {{-- Parents --}}
                                         @can('parents.index')
                                             <li>
                                                 <a href="{{ route('parents.index') }}" class="waves-effect {{ Request::is('parents*') ? 'active' : '' }}">
@@ -395,11 +404,11 @@
                             @endcanany
 
                             {{-- Profil Pengguna --}}
-                            <li>
+                            {{-- <li>
                                 <a href="#" class="waves-effect {{ Request::is('profile*') ? 'active' : '' }}">
                                     <i class="mdi mdi-account-cog"></i><span>{{ __('menu.user_profile') }}</span>
                                 </a>
-                            </li>
+                            </li> --}}
 
                             {{-- Jam Masuk/Pulang --}}
                             @can('settings.index')
@@ -424,6 +433,15 @@
                                 <li>
                                     <a href="{{ route('permissions.index') }}" class="waves-effect {{ Request::is('permissions*') ? 'active' : '' }}">
                                         <i class="mdi mdi-key"></i><span>{{ __('menu.permissions') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
+
+                            {{-- Notifikasi WhatsApp --}}
+                            @can('settings.index')
+                                <li>
+                                    <a href="{{ route('wa-notification.index') }}" class="waves-effect {{ Request::is('wa-notification*') ? 'active' : '' }}">
+                                        <i class="mdi mdi-whatsapp"></i><span>Notifikasi WA</span>
                                     </a>
                                 </li>
                             @endcan

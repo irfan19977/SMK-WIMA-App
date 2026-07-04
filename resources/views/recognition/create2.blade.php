@@ -46,7 +46,7 @@
                                         </td>
                                         <td>{{ $student->name ?? 'Student ' . ($index + 1) }}</td>
                                         <td>{{ $student->nisn ?? sprintf('%03d', $index + 1) }}</td>
-                                        <td>{{ $student->class ?? 'X-A' }}</td>
+                                        <td>{{ $student->classes->first()->name ?? 'X-A' }}</td>
                                         <td>
                                             @if($student->face_registered_at ?? false)
                                                 <span class="badge badge-warning">Sudah Terdaftar</span>

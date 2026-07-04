@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('grade')->nullable();
             $table->string('major')->nullable();
             $table->string('academic_year')->nullable();
+            $table->boolean('is_archived')->default(false);
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->string('deleted_by')->nullable();

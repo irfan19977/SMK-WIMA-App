@@ -17,7 +17,14 @@
         <link rel="stylesheet" href="{{ asset('frontend/assets/css/header.css') }}">
         <link rel="stylesheet" href="{{ asset('frontend/assets/css/responsive.css') }}">
 
-        <title>{{ __('index.smk_pgri_lawang') }} - {{ __('index.school_tagline') }}</title>
+        <!-- Dynamic Meta Tags -->
+        @hasSection('meta')
+            @yield('meta')
+        @else
+            <title>{{ __('index.smk_pgri_lawang') }} - {{ __('index.school_tagline') }}</title>
+            <meta name="description" content="{{ __('index.school_tagline') }} - {{ __('index.smk_pgri_lawang') }}">
+        @endif
+        
         <link rel="icon" type="image/png" href="{{ asset('frontend/assets/img/logo/logo 1.png') }}">
 
         @stack('style')

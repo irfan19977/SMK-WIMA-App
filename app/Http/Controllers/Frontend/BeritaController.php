@@ -57,18 +57,24 @@ class BeritaController extends Controller
         $tag = trim($tag);
 
         // Ambil berita yang kolom `tags`-nya mengandung tag tersebut (dipisah koma)
-        $news = News::with('user')
+        $featuredNews = News::with('user')
             ->where('is_published', true)
             ->where(function ($query) use ($tag) {
                 $query->where('tags', 'LIKE', "%$tag%");
             })
             ->latest('published_at')
-            ->paginate(9);
+            ->paginate(12);
 
-        return view('home.berita-tag', [
-            'tag' => $tag,
-            'newsList' => $news,
-        ]);
+        // Get categories with counts for sidebar
+        $categories = News::published()
+            ->selectRaw('category, COUNT(*) as total')
+            ->whereNotNull('category')
+            ->groupBy('category')
+            ->orderBy('category')
+            ->get();
+
+        // Gunakan view berita dengan data yang difilter
+        return view('home.berita', compact('featuredNews', 'categories'));
     }
 
     public function show($slug)

@@ -25,12 +25,14 @@ class QrCodeController extends Controller
         $request->validate([
             'url' => 'required|url',
             'size' => 'sometimes|integer|min:100|max:1000',
-            'format' => 'required|in:png,svg,eps'
+            'format' => 'required|in:png,svg,eps',
+            'qr_text' => 'nullable|string|max:200'
         ]);
 
         $url = $request->input('url');
         $size = $request->input('size', 300);
         $format = $request->input('format', 'png');
+        $qrText = $request->input('qr_text');
 
         // Normalisasi URL Google Form
         if (str_contains($url, 'forms.gle/') || str_contains($url, 'docs.google.com/forms')) {
@@ -100,7 +102,8 @@ class QrCodeController extends Controller
             'format' => $format,
             'isGoogleForm' => str_contains($url, 'forms.gle/') || str_contains($url, 'docs.google.com/forms'),
             'extension' => $extension,
-            'rawSvg' => $rawSvg ?? null
+            'rawSvg' => $rawSvg ?? null,
+            'qrText' => $qrText
         ]);
     }
 }

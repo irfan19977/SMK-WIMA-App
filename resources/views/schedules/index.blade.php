@@ -22,9 +22,11 @@
                             <h4 class="card-title mb-1">{{ __('index.schedule_list') }}</h4>
                         </div>
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-primary" onclick="openScheduleModal()">
-                                <i class="mdi mdi-plus"></i> {{ __('index.add_schedule') }}
-                            </button>
+                            @can('schedules.create')
+                                <button type="button" class="btn btn-primary" onclick="openScheduleModal()">
+                                    <i class="mdi mdi-plus"></i> {{ __('index.add_schedule') }}
+                                </button>
+                            @endcan
                             <button class="btn btn-success" onclick="exportExcel()">
                                 <i class="mdi mdi-file-excel"></i> {{ __('index.export_excel') }}
                             </button>
@@ -110,7 +112,9 @@
                                     <th width="15%">{{ __('index.teacher') }}</th>
                                     <th width="15%">{{ __('index.class') }}</th>
                                     <th width="10%">{{ __('index.semester') }}</th>
-                                    <th width="15%" class="text-center">{{ __('index.actions') }}</th>
+                                    @can('schedules.edit')
+                                        <th width="15%" class="text-center">{{ __('index.actions') }}</th>
+                                    @endcan
                                 </tr>
                             </thead>
                             <tbody id="schedules-tbody">
@@ -152,16 +156,18 @@
                                                 {{ $schedule->semester ?? '-' }}
                                             </span>
                                         </td>
-                                        <td>
-                                            <div class="d-flex gap-2">
-                                                <button type="button" class="btn btn-sm btn-soft-primary" onclick="editSchedule('{{ $schedule->id }}')">
-                                                    <i class="mdi mdi-pencil"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-soft-danger" onclick="deleteSchedule('{{ $schedule->id }}', '{{ $schedule->subject->name ?? '' }}')">
-                                                    <i class="mdi mdi-delete"></i>
-                                                </button>
-                                            </div>
-                                        </td>
+                                        @can('schedules.edit')
+                                            <td>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-sm btn-soft-primary" onclick="editSchedule('{{ $schedule->id }}')">
+                                                        <i class="mdi mdi-pencil"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-soft-danger" onclick="deleteSchedule('{{ $schedule->id }}', '{{ $schedule->subject->name ?? '' }}')">
+                                                        <i class="mdi mdi-delete"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        @endcan
                                     </tr>
                                 @empty
                                     <tr>

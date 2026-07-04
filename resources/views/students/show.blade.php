@@ -58,9 +58,9 @@
                                             </div>
                                             <div class="mb-2">
                                                 <i class="mdi mdi-phone text-muted me-2"></i>
-                                                @if($student->user->phone)
-                                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $student->user->phone) }}" target="_blank" class="text-decoration-none" title="Chat via WhatsApp">
-                                                        <small>{{ $student->user->phone }}</small>
+                                                @if($student->phone)
+                                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $student->phone) }}" target="_blank" class="text-decoration-none" title="Chat via WhatsApp">
+                                                        <small>{{ $student->phone }}</small>
                                                     </a>
                                                 @else
                                                     <small class="text-muted">-</small>

@@ -57,9 +57,29 @@ class Classes extends Model
         ]);
     }
 
+    /**
+     * Scope to order classes by grade level (X → XI → XII) then by name
+     */
+    public function scopeOrderByGrade($query)
+    {
+        return $query->orderByRaw("
+            CASE 
+                WHEN name LIKE 'X %' AND name NOT LIKE 'XI%' THEN 1
+                WHEN name LIKE 'XI %' AND name NOT LIKE 'XII%' THEN 2
+                WHEN name LIKE 'XII %' THEN 3
+                ELSE 4
+            END
+        ")->orderBy('name');
+    }
+
     public function schedules()
     {
         return $this->hasMany(Schedule::class, 'class_id');
+    }
+
+    public function exams()
+    {
+        return $this->hasMany(Exam::class);
     }
 
     /**

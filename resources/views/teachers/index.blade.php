@@ -89,7 +89,7 @@
                                         <span class="badge bg-light text-dark">{{ $item->nip }}</span>
                                     </td>
                                     <td>{{ $item->user->email }}</td>
-                                    <td>{{ $item->user->phone ?? '-' }}</td>
+                                    <td>{{ $item->phone ?? '-' }}</td>
                                     <td>
                                         <small class="text-muted">{{ $item->education_level }} - {{ $item->education_major }}</small>
                                     </td>
@@ -317,7 +317,7 @@
                                 <span class="badge bg-light text-dark">${item.nip}</span>
                             </td>
                             <td>${item.user.email}</td>
-                            <td>${item.user.phone || '-'}</td>
+                            <td>${item.phone || '-'}</td>
                             <td>
                                 <small class="text-muted">${item.education_level} - ${item.education_major}</small>
                             </td>

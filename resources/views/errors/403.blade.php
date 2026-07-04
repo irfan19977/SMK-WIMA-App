@@ -1,53 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.master-without-nav')
+@section('title')
+    403 Error
+@endsection
+@section('content')
+    <div class="auth-error d-flex align-items-center min-vh-100">
+        <div class="bg-overlay bg-light"></div>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-8">
+                    <div>
+                        <div class="text-center mb-4">
+                            <div class="mt-5">
+                                <h1 class="error-title mt-5"><span>403!</span></h1>
+                                <h4 class="mt-2 text-uppercase mt-4">Akses Ditolak</h4>
+                                <p class="mt-4 text-muted w-50 mx-auto">Maaf, Anda tidak memiliki izin untuk mengakses halaman ini. Silakan kembali ke dashboard.</p>
+                            </div>
 
-
-<!-- errors-404.html  21 Nov 2019 04:05:02 GMT -->
-<head>
-  <meta charset="UTF-8">
-  <meta content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" name="viewport">
-  <title>Otika - Admin Dashboard Template</title>
-  <!-- General CSS Files -->
-  <link rel="stylesheet" href="{{ asset('backend/assets/css/app.min.css') }}">
-  <!-- Template CSS -->
-  <link rel="stylesheet" href="{{ asset('backend/assets/css/style.css') }}">
-  <link rel="stylesheet" href="{{ asset('backend/assets/css/components.css') }}">
-  <!-- Custom style CSS -->
-  <link rel="stylesheet" href="{{ asset('backend/assets/css/custom.css') }}">
-  <link rel='shortcut icon' type='image/x-icon' href='{{ ('backend/assets/img/favicon.ico') }}' />
-</head>
-
-<body>
-  <div class="loader"></div>
-  <div id="app">
-    <section class="section">
-      <div class="container mt-5">
-        <div class="page-error">
-          <div class="page-inner">
-            <h1>403</h1>
-            <div class="page-description">
-                 Halaman ini lagi main petak umpet kayanya 🙈 Mimin ganteng juga bingung nyarinya dimana 😂 Yuk balik ke home dulu!
+                            <div class="mt-5 text-center">
+                                <a class="btn btn-primary waves-effect waves-light" href="{{ url('/dashboard') }}">Kembali ke Dashboard</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="page-search">
-              <div class="mt-3">
-                <a href="{{ route('dashboard') }}">Kembali Ke Dashboard</a>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
-    </section>
-  </div>
-  <!-- General JS Scripts -->
-  <script src="{{ asset('backend/assets/js/app.min.js') }}"></script>
-  <!-- JS Libraies -->
-  <!-- Page Specific JS File -->
-  <!-- Template JS File -->
-  <script src="{{ asset('backend/assets/js/scripts.js') }}"></script>
-  <!-- Custom JS File -->
-  <script src="{{ asset('backend/assets/js/custom.js') }}"></script>
-</body>
-
-
-<!-- errors-404.html  21 Nov 2019 04:05:02 GMT -->
-</html>
+    </div>
+@endsection
+@section('scripts')
+    <!-- App js -->
+    <script src="{{ URL::asset('build/js/app.js') }}"></script>
+@endsection

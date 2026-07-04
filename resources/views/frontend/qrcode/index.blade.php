@@ -2,108 +2,177 @@
 
 @section('title', 'QR Code Generator')
 
+@push('styles')
+<style>
+.format-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+.format-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+.format-card.active {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+}
+</style>
+@endpush
+
 @section('content')
-<div class="container py-5">
-    <!-- Header Section -->
-    <div class="row mb-5">
-        <div class="col-12 text-center">
-            <h2 class="fw-bold mb-2"><i class="icon-qrcode"></i> QR Code Generator</h2>
-            <p class="text-muted">Buat QR Code untuk URL Anda dengan mudah dan cepat</p>
-        </div>
-    </div>
-
-    <div class="row justify-content-center">
-        <!-- Info Card -->
-        <div class="col-lg-4 col-md-5 mb-4 mb-lg-0">
-            <div class="card shadow-sm h-100">
-                <div class="card-body p-4">
-                    <h5 class="card-title mb-3"><i class="icon-info"></i> Informasi</h5>
-                    <hr>
-                    <div class="mb-3">
-                        <h6 class="text-primary mb-2"><i class="icon-check"></i> Mudah Digunakan</h6>
-                        <p class="small text-muted mb-0">Cukup masukkan URL dan pilih format yang diinginkan</p>
-                    </div>
-                    <hr class="my-3">
-                    <div class="mb-3">
-                        <h6 class="text-primary mb-2"><i class="icon-check"></i> Multi Format</h6>
-                        <p class="small text-muted mb-0">Tersedia format PNG, SVG, dan EPS</p>
-                    </div>
-                    <hr class="my-3">
-                    <div class="alert alert-warning mb-0">
-                        <small><strong>Tips:</strong> Gunakan format PNG untuk media digital dan SVG untuk desain grafis</small>
+        <!-- Start Section Banner Area -->
+        <div class="section-banner bg-4">
+            <div class="container">
+                <div class="banner-spacing">
+                    <div class="section-info">
+                        <h2 data-aos="fade-up" data-aos-delay="100">QR Code Generator</h2>
+                        <p data-aos="fade-up" data-aos-delay="200">Buat QR Code profesional untuk URL Anda dengan mudah dan cepat</p>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Form Card -->
-        <div class="col-lg-7 col-md-7">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white py-3">
-                    <h5 class="mb-0"><i class="icon-settings"></i> Pengaturan QR Code</h5>
-                </div>
-                <div class="card-body p-4">
-                    <form action="{{ route('qrcode.generate') }}" method="POST">
-                        @csrf
-                        
-                        <!-- URL Input -->
-                        <div class="mb-4">
-                            <label for="url" class="form-label">
-                                <i class="icon-link"></i> URL Tujuan <span class="text-danger">*</span>
-                            </label>
-                            <input type="url" 
-                                   class="form-control @error('url') is-invalid @enderror" 
-                                   id="url" 
-                                   name="url" 
-                                   placeholder="https://forms.gle/example" 
-                                   value="{{ old('url') }}" 
-                                   required>
-                            <small class="form-text text-muted">
-                                <i class="icon-info"></i> Masukkan URL lengkap dengan https://
-                            </small>
-                            @error('url')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        
-                        <!-- Format Selection -->
-                        <div class="mb-4">
-                            <label class="form-label">
-                                <i class="icon-file-image"></i> Format File <span class="text-danger">*</span>
-                            </label>
-                            <div class="row g-3">
-                                @foreach($formats as $value => $label)
-                                <div class="col-4">
-                                    <input type="radio" 
-                                           class="btn-check" 
-                                           name="format" 
-                                           id="format_{{ $value }}" 
-                                           value="{{ $value }}" 
-                                           {{ old('format', 'png') == $value ? 'checked' : '' }}>
-                                    <label class="btn btn-outline-primary w-100 py-3" for="format_{{ $value }}">
-                                        <i class="icon-file" style="font-size: 1.5rem;"></i><br>
-                                        <strong>{{ $label }}</strong><br>
-                                        <small class="text-muted">.{{ $value }}</small>
-                                    </label>
-                                </div>
-                                @endforeach
+        <!-- End Section Banner Area -->
+        
+        <!-- Start QR Code Generator Area -->
+        <div class="contact-area ptb-100">
+            <div class="container">
+                <div class="row">
+                    <!-- Info Card -->
+                    <div class="col-lg-4">
+                        <div class="contact-info">
+                            <div class="info-details">
+                                <h3>Kenapa QR Code?</h3>
+                                <ul>
+                                    <li><i class='bx bx-bolt'></i> <strong>Cepat & Mudah:</strong> Generate QR Code dalam hitungan detik</li>
+                                    <li><i class='bx bx-layer'></i> <strong>Multi Format:</strong> PNG, SVG, dan EPS tersedia</li>
+                                    <li><i class='bx bx-shield'></i> <strong>High Quality:</strong> Error correction level tinggi</li>
+                                </ul>
                             </div>
-                            @error('format')
-                                <div class="text-danger mt-2"><small>{{ $message }}</small></div>
-                            @enderror
+                            <div class="alert alert-info">
+                                <small>
+                                    <i class='bx bx-lightbulb'></i> <strong>Tips:</strong> PNG untuk digital, SVG untuk desain grafis
+                                </small>
+                            </div>
                         </div>
-                        
-                        <!-- Submit Button -->
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg py-3">
-                                <i class="icon-magic"></i> Generate QR Code
-                            </button>
+                    </div>
+                    
+                    <!-- Form Card -->
+                    <div class="col-lg-8">
+                        <div class="contact-content">
+                            <div class="header-content">
+                                <h2>Buat QR Code Anda</h2>
+                                <p>Isi formulir di bawah ini untuk membuat QR Code</p>
+                            </div>
+                            
+                            <form action="{{ route('qrcode.generate') }}" method="POST">
+                                @csrf
+                                
+                                <!-- URL Input -->
+                                <div class="mb-4">
+                                    <label for="url" class="form-label fw-bold">
+                                        <i class='bx bx-link'></i> URL Tujuan
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class='bx bx-globe'></i>
+                                        </span>
+                                        <input type="url" 
+                                               class="form-control @error('url') is-invalid @enderror" 
+                                               id="url" 
+                                               name="url" 
+                                               placeholder="https://forms.gle/example" 
+                                               value="{{ old('url') }}" 
+                                               required>
+                                    </div>
+                                    <small class="text-muted mt-2 d-block">
+                                        <i class='bx bx-info-circle'></i> Masukkan URL lengkap dengan https://
+                                    </small>
+                                    @error('url')
+                                        <div class="text-danger mt-2"><small>{{ $message }}</small></div>
+                                    @enderror
+                                </div>
+
+                                <!-- Text Above QR Code -->
+                                <div class="mb-4">
+                                    <label for="qr_text" class="form-label fw-bold">
+                                        <i class='bx bx-file'></i> Teks di Atas QR Code
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class='bx bx-pencil'></i>
+                                        </span>
+                                        <input type="text" 
+                                               class="form-control @error('qr_text') is-invalid @enderror" 
+                                               id="qr_text" 
+                                               name="qr_text" 
+                                               placeholder="Contoh: Scan untuk mengisi form" 
+                                               value="{{ old('qr_text') }}">
+                                    </div>
+                                    <small class="text-muted mt-2 d-block">
+                                        <i class='bx bx-info-circle'></i> Teks ini akan muncul di atas QR Code (opsional)
+                                    </small>
+                                    @error('qr_text')
+                                        <div class="text-danger mt-2"><small>{{ $message }}</small></div>
+                                    @enderror
+                                </div>
+                                
+                                <!-- Format Selection -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold mb-3">
+                                        <i class='bx bx-file-image'></i> Pilih Format
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="row g-3">
+                                        @foreach($formats as $value => $label)
+                                        <div class="col-4">
+                                            <input type="radio" 
+                                                   class="btn-check" 
+                                                   name="format" 
+                                                   id="format_{{ $value }}" 
+                                                   value="{{ $value }}" 
+                                                   {{ old('format', 'png') == $value ? 'checked' : '' }}>
+                                            <label class="btn format-card w-100 py-4 rounded-3 @if(old('format', 'png') == $value) active @endif" for="format_{{ $value }}">
+                                                <div class="text-center">
+                                                    <i class='bx bx-file mb-2' style="font-size: 2rem; color: #667eea;"></i>
+                                                    <div class="fw-bold">{{ $label }}</div>
+                                                    <small class="text-muted">.{{ $value }}</small>
+                                                </div>
+                                            </label>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                    @error('format')
+                                        <div class="text-danger mt-2"><small>{{ $message }}</small></div>
+                                    @enderror
+                                </div>
+                                
+                                <!-- Submit Button -->
+                                <div class="d-grid">
+                                    <button type="submit" class="default-btn">
+                                        <i class='bx bx-magic'></i> Generate QR Code
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
+        <!-- End QR Code Generator Area -->
+
+@push('scripts')
+<script>
+// Add active class to selected format
+document.querySelectorAll('input[name="format"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.format-card').forEach(card => {
+            card.classList.remove('active');
+        });
+        this.nextElementSibling.classList.add('active');
+    });
+});
+</script>
+@endpush
 
 @endsection

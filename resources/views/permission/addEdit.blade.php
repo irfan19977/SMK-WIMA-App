@@ -96,37 +96,6 @@
         <script src="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.js') }}"></script>
         
         <script>
-            // Auto-format permission name
-            document.addEventListener('DOMContentLoaded', function() {
-                const nameInput = document.getElementById('name');
-                
-                nameInput.addEventListener('input', function() {
-                    // Auto-format to lowercase with dots instead of spaces
-                    let value = this.value.toLowerCase()
-                        .replace(/[^a-z0-9\s]/g, '')
-                        .replace(/\s+/g, '.');
-                    
-                    // Only update if user is typing (not pasting)
-                    if (this.value.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '.') === value) {
-                        return;
-                    }
-                    
-                    // Add timeout to avoid interfering with user typing
-                    clearTimeout(this.formatTimeout);
-                    this.formatTimeout = setTimeout(() => {
-                        this.value = value;
-                    }, 1000);
-                });
-
-                // Auto-format on blur
-                nameInput.addEventListener('blur', function() {
-                    clearTimeout(this.formatTimeout);
-                    this.value = this.value.toLowerCase()
-                        .replace(/[^a-z0-9\s]/g, '')
-                        .replace(/\s+/g, '.');
-                });
-            });
-
             // Delete function
             function confirmDelete(id, name) {
                 Swal.fire({
