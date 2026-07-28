@@ -70,6 +70,7 @@
                     <option value="Kamis" {{ strtolower(old('day', $schedule ? $schedule->day : '')) == 'kamis' ? 'selected' : '' }}>{{ __('index.thursday') }}</option>
                     <option value="Jumat" {{ strtolower(old('day', $schedule ? $schedule->day : '')) == 'jumat' ? 'selected' : '' }}>{{ __('index.friday') }}</option>
                     <option value="Sabtu" {{ strtolower(old('day', $schedule ? $schedule->day : '')) == 'sabtu' ? 'selected' : '' }}>{{ __('index.saturday') }}</option>
+                    <option value="Minggu" {{ strtolower(old('day', $schedule ? $schedule->day : '')) == 'minggu' ? 'selected' : '' }}>{{ __('index.sunday') }}</option>
                 </select>
                 <div class="invalid-feedback">
                     {{ __('index.please_select_day') }}

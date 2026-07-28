@@ -7,8 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-// Import Parent model for relationship
-use App\Models\Parent as ParentModel;
+use App\Models\ParentModel;
 
 class Student extends Model
 {

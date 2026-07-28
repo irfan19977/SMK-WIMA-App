@@ -47,18 +47,18 @@ class ProfileController extends Controller
         $user = $request->user();
         
         // Check if viewing another user's profile (for admin/teacher)
-        if ($request->has('user_id') && auth()->user()->hasRole(['administrator', 'Super Admin', 'teacher'])) {
-            $targetUser = \App\Models\User::with('student')->find($request->input('user_id'));
+        if ($request->has('user_id') && auth()->user()->hasRole(['Admin', 'Super Admin', 'Teacher'])) {
+            $targetUser = \App\Models\User::with(['student.parents.user', 'teacher', 'administrator', 'parent.student.user'])->find($request->input('user_id'));
             if ($targetUser) {
                 $user = $targetUser;
             }
         } else {
-            // Load student relationship for current user
-            $user = $user->load('student');
+            // Load all profile relationships for current user
+            $user = $user->load(['student.parents.user', 'teacher', 'administrator', 'parent.student.user']);
         }
         
         // Auto-assign student role if user has student data but no role
-        if ($user->student && !$user->hasRole('student') && !$user->hasRole('Student')) {
+        if ($user->student && !$user->hasRole('Student')) {
             $studentRole = \Spatie\Permission\Models\Role::where('name', 'student')->first();
             if ($studentRole) {
                 $user->assignRole($studentRole);

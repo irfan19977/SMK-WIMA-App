@@ -215,9 +215,8 @@
 
             // Bind action buttons
             bindActionButtons();
-        });
 
-        function bindActionButtons() {
+            function bindActionButtons() {
             // Toggle Active buttons
             document.querySelectorAll('.btn-toggle-active').forEach(function(btn) {
                 btn.addEventListener('click', async function () {
@@ -326,6 +325,8 @@
                 });
             });
         }
+
+        });
 
         // Export Excel
         function exportExcel() {

@@ -275,11 +275,20 @@ Route::middleware('auth')->group(function () {
         Route::get('/attendance-data', [DashboardController::class, 'getAttendanceData'])->name('.attendance-data');
         Route::get('/chart-data', [DashboardController::class, 'getChartData'])->name('.chart-data');
         Route::get('/parent-chart-data', [DashboardController::class, 'parentChartData'])->name('.parent-chart-data');
+        Route::get('/student-chart-data', [DashboardController::class, 'studentChartData'])->name('.student-chart-data');
     });
 
     // Parent Routes
     Route::get('/parent/attendance', [DashboardController::class, 'parentAttendance'])->name('parent.attendance');
+    Route::get('/parent/attendance/export', [DashboardController::class, 'parentAttendanceExport'])->name('parent.attendance.export');
     Route::get('/parent/schedule', [DashboardController::class, 'parentSchedule'])->name('parent.schedule');
+    Route::get('/parent/lesson-attendance', [DashboardController::class, 'parentLessonAttendance'])->name('parent.lesson-attendance');
+
+    // Student Routes
+    Route::get('/student/attendance', [DashboardController::class, 'studentAttendance'])->name('student.attendance');
+    Route::get('/student/attendance/export', [DashboardController::class, 'studentAttendanceExport'])->name('student.attendance.export');
+    Route::get('/student/schedule', [DashboardController::class, 'studentSchedule'])->name('student.schedule');
+    Route::get('/student/lesson-attendance', [DashboardController::class, 'studentLessonAttendance'])->name('student.lesson-attendance');
 
     // News Management
     Route::resource('news', NewsController::class);
@@ -399,6 +408,8 @@ Route::middleware('auth')->group(function () {
 
     // Attendance (In/Out)
     Route::prefix('attendances')->name('attendances.')->group(function () {
+        Route::get('/export-excel', [AttendanceController::class, 'exportExcel'])->name('export-excel');
+        Route::get('/print-pdf', [AttendanceController::class, 'printPdf'])->name('print-pdf');
         Route::resource('/', AttendanceController::class)->parameters(['' => 'attendance']);
         Route::get('/find-by-nisn/{nisn}', [AttendanceController::class, 'findByNisn']);
         Route::post('/find-existing', [AttendanceController::class, 'findExistingAttendance']);
@@ -406,6 +417,8 @@ Route::middleware('auth')->group(function () {
 
     // Lesson Attendance (Absensi Harian)
     Route::prefix('lesson-attendances')->name('lesson-attendances.')->group(function () {
+        Route::get('/export-excel', [LessonAttendanceController::class, 'exportExcel'])->name('export-excel');
+        Route::get('/print-pdf', [LessonAttendanceController::class, 'printPDF'])->name('print-pdf');
         Route::resource('/', LessonAttendanceController::class)->except(['create', 'edit', 'show']);
         Route::get('/create', [LessonAttendanceController::class, 'create'])->name('create');
         Route::get('/{id}/edit', [LessonAttendanceController::class, 'edit'])->name('edit');
@@ -416,6 +429,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/get-attendance-calendar', [LessonAttendanceController::class, 'getAttendanceCalendar'])->name('get-attendance-calendar');
         Route::get('/get-general-attendance-calendar', [LessonAttendanceController::class, 'getGeneralAttendanceCalendar'])->name('get-general-attendance-calendar');
         Route::post('/bulk-update', [LessonAttendanceController::class, 'bulkUpdate'])->name('bulk-update');
+        Route::get('/export-pdf', [LessonAttendanceController::class, 'exportLessonAttendancePdf'])->name('export-pdf');
     });
 
     // Face Recognition

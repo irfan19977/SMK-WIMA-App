@@ -87,11 +87,11 @@ class User extends Authenticatable
 
     public function getProfileData()
     {
-        if ($this->hasRole('admin') || $this->hasRole('Super Admin')) {
+        if ($this->hasRole('Admin') || $this->hasRole('Super Admin')) {
             return $this->administrator;
-        } elseif ($this->hasRole('teacher')) {
+        } elseif ($this->hasRole('Teacher')) {
             return $this->teacher;
-        } elseif ($this->hasRole('student') || $this->hasRole('Student')) {
+        } elseif ($this->hasRole('Student')) {
             return $this->student;
         } elseif ($this->hasRole('Parent')) {
             return $this->parent;

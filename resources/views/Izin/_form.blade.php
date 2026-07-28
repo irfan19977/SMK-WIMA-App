@@ -28,6 +28,25 @@
     
     <!-- Class and Student Section -->
     <div class="row mb-3">
+        @auth
+        @if(auth()->user()->hasRole('Parent'))
+            {{-- Parent: langsung tampilkan anak saja tanpa dropdown kelas --}}
+            <div class="col-md-12">
+                <div class="mb-3">
+                    <label for="student_id" class="form-label">Siswa <span class="text-danger">*</span></label>
+                    <select class="form-select form-control" id="student_id" name="student_id" required>
+                        <option value="">Pilih Siswa</option>
+                        @foreach($students as $student)
+                            <option value="{{ $student->id }}" {{ old('student_id', $permission->student_id ?? '') == $student->id ? 'selected' : '' }}>
+                                {{ $student->name }} ({{ $student->nisn }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="invalid-feedback">Harap pilih siswa</div>
+                </div>
+            </div>
+        @else
+        {{-- Non-Parent: tampilkan dropdown kelas dan siswa --}}
         <div class="col-md-6">
             <div class="mb-3">
                 <label for="class_id" class="form-label">Kelas <span class="text-danger">*</span></label>
@@ -58,6 +77,8 @@
                 </div>
             </div>
         </div>
+        @endif
+        @endauth
     </div>
     
     <!-- Type and Date Section -->

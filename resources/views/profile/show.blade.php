@@ -33,7 +33,7 @@
                         $profileData = $user->getProfileData();
                         
                         // Determine status display
-                        if($user->hasRole('student') || $user->hasRole('Student')) {
+                        if($user->hasRole('Student')) {
                             // For students, show status from student table
                             if($profileData && isset($profileData->status)) {
                                 $statusDisplay = ucfirst($profileData->status);
@@ -45,7 +45,12 @@
                         } else {
                             // For other roles, show role name
                             $statusDisplay = ucfirst($user->roles->first()->name ?? 'User');
-                            $statusBadgeClass = $user->hasRole('admin') ? 'danger' : ($user->hasRole('teacher') ? 'success' : 'primary');
+                            $statusBadgeClass = match(true) {
+                                $user->hasRole('Admin') || $user->hasRole('Super Admin') => 'danger',
+                                $user->hasRole('Teacher') => 'success',
+                                $user->hasRole('Parent') => 'info',
+                                default => 'primary',
+                            };
                         }
                     @endphp
                     <p class="badge bg-{{ $statusBadgeClass }}">
@@ -75,6 +80,97 @@
                     </div>
                 </div>
             </div>
+
+            @if($user->hasRole('Student'))
+                @php
+                    $parentRecord = $profileData->parents ?? null;
+                @endphp
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Orang Tua</h5>
+                        @if($parentRecord)
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Nama</label>
+                                <p class="mb-0">
+                                    @if($parentRecord->user)
+                                        <a href="{{ route('profile.show') }}?user_id={{ $parentRecord->user->id }}" class="text-decoration-none fw-medium">
+                                            {{ $parentRecord->name ?? $parentRecord->user->name }}
+                                        </a>
+                                    @else
+                                        {{ $parentRecord->name ?? '-' }}
+                                    @endif
+                                </p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Email</label>
+                                <p class="mb-0">{{ $parentRecord->user->email ?? '-' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">No. HP</label>
+                                <p class="mb-0">{{ $parentRecord->phone ?? '-' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Alamat</label>
+                                <p class="mb-0">{{ $parentRecord->address ?? '-' }}</p>
+                            </div>
+                        @elseif($profileData && ($profileData->parent_name || $profileData->parent_phone))
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Nama</label>
+                                <p class="mb-0">{{ $profileData->parent_name ?? '-' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">No. HP</label>
+                                <p class="mb-0">{{ $profileData->parent_phone ?? '-' }}</p>
+                            </div>
+                        @else
+                            <p class="text-muted mb-0">Data orang tua belum tersedia.</p>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
+            @if($user->hasRole('Parent'))
+                @php
+                    $childRecord = $profileData->student ?? null;
+                @endphp
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Biodata Anak</h5>
+                        @if($childRecord)
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Nama</label>
+                                <p class="mb-0">
+                                    @if($childRecord->user)
+                                        <a href="{{ route('profile.show') }}?user_id={{ $childRecord->user->id }}" class="text-decoration-none fw-medium">
+                                            {{ $childRecord->name }}
+                                        </a>
+                                    @else
+                                        {{ $childRecord->name }}
+                                    @endif
+                                </p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">NISN</label>
+                                <p class="mb-0">{{ $childRecord->nisn ?? '-' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Email</label>
+                                <p class="mb-0">{{ $childRecord->user->email ?? '-' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">No. HP</label>
+                                <p class="mb-0">{{ $childRecord->phone ?? '-' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Alamat</label>
+                                <p class="mb-0">{{ $childRecord->address ?? '-' }}</p>
+                            </div>
+                        @else
+                            <p class="text-muted mb-0">Data anak belum tersedia.</p>
+                        @endif
+                    </div>
+                </div>
+            @endif
         </div>
 
         <div class="col-lg-8">
@@ -134,8 +230,20 @@
                                         <td>{{ $profileData->phone ?? '-' }}</td>
                                     </tr>
                                     
-                                    @if($user->hasRole('student') || $user->hasRole('Student'))
+                                    @if($user->hasRole('Student'))
                                         @if($profileData)
+                                            <tr>
+                                                <th>Nama Orang Tua</th>
+                                                <td>{{ $profileData->parent_name ?? '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>No. HP Orang Tua</th>
+                                                <td>{{ $profileData->parent_phone ?? '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Email Orang Tua</th>
+                                                <td>{{ $profileData->parent_email ?? '-' }}</td>
+                                            </tr>
                                             <tr>
                                                 <th>{{ __('index.absence_number') }}</th>
                                                 <td>{{ $profileData->no_absen ?? '-' }}</td>
@@ -199,6 +307,19 @@
                                             </tr>
                                         @endif
                                     @endif
+
+                                    @if($user->hasRole('Parent') && $profileData && $profileData->student)
+                                        <tr>
+                                            <th>Data Anak</th>
+                                            <td>
+                                                <a href="{{ route('students.show', $profileData->student->id) }}" class="text-decoration-none fw-medium">
+                                                    {{ $profileData->student->name ?? '-' }}
+                                                </a>
+                                                <br>
+                                                <small class="text-muted">NISN: {{ $profileData->student->nisn ?? '-' }}</small>
+                                            </td>
+                                        </tr>
+                                    @endif
                                     
                                     <tr>
                                         <th>{{ __('index.address') }}</th>
@@ -235,7 +356,7 @@
                                     </div>
                                 </div>
 
-                                @if($user->hasRole('student') || $user->hasRole('Student'))
+                                @if($user->hasRole('Student'))
                                     @if($profileData)
                                         <div class="row">
                                             <div class="col-md-4 mb-3">
@@ -407,7 +528,7 @@
     </div>
 
     <!-- Dokumen Lampiran: Full Width (for students) -->
-    @if($user->hasRole('student') || $user->hasRole('Student'))
+    @if($user->hasRole('Student'))
         @if($profileData)
         <div class="row mt-4">
             <div class="col-12">

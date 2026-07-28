@@ -12,9 +12,16 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            CompleteSchoolSeeder::class,
-            GenapScheduleSeeder::class,
-            GenapStudentClassSeeder::class,
+            RolesPermissionsSeeder::class,
+            AdminSeeder::class,
+            TeacherSeeder::class,
+            StudentSeeder::class,
+            ParentSeeder::class,
+            SubjectSeeder::class,
+            ClassSeeder::class,
+            StudentClassSeeder::class,
+            ScheduleSeeder::class,
+            SettingScheduleSeeder::class,
         ]);
     }
 }

@@ -25,6 +25,11 @@ class DashboardController extends Controller
         if (Auth::check() && Auth::user()->hasRole('Parent')) {
             return $this->parentDashboard();
         }
+
+        // Check if user is student
+        if (Auth::check() && Auth::user()->hasRole('Student')) {
+            return $this->studentDashboard();
+        }
         
         // Get statistics for dashboard cards
         $totalStudents = DB::table('student')->count();
@@ -179,6 +184,65 @@ class DashboardController extends Controller
         ));
     }
 
+    public function parentAttendanceExport(Request $request)
+    {
+        $parent = \App\Models\ParentModel::where('user_id', Auth::id())->first();
+
+        if (!$parent || !$parent->student_id) {
+            return redirect()->back()->with('error', 'Data parent atau siswa tidak ditemukan');
+        }
+
+        $student = \App\Models\Student::with(['user', 'classes'])->find($parent->student_id);
+
+        if (!$student) {
+            return redirect()->back()->with('error', 'Data siswa tidak ditemukan');
+        }
+
+        $studentClass = $student->classes->first();
+
+        // Build query with filters
+        $query = DB::table('attendance')->where('student_id', $student->id);
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('date', [$request->start_date, $request->end_date]);
+        }
+
+        if ($request->filled('status') && $request->status != 'all') {
+            $query->where('check_in_status', $request->status);
+        }
+
+        $attendances = $query->orderBy('date', 'asc')->get();
+        $attendanceStats = $this->getStudentAttendanceStats($student->id);
+
+        // Lesson attendance data
+        $lessonQuery = DB::table('lesson_attendance')
+            ->join('subject', 'lesson_attendance.subject_id', '=', 'subject.id')
+            ->select('lesson_attendance.*', 'subject.name as subject_name')
+            ->where('lesson_attendance.student_id', $student->id)
+            ->whereNull('lesson_attendance.deleted_at');
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $lessonQuery->whereBetween('lesson_attendance.date', [$request->start_date, $request->end_date]);
+        }
+
+        $lessonAttendances = $lessonQuery->orderBy('lesson_attendance.date', 'asc')
+            ->orderBy('subject_name', 'asc')
+            ->get();
+
+        $startDate = $request->filled('start_date') ? \Carbon\Carbon::parse($request->start_date)->format('d/m/Y') : null;
+        $endDate   = $request->filled('end_date')   ? \Carbon\Carbon::parse($request->end_date)->format('d/m/Y')   : null;
+
+        return view('dashboard.parent-attendance-export', compact(
+            'student',
+            'studentClass',
+            'attendanceStats',
+            'attendances',
+            'lessonAttendances',
+            'startDate',
+            'endDate'
+        ));
+    }
+
     public function parentSchedule(Request $request)
     {
         // Get parent data
@@ -307,6 +371,126 @@ class DashboardController extends Controller
         ));
     }
 
+    public function parentLessonAttendance(Request $request)
+    {
+        $parent = \App\Models\ParentModel::where('user_id', Auth::id())->first();
+
+        if (!$parent || !$parent->student_id) {
+            return redirect()->back()->with('error', 'Data parent atau siswa tidak ditemukan');
+        }
+
+        $student = \App\Models\Student::with(['user', 'classes'])->find($parent->student_id);
+
+        if (!$student) {
+            return redirect()->back()->with('error', 'Data siswa tidak ditemukan');
+        }
+
+        $data = $this->buildWeeklyLessonAttendance($student, $request);
+
+        if ($data === null) {
+            return redirect()->back()->with('error', 'Siswa belum memiliki kelas');
+        }
+
+        return view('dashboard.parent-lesson-attendance', $data);
+    }
+
+    private function buildWeeklyLessonAttendance($student, Request $request)
+    {
+        $studentClass = $student->classes->first();
+
+        if (!$studentClass) {
+            return null;
+        }
+
+        $activeSemester = (object) [
+            'academic_year' => AcademicYearHelper::getCurrentAcademicYear(),
+            'semester_type' => AcademicYearHelper::getCurrentSemester(),
+            'display_name' => 'Semester ' . ucfirst(AcademicYearHelper::getCurrentSemester()) . ' ' . AcademicYearHelper::getCurrentAcademicYear(),
+        ];
+
+        $schedules = \App\Models\Schedule::with('subject', 'teacher')
+            ->where('class_id', $studentClass->id)
+            ->where('academic_year', $activeSemester->academic_year)
+            ->where('semester', $activeSemester->semester_type)
+            ->orderBy('day')
+            ->orderBy('start_time')
+            ->get()
+            ->groupBy('day');
+
+        $dayOrder = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
+        $orderedSchedules = [];
+        foreach ($dayOrder as $day) {
+            if (isset($schedules[$day])) {
+                $orderedSchedules[$day] = $schedules[$day];
+            }
+        }
+
+        $selectedDate = $request->input('date', Carbon::today()->format('Y-m-d'));
+        $weekStart = Carbon::parse($selectedDate)->startOfWeek(Carbon::MONDAY);
+        $weekEnd = $weekStart->copy()->addDays(5);
+
+        $dayLabels = [
+            'senin' => 'Senin',
+            'selasa' => 'Selasa',
+            'rabu' => 'Rabu',
+            'kamis' => 'Kamis',
+            'jumat' => 'Jumat',
+            'sabtu' => 'Sabtu',
+            'minggu' => 'Minggu',
+        ];
+
+        $lessonAttendances = DB::table('lesson_attendance')
+            ->where('student_id', $student->id)
+            ->whereBetween('date', [$weekStart->format('Y-m-d'), $weekEnd->format('Y-m-d')])
+            ->whereNull('deleted_at')
+            ->get()
+            ->keyBy(function ($item) {
+                return $item->date . '|' . $item->subject_id;
+            });
+
+        $weeklyAttendance = [];
+        $currentDay = $weekStart->copy();
+        while ($currentDay <= $weekEnd) {
+            $dayKey = strtolower($currentDay->locale('id')->isoFormat('dddd'));
+            $dateStr = $currentDay->format('Y-m-d');
+            $daySchedules = $orderedSchedules[$dayKey] ?? collect();
+            $dayRows = [];
+
+            foreach ($daySchedules as $schedule) {
+                $key = $dateStr . '|' . $schedule->subject_id;
+                $la = $lessonAttendances->get($key);
+
+                $dayRows[] = [
+                    'time' => Carbon::parse($schedule->start_time)->format('H:i') . ' - ' . Carbon::parse($schedule->end_time)->format('H:i'),
+                    'subject' => $schedule->subject->name,
+                    'teacher' => $schedule->teacher->name,
+                    'status' => $la ? $la->check_in_status : null,
+                    'check_in' => $la ? $la->check_in : null,
+                ];
+            }
+
+            $weeklyAttendance[] = [
+                'date' => $dateStr,
+                'day_key' => $dayKey,
+                'day_label' => $dayLabels[$dayKey] ?? ucfirst($dayKey),
+                'rows' => $dayRows,
+            ];
+
+            $currentDay->addDay();
+        }
+
+        return compact(
+            'student',
+            'studentClass',
+            'activeSemester',
+            'orderedSchedules',
+            'weeklyAttendance',
+            'selectedDate',
+            'weekStart',
+            'weekEnd'
+        );
+    }
+
     private function getStudentChartData($studentId)
     {
         $endDate = Carbon::now()->endOfMonth();
@@ -414,6 +598,337 @@ class DashboardController extends Controller
 
         if (!$student) {
             return response()->json(['error' => 'Data siswa tidak ditemukan'], 404);
+        }
+
+        $period = $request->get('period', '6m');
+        $endDate = Carbon::now()->endOfMonth();
+
+        switch ($period) {
+            case '1m':
+                $startDate = Carbon::now()->startOfMonth();
+                break;
+            case '1y':
+                $startDate = Carbon::now()->subMonths(11)->startOfMonth();
+                break;
+            default:
+                $startDate = Carbon::now()->subMonths(5)->startOfMonth();
+                $period = '6m';
+        }
+
+        $data = $this->getStudentChartDataForDateRange($student->id, $startDate, $endDate);
+        $data['donut'] = $this->getStudentDonutDataForDateRange($student->id, $startDate, $endDate);
+
+        return response()->json($data);
+    }
+
+    private function studentDashboard()
+    {
+        // Get student data from authenticated user
+        $student = \App\Models\Student::with(['user', 'classes'])->where('user_id', Auth::id())->first();
+
+        if (!$student) {
+            return redirect()->back()->with('error', 'Data siswa tidak ditemukan');
+        }
+
+        $studentClass = $student->classes->first();
+
+        // Get attendance statistics for the student
+        $attendanceStats = $this->getStudentAttendanceStats($student->id);
+
+        // Get recent attendance for the student
+        $recentAttendance = DB::table('attendance')
+            ->where('student_id', $student->id)
+            ->orderBy('date', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Get today's attendance for the student
+        $todayAttendance = DB::table('attendance')
+            ->where('student_id', $student->id)
+            ->whereDate('date', Carbon::today())
+            ->first();
+
+        // Get chart data for the student
+        $chartData = $this->getStudentChartData($student->id);
+        $donutData = $this->getStudentDonutData($student->id);
+
+        // Get student's schedule for the active semester
+        $activeSemester = (object) [
+            'academic_year' => AcademicYearHelper::getCurrentAcademicYear(),
+            'semester_type' => AcademicYearHelper::getCurrentSemester(),
+            'display_name' => 'Semester ' . ucfirst(AcademicYearHelper::getCurrentSemester()) . ' ' . AcademicYearHelper::getCurrentAcademicYear(),
+        ];
+        $schedules = [];
+        if ($studentClass) {
+            $query = \App\Models\Schedule::with('subject', 'teacher')
+                ->where('class_id', $studentClass->id)
+                ->where('academic_year', $activeSemester->academic_year)
+                ->where('semester', $activeSemester->semester_type);
+
+            $schedules = $query->orderBy('day')
+                ->orderBy('start_time')
+                ->get()
+                ->groupBy('day');
+
+            $dayOrder = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
+            $orderedSchedules = [];
+
+            foreach ($dayOrder as $day) {
+                if (isset($schedules[$day])) {
+                    $orderedSchedules[$day] = $schedules[$day];
+                }
+            }
+        }
+
+        return view('dashboard.student', compact(
+            'student',
+            'studentClass',
+            'activeSemester',
+            'attendanceStats',
+            'recentAttendance',
+            'todayAttendance',
+            'orderedSchedules',
+            'chartData',
+            'donutData'
+        ));
+    }
+
+    public function studentAttendance(Request $request)
+    {
+        // Get student data from authenticated user
+        $student = \App\Models\Student::with(['user', 'classes'])->where('user_id', Auth::id())->first();
+
+        if (!$student) {
+            return redirect()->back()->with('error', 'Data siswa tidak ditemukan');
+        }
+
+        $studentClass = $student->classes->first();
+
+        // Get attendance statistics for the student
+        $attendanceStats = $this->getStudentAttendanceStats($student->id);
+
+        // Build attendance query with filters
+        $query = DB::table('attendance')
+            ->where('student_id', $student->id);
+
+        // Filter by date range
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('date', [$request->start_date, $request->end_date]);
+        }
+
+        // Filter by status
+        if ($request->filled('status') && $request->status != 'all') {
+            $query->where('check_in_status', $request->status);
+        }
+
+        // Order and paginate
+        $attendances = $query->orderBy('date', 'desc')->paginate(20);
+
+        return view('dashboard.student-attendance', compact(
+            'student',
+            'studentClass',
+            'attendanceStats',
+            'attendances'
+        ));
+    }
+
+    public function studentAttendanceExport(Request $request)
+    {
+        $student = \App\Models\Student::with(['user', 'classes'])->where('user_id', Auth::id())->first();
+
+        if (!$student) {
+            return redirect()->back()->with('error', 'Data siswa tidak ditemukan');
+        }
+
+        $studentClass = $student->classes->first();
+
+        // Build query with filters
+        $query = DB::table('attendance')->where('student_id', $student->id);
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('date', [$request->start_date, $request->end_date]);
+        }
+
+        if ($request->filled('status') && $request->status != 'all') {
+            $query->where('check_in_status', $request->status);
+        }
+
+        $attendances = $query->orderBy('date', 'asc')->get();
+        $attendanceStats = $this->getStudentAttendanceStats($student->id);
+
+        // Lesson attendance data
+        $lessonQuery = DB::table('lesson_attendance')
+            ->join('subject', 'lesson_attendance.subject_id', '=', 'subject.id')
+            ->select('lesson_attendance.*', 'subject.name as subject_name')
+            ->where('lesson_attendance.student_id', $student->id)
+            ->whereNull('lesson_attendance.deleted_at');
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $lessonQuery->whereBetween('lesson_attendance.date', [$request->start_date, $request->end_date]);
+        }
+
+        $lessonAttendances = $lessonQuery->orderBy('lesson_attendance.date', 'asc')
+            ->orderBy('subject_name', 'asc')
+            ->get();
+
+        $startDate = $request->filled('start_date') ? \Carbon\Carbon::parse($request->start_date)->format('d/m/Y') : null;
+        $endDate   = $request->filled('end_date')   ? \Carbon\Carbon::parse($request->end_date)->format('d/m/Y')   : null;
+
+        return view('dashboard.student-attendance-export', compact(
+            'student',
+            'studentClass',
+            'attendanceStats',
+            'attendances',
+            'lessonAttendances',
+            'startDate',
+            'endDate'
+        ));
+    }
+
+    public function studentSchedule(Request $request)
+    {
+        // Get student data from authenticated user
+        $student = \App\Models\Student::with(['user', 'classes'])->where('user_id', Auth::id())->first();
+
+        if (!$student) {
+            return redirect()->back()->with('error', 'Data siswa tidak ditemukan');
+        }
+
+        $studentClass = $student->classes->first();
+
+        if (!$studentClass) {
+            return redirect()->back()->with('error', 'Siswa belum memiliki kelas');
+        }
+
+        // Get student's schedule for the active semester
+        $activeSemester = (object) [
+            'academic_year' => AcademicYearHelper::getCurrentAcademicYear(),
+            'semester_type' => AcademicYearHelper::getCurrentSemester(),
+            'display_name' => 'Semester ' . ucfirst(AcademicYearHelper::getCurrentSemester()) . ' ' . AcademicYearHelper::getCurrentAcademicYear(),
+        ];
+        $schedules = \App\Models\Schedule::with('subject', 'teacher')
+            ->where('class_id', $studentClass->id)
+            ->where('academic_year', $activeSemester->academic_year)
+            ->where('semester', $activeSemester->semester_type)
+            ->orderBy('day')
+            ->orderBy('start_time')
+            ->get()
+            ->groupBy('day');
+
+        $dayOrder = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
+        $orderedSchedules = [];
+
+        foreach ($dayOrder as $day) {
+            if (isset($schedules[$day])) {
+                $orderedSchedules[$day] = $schedules[$day];
+            }
+        }
+
+        // Get selected month from request, default to current month
+        $selectedMonth = $request->input('month', \Carbon\Carbon::now()->format('Y-m'));
+
+        // Get attendance for each subject for the selected month
+        $subjectAttendance = [];
+
+        // Get all attendance records for this student for the selected month
+        $allAttendance = DB::table('attendance')
+            ->where('student_id', $student->id)
+            ->whereYear('date', \Carbon\Carbon::parse($selectedMonth)->year)
+            ->whereMonth('date', \Carbon\Carbon::parse($selectedMonth)->month)
+            ->orderBy('date')
+            ->get();
+
+        // Organize by subject with schedule-based meetings
+        foreach ($orderedSchedules as $day => $daySchedules) {
+            foreach ($daySchedules as $schedule) {
+                $subjectId = $schedule->subject_id;
+
+                if (!isset($subjectAttendance[$subjectId])) {
+                    $subjectAttendance[$subjectId] = [
+                        'subject_name' => $schedule->subject->name,
+                        'teacher_name' => $schedule->teacher->name,
+                        'day' => $schedule->day,
+                        'meetings' => []
+                    ];
+                }
+
+                // Find attendance records that match the schedule day
+                foreach ($allAttendance as $attendance) {
+                    $attendanceDay = \Carbon\Carbon::parse($attendance->date)->format('l');
+                    $dayName = strtolower($attendanceDay);
+
+                    // Map English day names to Indonesian
+                    $dayMap = [
+                        'monday' => 'senin',
+                        'tuesday' => 'selasa',
+                        'wednesday' => 'rabu',
+                        'thursday' => 'kamis',
+                        'friday' => 'jumat',
+                        'saturday' => 'sabtu',
+                        'sunday' => 'minggu'
+                    ];
+
+                    if (isset($dayMap[$dayName]) && $dayMap[$dayName] == $schedule->day) {
+                        $subjectAttendance[$subjectId]['meetings'][] = [
+                            'date' => $attendance->date,
+                            'check_in' => $attendance->check_in,
+                            'check_out' => $attendance->check_out,
+                            'check_in_status' => $attendance->check_in_status,
+                            'check_out_status' => $attendance->check_out_status
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Get available months for filter
+        $availableMonths = DB::table('attendance')
+            ->where('student_id', $student->id)
+            ->selectRaw('DISTINCT DATE_FORMAT(date, "%Y-%m") as month')
+            ->orderBy('month', 'desc')
+            ->pluck('month')
+            ->toArray();
+
+        // Get chart data for the student
+        $chartData = $this->getStudentChartData($student->id);
+        $donutData = $this->getStudentDonutData($student->id);
+
+        return view('dashboard.student-schedule', compact(
+            'student',
+            'studentClass',
+            'activeSemester',
+            'orderedSchedules',
+            'subjectAttendance',
+            'selectedMonth',
+            'availableMonths',
+            'chartData',
+            'donutData'
+        ));
+    }
+
+    public function studentLessonAttendance(Request $request)
+    {
+        $student = \App\Models\Student::with(['user', 'classes'])->where('user_id', Auth::id())->first();
+
+        if (!$student) {
+            return redirect()->back()->with('error', 'Data siswa tidak ditemukan');
+        }
+
+        $data = $this->buildWeeklyLessonAttendance($student, $request);
+
+        if ($data === null) {
+            return redirect()->back()->with('error', 'Siswa belum memiliki kelas');
+        }
+
+        return view('dashboard.student-lesson-attendance', $data);
+    }
+
+    public function studentChartData(Request $request)
+    {
+        $student = \App\Models\Student::where('user_id', Auth::id())->first();
+
+        if (!$student) {
+            return response()->json(['error' => 'Data siswa tidak ditemukan'], 403);
         }
 
         $period = $request->get('period', '6m');

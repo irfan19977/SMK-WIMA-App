@@ -16,12 +16,23 @@ use Illuminate\Support\Facades\App;
 use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\Models\ParentModel;
 
 class StudentPermissionController extends Controller
 {
     public function index(Request $request)
     {
         $query = StudentPermission::with(['student', 'approvedBy']);
+
+        // Jika parent, filter hanya anak mereka
+        if (Auth::user()->hasRole('Parent')) {
+            $parent = ParentModel::where('user_id', Auth::id())->first();
+            if ($parent && $parent->student_id) {
+                $query->where('student_id', $parent->student_id);
+            } else {
+                $query->whereRaw('1 = 0'); // tidak ada data jika parent tidak punya anak
+            }
+        }
 
         // Search by student name or NISN
         if ($request->has('q') && $request->q) {
@@ -99,7 +110,16 @@ class StudentPermissionController extends Controller
     public function create()
     {
         $classes = Classes::all();
-        $students = Student::with('classes')->get();
+
+        // Jika parent, hanya tampilkan anak mereka
+        if (Auth::user()->hasRole('Parent')) {
+            $parent = ParentModel::where('user_id', Auth::id())->first();
+            $students = ($parent && $parent->student_id)
+                ? Student::with('classes')->where('id', $parent->student_id)->get()
+                : collect();
+        } else {
+            $students = Student::with('classes')->get();
+        }
         
         return response()->json([
             'success' => true,
@@ -298,16 +318,26 @@ class StudentPermissionController extends Controller
     public function getStudentsByClass(Request $request)
     {
         $classId = $request->class_id;
-        $students = Student::whereHas('classes', function($query) use ($classId) {
-                $query->where('classes.id', $classId)
-                      ->where('student_class.status', 'active');
+
+        $query = Student::whereHas('classes', function($q) use ($classId) {
+                $q->where('classes.id', $classId)
+                  ->where('student_class.status', 'active');
             })
-            ->select('id', 'name', 'nisn')
-            ->get();
+            ->select('id', 'name', 'nisn');
+
+        // Jika parent, hanya kembalikan anak mereka
+        if (Auth::user()->hasRole('Parent')) {
+            $parent = ParentModel::where('user_id', Auth::id())->first();
+            if ($parent && $parent->student_id) {
+                $query->where('id', $parent->student_id);
+            } else {
+                return response()->json(['success' => true, 'data' => []]);
+            }
+        }
 
         return response()->json([
             'success' => true,
-            'data' => $students
+            'data' => $query->get()
         ]);
     }
 

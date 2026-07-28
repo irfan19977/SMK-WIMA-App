@@ -35,7 +35,7 @@ return [
     'face_scan_attendance' => 'Absensi Scan Wajah',
     'daily_attendance' => 'Absensi Harian',
     'in_out_attendance' => 'Kehadiran In/Out',
-    'child_in_out_attendance' => 'Kehadiran In/Out Anak',
+    'child_in_out_attendance' => 'Kehadiran Anak',
     
     // Biometric Submenu
     'face_scan' => 'Scan Wajah',

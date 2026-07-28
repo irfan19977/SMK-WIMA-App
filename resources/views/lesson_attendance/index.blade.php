@@ -674,15 +674,19 @@
 
         // Export Excel
         function exportExcel() {
-            const url = new URL(window.location.href);
-            url.searchParams.set('export', 'excel');
+            const url = new URL('{{ route('lesson-attendances.export-excel') }}', window.location.origin);
+            const filters = new URLSearchParams(window.location.search);
+            filters.delete('page');
+            url.search = filters.toString();
             window.open(url.toString(), '_blank');
         }
 
         // Print PDF
         function printPDF() {
-            const url = new URL(window.location.href);
-            url.searchParams.set('print', 'pdf');
+            const url = new URL('{{ route('lesson-attendances.print-pdf') }}', window.location.origin);
+            const filters = new URLSearchParams(window.location.search);
+            filters.delete('page');
+            url.search = filters.toString();
             window.open(url.toString(), '_blank');
         }
 
@@ -798,13 +802,6 @@
                     });
                 }
             });
-        }
-
-        // Print PDF
-        function printPDF() {
-            const url = new URL(window.location.href);
-            url.searchParams.set('print', 'pdf');
-            window.open(url.toString(), '_blank');
         }
 
         // Initialize lesson form interactions (class→student, subject, time, status)

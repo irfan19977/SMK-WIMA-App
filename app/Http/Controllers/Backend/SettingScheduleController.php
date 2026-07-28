@@ -80,7 +80,7 @@ class SettingScheduleController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'day' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu|unique:setting_schedule,day',
+            'day' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu|unique:setting_schedule,day',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'color' => 'nullable|string|max:7'
@@ -164,7 +164,7 @@ class SettingScheduleController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'day' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu|unique:setting_schedule,day,' . $id,
+            'day' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu|unique:setting_schedule,day,' . $id,
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
         ], [

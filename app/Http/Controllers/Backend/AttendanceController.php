@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Services\WhatsAppService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceController extends Controller
 {
@@ -34,71 +37,10 @@ class AttendanceController extends Controller
         
         $this->authorize('attendances.index');
         
-        $query = $request->get('q');
-        $user = Auth::user();
-        
-        // Query untuk menggabungkan data check_in dan check_out dalam satu baris
-        $attendancesQuery = DB::table('attendance as a1')
-            ->select([
-                'a1.id as attendance_id',
-                'a1.student_id',
-                'a1.class_id',
-                'a1.date',
-                's.name as student_name',
-                's.user_id',
-                'c.name as class_name',
-                // Data check in
-                'a1.check_in',
-                'a1.check_in_status',
-                // Data check out (fallback to a1 for auto-generated permission records)
-                DB::raw('COALESCE(a2.check_out, a1.check_out) as check_out'),
-                DB::raw('COALESCE(a2.check_out_status, a1.check_out_status) as check_out_status'),
-                DB::raw('COALESCE(a2.id, a1.id) as checkout_id')
-            ])
-            ->leftJoin('attendance as a2', function($join) {
-                $join->on('a1.student_id', '=', 'a2.student_id')
-                    ->on('a1.class_id', '=', 'a2.class_id')
-                    ->on('a1.date', '=', 'a2.date')
-                    ->whereNotNull('a2.check_out');
-            })
-            ->join('student as s', 'a1.student_id', '=', 's.id')
-            ->join('classes as c', 'a1.class_id', '=', 'c.id')
-            ->whereNotNull('a1.check_in_status')
-            ->whereNull('a1.deleted_at')
-            ->whereNull('s.deleted_at')
-            ->whereNull('c.deleted_at');
-        
-        // Jika user adalah parent, batasi hanya data anak mereka
-        if ($user->hasRole('parent')) {
-            $parent = DB::table('parent')
-                ->where('user_id', $user->id)
-                ->whereNull('deleted_at')
-                ->first();
-            
-            if ($parent && $parent->student_id) {
-                $attendancesQuery->where('a1.student_id', $parent->student_id);
-            } else {
-                // Jika parent tidak memiliki student_id, return empty collection
-                $attendances = collect();
-            }
-            
-            // Parent tidak bisa melakukan pencarian
-            $query = null;
-        }
-        
-        // Jika bukan parent, bisa melakukan pencarian
-        if (!$user->hasRole('parent') && $query) {
-            $attendancesQuery->where(function($subQuery) use ($query) {
-                $subQuery->where('s.name', 'LIKE', "%{$query}%")
-                        ->orWhere('c.name', 'LIKE', "%{$query}%")
-                        ->orWhere('a1.date', 'LIKE', "%{$query}%");
-            });
-        }
-        
-        $attendances = isset($attendances) ? $attendances : $attendancesQuery
+        $attendances = $this->attendanceReportQuery($request)
             ->orderBy('a1.date', 'desc')
             ->orderBy('a1.check_in', 'asc')
-            ->paginate(request('per_page', 10));
+            ->paginate($request->get('per_page', 10));
         
         if ($request->ajax()) {
             return response()->json([
@@ -629,6 +571,116 @@ class AttendanceController extends Controller
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ]);
         }
+    }
+
+    public function exportExcel(Request $request): StreamedResponse
+    {
+        $this->authorize('attendances.index');
+
+        $attendances = $this->attendanceReportQuery($request)
+            ->orderBy('a1.date', 'desc')
+            ->orderBy('a1.check_in', 'asc')
+            ->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Absensi In Out');
+        $sheet->fromArray(['No', 'Nama Siswa', 'Kelas', 'Tanggal', 'Jam Masuk', 'Status Masuk', 'Jam Keluar', 'Status Keluar'], null, 'A1');
+
+        foreach ($attendances as $index => $attendance) {
+            $sheet->fromArray([
+                $index + 1,
+                $attendance->student_name,
+                $attendance->class_name,
+                Carbon::parse($attendance->date)->format('d-m-Y'),
+                $attendance->check_in ? Carbon::parse($attendance->check_in)->format('H:i') : '-',
+                $attendance->check_in_status,
+                $attendance->check_out ? Carbon::parse($attendance->check_out)->format('H:i') : '-',
+                $attendance->check_out_status ?? '-',
+            ], null, 'A' . ($index + 2));
+        }
+
+        foreach (range('A', 'H') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+        $sheet->getStyle('A1:H1')->getFont()->setBold(true);
+
+        $filename = 'absensi-in-out-' . now()->format('Ymd-His') . '.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function printPdf(Request $request)
+    {
+        $this->authorize('attendances.index');
+
+        $attendances = $this->attendanceReportQuery($request)
+            ->orderBy('a1.date', 'desc')
+            ->orderBy('a1.check_in', 'asc')
+            ->get();
+
+        return view('attendances.export_pdf', compact('attendances'));
+    }
+
+    private function attendanceReportQuery(Request $request)
+    {
+        $query = $request->get('q');
+        $user = Auth::user();
+
+        $attendancesQuery = DB::table('attendance as a1')
+            ->select([
+                'a1.id as attendance_id',
+                'a1.student_id',
+                'a1.class_id',
+                'a1.date',
+                's.name as student_name',
+                's.nisn as student_nisn',
+                's.user_id',
+                'c.name as class_name',
+                'a1.check_in',
+                'a1.check_in_status',
+                DB::raw('COALESCE(a2.check_out, a1.check_out) as check_out'),
+                DB::raw('COALESCE(a2.check_out_status, a1.check_out_status) as check_out_status'),
+                DB::raw('COALESCE(a2.id, a1.id) as checkout_id')
+            ])
+            ->leftJoin('attendance as a2', function ($join) {
+                $join->on('a1.student_id', '=', 'a2.student_id')
+                    ->on('a1.class_id', '=', 'a2.class_id')
+                    ->on('a1.date', '=', 'a2.date')
+                    ->whereNotNull('a2.check_out');
+            })
+            ->join('student as s', 'a1.student_id', '=', 's.id')
+            ->join('classes as c', 'a1.class_id', '=', 'c.id')
+            ->whereNotNull('a1.check_in_status')
+            ->whereNull('a1.deleted_at')
+            ->whereNull('s.deleted_at')
+            ->whereNull('c.deleted_at');
+
+        if ($user->hasRole('parent')) {
+            $parent = DB::table('parent')
+                ->where('user_id', $user->id)
+                ->whereNull('deleted_at')
+                ->first();
+
+            if ($parent && $parent->student_id) {
+                $attendancesQuery->where('a1.student_id', $parent->student_id);
+            } else {
+                $attendancesQuery->whereRaw('1 = 0');
+            }
+        } elseif ($query) {
+            $attendancesQuery->where(function ($subQuery) use ($query) {
+                $subQuery->where('s.name', 'LIKE', "%{$query}%")
+                    ->orWhere('s.nisn', 'LIKE', "%{$query}%")
+                    ->orWhere('c.name', 'LIKE', "%{$query}%")
+                    ->orWhere('a1.date', 'LIKE', "%{$query}%");
+            });
+        }
+
+        return $attendancesQuery;
     }
 
     public function findByNisn($nisn)

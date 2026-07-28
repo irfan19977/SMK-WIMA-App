@@ -39,6 +39,7 @@ class WhatsAppService
         }
 
         try {
+            // KIRIM DAN MENERIMA
             $response = Http::timeout(5)->connectTimeout(3)->withHeaders([
                 'Authorization' => $this->token,
             ])->post($this->apiUrl, [
@@ -140,7 +141,7 @@ class WhatsAppService
             . "Yth. Orang Tua/Wali dari:\n"
             . "👤 *{$student->name}*\n"
             . "🏫 Kelas: {$className}\n\n"
-            . "📅 Tanggal: " . \Carbon\Carbon::parse($attendance->date)->format('d M Y') . "\n"
+            . "📅 Tanggal: " . \Carbon\Carbon::parse($attendance->date, 'Asia/Jakarta')->format('d M Y') . "\n"
             . "🕐 Jam Masuk: " . ($attendance->check_in ?? '-') . "\n"
             . "📊 Status: {$statusLabel}\n";
 
@@ -182,7 +183,7 @@ class WhatsAppService
             . "👤 *{$student->name}*\n"
             . "🏫 Kelas: {$className}\n\n"
             . "Putra/Putri Bapak/Ibu datang *terlambat* pada:\n"
-            . "📅 Tanggal: " . \Carbon\Carbon::parse($attendance->date)->format('d M Y') . "\n"
+            . "📅 Tanggal: " . \Carbon\Carbon::parse($attendance->date, 'Asia/Jakarta')->format('d M Y') . "\n"
             . "🕐 Jam Masuk: {$attendance->check_in}\n";
 
         if ($lessonSubject) {
@@ -214,7 +215,7 @@ class WhatsAppService
             . "👤 *{$student->name}*\n"
             . "🏫 Kelas: {$className}\n\n"
             . "Putra/Putri Bapak/Ibu *tidak hadir tanpa keterangan (Alpha)* pada:\n"
-            . "📅 Tanggal: " . \Carbon\Carbon::parse($date)->format('d M Y') . "\n\n"
+            . "📅 Tanggal: " . \Carbon\Carbon::parse($date, 'Asia/Jakarta')->format('d M Y') . "\n\n"
             . "Mohon konfirmasi atau hubungi pihak sekolah.\n\n"
             . "Terima kasih.\n_SMK WIMA_";
 
@@ -236,9 +237,9 @@ class WhatsAppService
         $statusEmoji = $action === 'approved' ? '✅' : '❌';
         $statusText = $action === 'approved' ? 'DISETUJUI' : 'DITOLAK';
 
-        $dateRange = \Carbon\Carbon::parse($permission->start_date)->format('d M Y');
+        $dateRange = \Carbon\Carbon::parse($permission->start_date, 'Asia/Jakarta')->format('d M Y');
         if ($permission->end_date) {
-            $dateRange .= ' - ' . \Carbon\Carbon::parse($permission->end_date)->format('d M Y');
+            $dateRange .= ' - ' . \Carbon\Carbon::parse($permission->end_date, 'Asia/Jakarta')->format('d M Y');
         }
 
         $message = "{$statusEmoji} *Notifikasi Izin Siswa*\n\n"
@@ -301,7 +302,7 @@ class WhatsAppService
             . "👤 *{$student->name}*\n"
             . "🏫 Kelas: {$className}\n\n"
             . "Putra/Putri Bapak/Ibu *belum tercatat hadir* di sekolah pada:\n"
-            . "📅 Tanggal: " . \Carbon\Carbon::parse($date)->format('d M Y') . "\n\n"
+            . "📅 Tanggal: " . \Carbon\Carbon::parse($date, 'Asia/Jakarta')->format('d M Y') . "\n\n"
             . "Mohon konfirmasi atau hubungi pihak sekolah jika ada keterangan.\n\n"
             . "Terima kasih.\n_SMK WIMA_";
 
@@ -322,15 +323,15 @@ class WhatsAppService
 
         $className = $student->getCurrentClass()?->name ?? '-';
         $subjectName = $schedule->subject?->name ?? '-';
-        $startTime = \Carbon\Carbon::createFromTimeString($schedule->start_time)->format('H:i');
-        $endTime = \Carbon\Carbon::createFromTimeString($schedule->end_time)->format('H:i');
+        $startTime = \Carbon\Carbon::createFromTimeString($schedule->start_time, 'Asia/Jakarta')->format('H:i');
+        $endTime = \Carbon\Carbon::createFromTimeString($schedule->end_time, 'Asia/Jakarta')->format('H:i');
 
         $message = "⚠️ *Pemberitahuan Ketidakhadiran Pelajaran*\n\n"
             . "Yth. Orang Tua/Wali dari:\n"
             . "👤 *{$student->name}*\n"
             . "🏫 Kelas: {$className}\n\n"
             . "Putra/Putri Bapak/Ibu *tidak tercatat hadir* pada:\n"
-            . "📅 Tanggal: " . \Carbon\Carbon::parse($date)->format('d M Y') . "\n"
+            . "📅 Tanggal: " . \Carbon\Carbon::parse($date, 'Asia/Jakarta')->format('d M Y') . "\n"
             . "📚 Mata Pelajaran: *{$subjectName}*\n"
             . "🕐 Jam: {$startTime} - {$endTime}\n\n"
             . "Mohon konfirmasi atau hubungi pihak sekolah.\n\n"
@@ -363,7 +364,7 @@ class WhatsAppService
             . "Yth. Orang Tua/Wali dari:\n"
             . "👤 *{$student->name}*\n"
             . "🏫 Kelas: {$className}\n\n"
-            . "📅 Tanggal: " . \Carbon\Carbon::parse($attendance->date)->format('d M Y') . "\n"
+            . "📅 Tanggal: " . \Carbon\Carbon::parse($attendance->date, 'Asia/Jakarta')->format('d M Y') . "\n"
             . "🕐 Jam Pulang: {$attendance->check_out}\n"
             . "📊 Status: {$checkOutLabel}\n"
             . "\nTerima kasih.\n_SMK WIMA_";
@@ -374,7 +375,7 @@ class WhatsAppService
     /**
      * Notifikasi kehadiran pelajaran siswa ke orang tua
      */
-    public function sendLessonAttendanceNotification($student, $subjectName, $date, $status = 'hadir'): array
+    public function sendLessonAttendanceNotification($student, $attendance, $lessonSubject, string $lessonStatus = 'hadir'): array
     {
         $parentPhone = $this->getParentPhone($student);
         if (!$parentPhone) {
@@ -383,25 +384,30 @@ class WhatsAppService
 
         $className = $student->getCurrentClass()?->name ?? '-';
 
-        $statusLabel = match($status) {
+        $statusLabel = match($lessonStatus) {
             'hadir' => '✅ Hadir',
             'terlambat' => '⚠️ Terlambat',
             'izin' => '📋 Izin',
             'sakit' => '🏥 Sakit',
             'alpha' => '❌ Alpha',
-            default => ucfirst($status),
+            default => ucfirst($lessonStatus),
         };
+
+        $subjectName = is_object($lessonSubject) ? $lessonSubject->name : $lessonSubject;
+        $date = is_object($attendance) ? $attendance->date : $attendance;
+        $attendanceId = is_object($attendance) ? ($attendance->id ?? null) : null;
 
         $message = "📚 *Notifikasi Absensi Pelajaran SMK WIMA*\n\n"
             . "Yth. Orang Tua/Wali dari:\n"
             . "👤 *{$student->name}*\n"
             . "🏫 Kelas: {$className}\n\n"
-            . "📅 Tanggal: " . \Carbon\Carbon::parse($date)->format('d M Y') . "\n"
+            . "📅 Tanggal: " . \Carbon\Carbon::parse($date, 'Asia/Jakarta')->format('d M Y') . "\n"
             . "📖 Mata Pelajaran: *{$subjectName}*\n"
-            . "📊 Status: {$statusLabel}\n"
-            . "\nTerima kasih.\n_SMK WIMA_";
+            . "🕐 Jam: " . now('Asia/Jakarta')->format('H:i') . "\n"
+            . "📊 Status: {$statusLabel}\n\n"
+            . "Terima kasih.\n_SMK WIMA_";
 
-        return $this->send($parentPhone, $message, 'attendance', null);
+        return $this->send($parentPhone, $message, 'lesson_attendance', $attendanceId);
     }
 
     /**
@@ -473,15 +479,9 @@ class WhatsAppService
      */
     protected function getParentPhone($student): ?string
     {
-        // Cek dari tabel parent dulu
         $parent = \App\Models\ParentModel::where('student_id', $student->id)->first();
         if ($parent && !empty($parent->phone)) {
             return $parent->phone;
-        }
-
-        // Fallback ke parent_phone di tabel student
-        if (!empty($student->parent_phone)) {
-            return $student->parent_phone;
         }
 
         return null;

@@ -145,11 +145,14 @@ class RFIDController extends Controller
         $currentTime = Carbon::now('Asia/Jakarta');
         $currentDate = $currentTime->format('Y-m-d');
         $dayName = $this->convertDayToIndonesian($currentTime->format('l'));
+        $dayNameLower = strtolower($dayName); // Untuk query tabel schedule (enum lowercase)
 
-        // Get active semester from the database (is_active = true)
+        // Get active semester dari DB, fallback ke AcademicYearHelper jika tidak ada
         $activeSemester = Semester::where('is_active', true)->first();
-        $academicYear = $activeSemester ? $activeSemester->academic_year : null;
-        $semesterType = $activeSemester ? $activeSemester->semester_type : null;
+        $academicYear = $activeSemester ? $activeSemester->academic_year : \App\Helpers\AcademicYearHelper::getCurrentAcademicYear();
+        $semesterType = $activeSemester ? $activeSemester->semester_type : \App\Helpers\AcademicYearHelper::getCurrentSemester();
+        // Cover kemungkinan simpan dengan ucfirst (Ganjil/Genap) atau lowercase (ganjil/genap)
+        $semesterTypeVariants = [strtolower($semesterType), ucfirst($semesterType)];
 
         try {
             DB::beginTransaction();
@@ -223,15 +226,15 @@ class RFIDController extends Controller
                 // Prioritas 1: Cek apakah ada pelajaran aktif saat ini
                 $currentTimeOnly = $currentTime->format('H:i:s');
                 $activeScheduleQuery = Schedule::where('class_id', $studentClass->class_id)
-                    ->where('day', $dayName)
+                    ->where('day', $dayNameLower)
                     ->where('start_time', '<=', $currentTimeOnly)
                     ->where('end_time', '>=', $currentTimeOnly);
 
                 if ($academicYear) {
                     $activeScheduleQuery->where('academic_year', $academicYear);
                 }
-                if ($semesterType) {
-                    $activeScheduleQuery->where('semester', $semesterType);
+                if (!empty($semesterTypeVariants)) {
+                    $activeScheduleQuery->whereIn('semester', $semesterTypeVariants);
                 }
 
                 $activeSchedule = $activeScheduleQuery->first();
@@ -275,7 +278,7 @@ class RFIDController extends Controller
 
                     DB::commit();
 
-                    // Kirim notifikasi WA ke orang tua
+                    // Kirim notifikasi WA ke orang tua: 1 notif pelajaran saja (sudah check-in sebelumnya)
                     $studentId = $student->id;
                     $attendanceId = $existingAttendance->id;
                     $lessonSubjectId = $activeSchedule->subject_id;
@@ -284,9 +287,9 @@ class RFIDController extends Controller
                             $student = Student::find($studentId);
                             $attendance = Attendance::find($attendanceId);
                             $lessonSubject = \App\Models\Subject::find($lessonSubjectId);
-                            if ($student && $attendance) {
+                            if ($student && $attendance && $lessonSubject) {
                                 $wa = app(WhatsAppService::class);
-                                $wa->sendAttendanceNotification($student, $attendance, $lessonSubject);
+                                $wa->sendLessonAttendanceNotification($student, $attendance, $lessonSubject, 'hadir');
                             }
                         } catch (\Exception $e) {
                             \Log::warning('WA notification failed after lesson attendance: ' . $e->getMessage());
@@ -401,35 +404,44 @@ class RFIDController extends Controller
             $checkInStatus = 'tepat';
             $checkInTime = $currentTime->format('H:i');
             
-            // Logika: mulai absensi 06:00, tepat waktu sebelum 07:00, terlambat setelah 07:00
-            $currentHour = $currentTime->format('H');
-            $currentMinute = $currentTime->format('i');
-            $currentTimeInMinutes = ($currentHour * 60) + $currentMinute;
-            
-            // Cek apakah sebelum 06:00 (belum bisa absensi)
-            if ($currentTimeInMinutes < 360) { // 06:00 = 360 menit
-                return response()->json([
-                    'status' => 'error',
-                    'message' => "Belum waktu absensi. Absensi dibuka mulai pukul 06:00. Waktu sekarang: " . $checkInTime,
-                ], 422);
-            }
-
-            // Cek apakah jam pelajaran sudah selesai (tidak bisa check-in setelah end_time)
             if ($schedule) {
-                $scheduleEndCarbon = Carbon::createFromTimeString($schedule->end_time, 'Asia/Jakarta');
+                $scheduleStartCarbon = Carbon::createFromTimeString($schedule->start_time, 'Asia/Jakarta');
+                $scheduleEndCarbon   = Carbon::createFromTimeString($schedule->end_time, 'Asia/Jakarta');
+
+                // Absensi dibuka 1 jam sebelum start_time
+                $openTime = $scheduleStartCarbon->copy()->subHour();
+
+                // Belum buka
+                if ($currentTime->lt($openTime)) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "Belum waktu absensi. Absensi dibuka mulai pukul " . $openTime->format('H:i') . ". Waktu sekarang: " . $checkInTime,
+                    ], 422);
+                }
+
+                // Jam pelajaran sudah selesai
                 if ($currentTime->gte($scheduleEndCarbon)) {
                     return response()->json([
                         'status' => 'error',
                         'message' => "Tidak dapat absen masuk. Jam pelajaran sudah selesai pukul " . $scheduleEndCarbon->format('H:i') . ".",
                     ], 422);
                 }
-            }
-            
-            // Cek apakah terlambat (setelah 07:00)
-            if ($currentTimeInMinutes >= 420) { // 07:00 = 420 menit
-                $checkInStatus = 'terlambat';
+
+                // Terlambat jika setelah start_time
+                $checkInStatus = $currentTime->gt($scheduleStartCarbon) ? 'terlambat' : 'tepat';
+
             } else {
-                $checkInStatus = 'tepat';
+                // Fallback jika tidak ada schedule: buka 06:00, terlambat setelah 07:00
+                $currentTimeInMinutes = ($currentTime->format('H') * 60) + $currentTime->format('i');
+
+                if ($currentTimeInMinutes < 360) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "Belum waktu absensi. Absensi dibuka mulai pukul 06:00. Waktu sekarang: " . $checkInTime,
+                    ], 422);
+                }
+
+                $checkInStatus = $currentTimeInMinutes >= 420 ? 'terlambat' : 'tepat';
             }
 
             // Buat absensi baru
@@ -446,18 +458,27 @@ class RFIDController extends Controller
             // Cek apakah ada pelajaran yang sedang berjalan pada jam tersebut
             $currentTimeOnly = $currentTime->format('H:i:s');
             $currentScheduleQuery = Schedule::where('class_id', $studentClass->class_id)
-                ->where('day', $dayName)
+                ->where('day', $dayNameLower)
                 ->where('start_time', '<=', $currentTimeOnly)
                 ->where('end_time', '>=', $currentTimeOnly);
 
             if ($academicYear) {
                 $currentScheduleQuery->where('academic_year', $academicYear);
             }
-            if ($semesterType) {
-                $currentScheduleQuery->where('semester', $semesterType);
+            if (!empty($semesterTypeVariants)) {
+                $currentScheduleQuery->whereIn('semester', $semesterTypeVariants);
             }
 
             $currentSchedule = $currentScheduleQuery->first();
+
+            \Log::info('RFID check-in schedule debug', [
+                'class_id'   => $studentClass->class_id,
+                'day'        => $dayNameLower,
+                'time'       => $currentTimeOnly,
+                'academicYear' => $academicYear,
+                'semesterVariants' => $semesterTypeVariants,
+                'schedule_found' => $currentSchedule ? $currentSchedule->id : null,
+            ]);
 
             $lessonAttendanceCreated = false;
             if ($currentSchedule) {
@@ -486,8 +507,8 @@ class RFIDController extends Controller
                         'date' => $currentDate,
                         'check_in' => $currentTimeOnly,
                         'check_in_status' => $lessonCheckInStatus,
-                        'academic_year' => '2025/2026',
-                        'semester' => 'ganjil',
+                        'academic_year' => $academicYear ?? '2025/2026',
+                        'semester' => $semesterType ?? 'ganjil',
                     ]);
 
                     $lessonAttendanceCreated = true;
@@ -507,11 +528,19 @@ class RFIDController extends Controller
                     $attendance = Attendance::find($attendanceId);
                     if ($student && $attendance) {
                         $wa = app(WhatsAppService::class);
-                        $lessonSubject = $lessonSubjectId ? \App\Models\Subject::find($lessonSubjectId) : null;
+                        // Notif 1: kehadiran
                         if ($status === 'terlambat') {
-                            $wa->sendLateNotification($student, $attendance, $lessonSubject);
+                            $wa->sendLateNotification($student, $attendance);
                         } else {
-                            $wa->sendAttendanceNotification($student, $attendance, $lessonSubject);
+                            $wa->sendAttendanceNotification($student, $attendance);
+                        }
+                        // Notif 2: pelajaran (jika ada)
+                        if ($lessonSubjectId) {
+                            $lessonSubject = \App\Models\Subject::find($lessonSubjectId);
+                            if ($lessonSubject) {
+                                $lessonStatus = $status === 'terlambat' ? 'terlambat' : 'hadir';
+                                $wa->sendLessonAttendanceNotification($student, $attendance, $lessonSubject, $lessonStatus);
+                            }
                         }
                     }
                 } catch (\Exception $e) {

@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 use App\Services\WhatsAppService;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LessonAttendanceController extends Controller
 {
@@ -105,22 +108,27 @@ class LessonAttendanceController extends Controller
             });
         }
 
+        // Apply student restriction if user is student
+        if ($user->hasRole('Student')) {
+            $student = Student::where('user_id', $user->id)->first();
+            if ($student) {
+                $query->where('la.student_id', $student->id);
+            }
+        }
+
         // Order by date desc, then student name
         $query->orderBy('la.date', 'desc')
               ->orderBy('s.name', 'asc');
 
-        // Paginate
-        $lessonAttendances = $query->paginate($request->get('per_page', 10));
-
-        // Handle export
         if ($request->has('export') && $request->export === 'excel') {
-            return $this->exportExcel($lessonAttendances);
+            return $this->downloadExcel((clone $query)->get());
         }
 
-        // Handle print
         if ($request->has('print') && $request->print === 'pdf') {
-            return $this->printPDF($lessonAttendances);
+            return $this->renderPrintableReport((clone $query)->get());
         }
+
+        $lessonAttendances = $query->paginate($request->get('per_page', 10));
 
         // Jika request AJAX, return JSON
         if ($request->ajax() || $request->expectsJson()) {
@@ -1041,28 +1049,188 @@ class LessonAttendanceController extends Controller
         return $days[$englishDay] ?? $englishDay;
     }
 
-    /**
-     * Export lesson attendances to Excel
-     */
-    private function exportExcel($lessonAttendances)
+    public function exportExcel(Request $request): StreamedResponse
     {
-        // Implementation for Excel export
-        // You can use Laravel Excel package here
-        return response()->json([
-            'message' => 'Export Excel feature coming soon!'
+        return $this->downloadExcel($this->filteredLessonAttendanceQuery($request)->get());
+    }
+
+    private function downloadExcel($lessonAttendances): StreamedResponse
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Absensi Pelajaran');
+        $sheet->fromArray(['No', 'NISN', 'Nama Siswa', 'Kelas', 'Mata Pelajaran', 'Tanggal', 'Jam Masuk', 'Status'], null, 'A1');
+
+        foreach ($lessonAttendances as $index => $attendance) {
+            $sheet->fromArray([
+                $index + 1,
+                $attendance->student_nisn ?? '-',
+                $attendance->student_name,
+                $attendance->class_name,
+                $attendance->subject_name,
+                Carbon::parse($attendance->date)->format('d-m-Y'),
+                $attendance->check_in ? Carbon::parse($attendance->check_in)->format('H:i') : '-',
+                ucfirst($attendance->status),
+            ], null, 'A' . ($index + 2));
+        }
+
+        foreach (range('A', 'H') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+        $sheet->getStyle('A1:H1')->getFont()->setBold(true);
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, 'absensi-pelajaran-' . now()->format('Ymd-His') . '.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
 
-    /**
-     * Print lesson attendances to PDF
-     */
-    private function printPDF($lessonAttendances)
+    public function printPDF(Request $request)
     {
-        // Implementation for PDF print
-        // You can use DomPDF or similar package here
-        return response()->json([
-            'message' => 'Print PDF feature coming soon!'
-        ]);
+        return $this->renderPrintableReport($this->filteredLessonAttendanceQuery($request)->get());
+    }
+
+    private function renderPrintableReport($lessonAttendances)
+    {
+        return view('lesson_attendance.export_pdf', compact('lessonAttendances'));
+    }
+
+    private function filteredLessonAttendanceQuery(Request $request)
+    {
+        $user = Auth::user();
+        $query = DB::table('lesson_attendance as la')
+            ->select([
+                'la.id',
+                'la.student_id',
+                'la.subject_id',
+                'la.date',
+                'la.check_in_status as status',
+                'la.check_in',
+                's.nisn as student_nisn',
+                's.name as student_name',
+                'c.name as class_name',
+                'sub.name as subject_name'
+            ])
+            ->join('student as s', 'la.student_id', '=', 's.id')
+            ->join('student_class as sc', function ($join) {
+                $join->on('s.id', '=', 'sc.student_id')->where('sc.status', '=', 'active');
+            })
+            ->join('classes as c', 'sc.class_id', '=', 'c.id')
+            ->join('subject as sub', 'la.subject_id', '=', 'sub.id')
+            ->whereNull('la.deleted_at')
+            ->whereNull('s.deleted_at')
+            ->whereNull('c.deleted_at');
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+            $query->where(function ($builder) use ($search) {
+                $builder->where('s.nisn', 'like', "%{$search}%")
+                    ->orWhere('s.name', 'like', "%{$search}%")
+                    ->orWhere('c.name', 'like', "%{$search}%")
+                    ->orWhere('sub.name', 'like', "%{$search}%");
+            });
+        }
+        if ($request->filled('class_id')) {
+            $query->where('c.id', $request->class_id);
+        }
+        if ($request->filled('subject_id')) {
+            $query->where('sub.id', $request->subject_id);
+        }
+        if ($request->filled('month') && preg_match('/^\d{4}-\d{2}$/', $request->month)) {
+            [$year, $month] = explode('-', $request->month);
+            $query->whereYear('la.date', $year)->whereMonth('la.date', $month);
+        }
+        if ($user->hasRole('teacher')) {
+            $query->whereExists(function ($subQuery) use ($user) {
+                $subQuery->select(DB::raw(1))->from('schedules')
+                    ->whereColumn('schedules.class_id', 'c.id')
+                    ->whereColumn('schedules.subject_id', 'sub.id')
+                    ->where('schedules.teacher_id', $user->id);
+            });
+        }
+        if ($user->hasRole('Student')) {
+            $student = Student::where('user_id', $user->id)->first();
+            $query->where('la.student_id', $student?->id ?? 0);
+        }
+
+        return $query->orderBy('la.date', 'desc')->orderBy('s.name', 'asc');
+    }
+
+    /**
+     * Export lesson attendance to printable PDF view
+     */
+    public function exportLessonAttendancePdf(Request $request)
+    {
+        $classId   = $request->class_id;
+        $subjectId = $request->subject_id;
+        $month     = $request->month; // format Y-m
+
+        if (!$classId || !$subjectId || !$month) {
+            abort(400, 'Parameter class_id, subject_id, dan month diperlukan.');
+        }
+
+        [$year, $monthNum] = explode('-', $month);
+
+        $class   = Classes::findOrFail($classId);
+        $subject = Subject::findOrFail($subjectId);
+
+        $monthName = Carbon::createFromDate($year, $monthNum, 1)->translatedFormat('F Y');
+
+        // Siswa aktif di kelas
+        $students = DB::table('student as s')
+            ->join('student_class as sc', function ($join) use ($classId) {
+                $join->on('s.id', '=', 'sc.student_id')
+                     ->where('sc.status', 'active')
+                     ->where('sc.class_id', $classId);
+            })
+            ->whereNull('s.deleted_at')
+            ->select('s.id', 's.name', 's.nisn')
+            ->orderBy('s.name')
+            ->get();
+
+        // Data absensi bulan tersebut
+        $attendanceData = DB::table('lesson_attendance as la')
+            ->where('la.class_id', $classId)
+            ->where('la.subject_id', $subjectId)
+            ->whereYear('la.date', $year)
+            ->whereMonth('la.date', $monthNum)
+            ->whereNull('la.deleted_at')
+            ->select('la.student_id', 'la.date', 'la.check_in_status')
+            ->get();
+
+        // Ambil tanggal unik yang ada record, urutkan ascending
+        $uniqueDates = $attendanceData->pluck('date')->unique()->sort()->values();
+
+        $attendanceByStudent = $attendanceData->groupBy('student_id');
+
+        // Susun data per siswa
+        $studentsWithAttendance = $students->map(function ($student) use ($attendanceByStudent, $uniqueDates) {
+            $records = $attendanceByStudent->get($student->id, collect());
+            $daily = [];
+            foreach ($records as $r) {
+                $dateKey = $r->date;
+                $status  = $r->check_in_status;
+                if ($status === 'hadir' || $status === 'terlambat') $daily[$dateKey] = 'H';
+                elseif ($status === 'sakit') $daily[$dateKey] = 'S';
+                elseif ($status === 'izin')  $daily[$dateKey] = 'I';
+                elseif ($status === 'alpha') $daily[$dateKey] = 'A';
+                else                         $daily[$dateKey] = '-';
+            }
+            return [
+                'student'     => $student,
+                'daily'       => $daily,
+                'hadir_count' => $records->whereIn('check_in_status', ['hadir','terlambat'])->count(),
+                'sakit_count' => $records->where('check_in_status','sakit')->count(),
+                'izin_count'  => $records->where('check_in_status','izin')->count(),
+                'alpha_count' => $records->where('check_in_status','alpha')->count(),
+            ];
+        });
+
+        return view('classes.lesson_attendance_export_pdf', compact(
+            'class', 'subject', 'month', 'monthName', 'uniqueDates',
+            'studentsWithAttendance'
+        ));
     }
 
 }

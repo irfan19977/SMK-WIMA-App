@@ -25,20 +25,29 @@ class NotifyMissingLessonAttendance extends Command
         $dayName = $this->convertDayToIndonesian($now->format('l'));
         $currentTimeOnly = $now->format('H:i:s');
 
-        $activeSemester = Semester::where('is_active', true)->first();
+        $activeSemester = Semester::getCurrentActiveSemester();
         $academicYear = $activeSemester?->academic_year;
         $semesterType = $activeSemester?->semester_type;
 
         // Ambil semua jadwal pelajaran yang sudah BERAKHIR hari ini
+        // Tabel schedule menyimpan nama hari dalam lowercase (senin, selasa, ...)
         $endedSchedulesQuery = Schedule::with(['subject', 'classRoom'])
-            ->where('day', $dayName)
+            ->where('day', strtolower($dayName))
             ->where('end_time', '<=', $currentTimeOnly);
 
         if ($academicYear) {
             $endedSchedulesQuery->where('academic_year', $academicYear);
         }
         if ($semesterType) {
-            $endedSchedulesQuery->where('semester', $semesterType);
+            if (strtolower($semesterType) === 'ganjil') {
+                $endedSchedulesQuery->where(function ($q) {
+                    $q->whereIn('semester', ['Ganjil', 'ganjil', '1', 1])
+                      ->orWhereNull('semester')
+                      ->orWhere('semester', '');
+                });
+            } elseif (strtolower($semesterType) === 'genap') {
+                $endedSchedulesQuery->whereIn('semester', ['Genap', 'genap', '2', 2]);
+            }
         }
 
         $endedSchedules = $endedSchedulesQuery->get();

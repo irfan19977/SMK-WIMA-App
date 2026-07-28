@@ -16,6 +16,7 @@
                     <option value="Kamis" {{ isset($schedule) && $schedule->day == 'Kamis' ? 'selected' : '' }}>{{ __('index.kamis') }}</option>
                     <option value="Jumat" {{ isset($schedule) && $schedule->day == 'Jumat' ? 'selected' : '' }}>{{ __('index.jumat') }}</option>
                     <option value="Sabtu" {{ isset($schedule) && $schedule->day == 'Sabtu' ? 'selected' : '' }}>{{ __('index.sabtu') }}</option>
+                    <option value="Minggu" {{ isset($schedule) && $schedule->day == 'Minggu' ? 'selected' : '' }}>{{ __('index.minggu') }}</option>
                 </select>
                 <div class="invalid-feedback">
                     {{ __('index.please_select_day') }}

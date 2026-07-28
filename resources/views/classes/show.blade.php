@@ -7,6 +7,202 @@
 @section('css')
     <!-- Sweet Alert-->
     <link href="{{ URL::asset('build/libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
+    <style>
+        .student-item {
+            position: relative;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            background: #fff;
+        }
+        .student-item:hover {
+            border-color: #0d6efd;
+            box-shadow: 0 2px 8px rgba(13, 110, 253, 0.1);
+        }
+        .student-item.selected {
+            border-color: #0d6efd;
+            background: #f0f7ff;
+        }
+        .student-checkbox {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            z-index: 2;
+        }
+        .student-label {
+            display: flex;
+            align-items: center;
+            padding: 12px 12px 12px 42px;
+            margin: 0;
+            cursor: pointer;
+            border-radius: 8px;
+            min-height: 64px;
+        }
+        .student-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0d6efd 0%, #0099ff 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .student-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .student-name {
+            font-weight: 500;
+            color: #212529;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .student-meta {
+            font-size: 12px;
+            color: #6c757d;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .student-check {
+            font-size: 20px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+        .student-item.selected .student-check {
+            opacity: 1;
+        }
+        .class-overview {
+            overflow: hidden;
+            border: 0;
+            border-radius: 16px;
+            box-shadow: 0 10px 26px rgba(22, 56, 74, 0.08);
+        }
+        .class-overview__hero {
+            padding: 26px 24px 22px;
+            color: #fff;
+            background: linear-gradient(135deg, #087f8c 0%, #0b6173 100%);
+        }
+        .class-overview__icon {
+            width: 56px;
+            height: 56px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.16);
+            font-size: 28px;
+        }
+        .class-overview__body {
+            padding: 18px 24px 22px;
+        }
+        .class-overview__meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            color: #657786;
+            font-size: 13px;
+            border-bottom: 1px solid #edf1f4;
+        }
+        .class-overview__meta:last-child {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
+        .class-stat {
+            border: 1px solid #e6eef1;
+            border-radius: 12px;
+            background: #f8fbfc;
+        }
+        .class-tabs {
+            padding: 8px;
+            border: 0;
+            border-radius: 14px;
+            box-shadow: 0 6px 18px rgba(22, 56, 74, 0.06);
+        }
+        .class-tabs .nav-link {
+            padding: 12px 16px;
+            color: #657786;
+            font-weight: 600;
+            border-radius: 9px;
+        }
+        .class-tabs .nav-link.active {
+            color: #fff;
+            background: #0d8494;
+            box-shadow: 0 4px 10px rgba(13, 132, 148, 0.22);
+        }
+        .student-directory {
+            overflow: hidden;
+            border: 0;
+            border-radius: 14px;
+            box-shadow: 0 6px 20px rgba(22, 56, 74, 0.06);
+        }
+        .student-directory .card-header {
+            padding: 22px 24px;
+            background: #fff;
+            border-bottom: 1px solid #edf1f4;
+        }
+        .student-directory .card-body {
+            padding: 0;
+        }
+        .student-directory .table {
+            margin-bottom: 0;
+        }
+        .student-directory .table thead th {
+            padding: 14px 24px;
+            color: #718096;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            background: #f7fafb;
+            border: 0;
+        }
+        .student-directory .table tbody td {
+            padding: 15px 24px;
+            vertical-align: middle;
+            border-color: #edf1f4;
+        }
+        .student-number {
+            display: inline-flex;
+            width: 28px;
+            height: 28px;
+            align-items: center;
+            justify-content: center;
+            color: #0d8494;
+            font-size: 12px;
+            font-weight: 700;
+            background: #e7f6f7;
+            border-radius: 50%;
+        }
+        .student-profile-link {
+            color: #1d3b4a;
+            font-weight: 600;
+        }
+        .student-profile-link:hover {
+            color: #0d8494;
+        }
+        @media (max-width: 1199.98px) {
+            .class-overview { margin-bottom: 20px; }
+        }
+        @media (max-width: 575.98px) {
+            .student-directory .card-header { padding: 18px; }
+            .student-directory .table thead th, .student-directory .table tbody td { padding: 12px 16px; }
+        }
+    </style>
 @endsection
 
 @section('page-title')
@@ -22,40 +218,35 @@
         <!-- Sidebar -->
         <div class="col-xl-3">
             <!-- Class Header Card -->
-            <div class="card mb-3">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <div class="avatar-xxl mx-auto bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                            <i class="mdi mdi-school text-white" style="font-size: 2rem;"></i>
+            <div class="card class-overview mb-3">
+                <div class="class-overview__hero">
+                    <div class="class-overview__icon mb-3"><i class="mdi mdi-school"></i></div>
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <div>
+                            <p class="text-white-50 text-uppercase small fw-semibold mb-1">Detail Kelas</p>
+                            <h3 class="mb-1 text-white">{{ $classes->name }}</h3>
+                            <p class="mb-0 text-white-50">{{ $classes->major ?: 'Program keahlian belum diatur' }}</p>
                         </div>
-                    </div>
-                    <h4 class="mb-1">{{ $classes->name }}</h4>
-                    <p class="text-muted mb-2">{{ $classes->major }}</p>
-                    <div class="d-flex justify-content-center gap-2 mb-3">
-                        <span class="badge bg-primary">{{ $classes->code }}</span>
-                        <span class="badge bg-info">{{ __('index.grade') }} {{ $classes->grade }}</span>
                         @if($classes->is_archived)
-                            <span class="badge bg-warning">{{ __('index.archived') }}</span>
+                            <span class="badge bg-warning text-dark">{{ __('index.archived') }}</span>
                         @else
                             <span class="badge bg-success">{{ __('index.active') }}</span>
                         @endif
                     </div>
-                    <p class="text-muted small mb-0">
-                        <i class="mdi mdi-calendar me-1"></i>
-                        {{ $classes->academic_year}}
-                    </p>
-                    @php
-                        try {
-                            $activeSemester = \App\Models\Semester::where('is_active', true)->first();
-                        } catch (\Exception $e) {
-                            $activeSemester = null;
-                        }
-                    @endphp
-                    @if($activeSemester)
-                    <p class="text-muted small mb-0">
-                        <i class="mdi mdi-book me-1"></i>
-                        {{ __('index.semester') }} {{ $activeSemester->semester_type }}
-                    </p>
+                </div>
+                <div class="class-overview__body">
+                    <div class="class-stat d-flex align-items-center justify-content-between p-3 mb-3">
+                        <div>
+                            <p class="text-muted small mb-1">Total Siswa</p>
+                            <h3 class="mb-0">{{ $students->count() }}</h3>
+                        </div>
+                        <div class="text-primary"><i class="mdi mdi-account-group mdi-36px"></i></div>
+                    </div>
+                    <div class="class-overview__meta"><i class="mdi mdi-barcode text-primary"></i><span>{{ $classes->code }}</span></div>
+                    <div class="class-overview__meta"><i class="mdi mdi-school-outline text-primary"></i><span>{{ __('index.grade') }} {{ $classes->grade }}</span></div>
+                    <div class="class-overview__meta"><i class="mdi mdi-calendar-range text-primary"></i><span>{{ $classes->academic_year }}</span></div>
+                    @if($currentSemesterLabel)
+                        <div class="class-overview__meta"><i class="mdi mdi-book-open-page-variant text-primary"></i><span>{{ __('index.semester') }} {{ $currentSemesterLabel }}</span></div>
                     @endif
                 </div>
             </div>
@@ -94,8 +285,8 @@
         <!-- Main Content -->
         <div class="col-xl-9">
             <!-- Tabs Navigation -->
-            <div class="card mb-3">
-                <div class="card-body">
+            <div class="card class-tabs mb-3">
+                <div class="card-body p-0">
                     <!-- Nav tabs -->
                     <ul class="nav nav-pills nav-justified" role="tablist">
                         <li class="nav-item waves-effect waves-light">
@@ -124,22 +315,19 @@
             <div class="tab-content">
                 <!-- Students Tab -->
                 <div class="tab-pane active" id="students-tab" role="tabpanel">
-                    <div class="card">
-                        <div class="card-body">
+                    <div class="card student-directory">
+                        <div class="card-header">
                             <!-- Header -->
-                            <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
                                 <div>
-                                    <h4 class="mb-1">{{ $classes->name }}</h4>
-                                    <p class="text-muted mb-0">
-                                        {{ $classes->major }} - {{ __('index.grade') }} {{ $classes->grade }} - {{ $classes->code }}
-                                    </p>
+                                    <p class="text-uppercase text-muted small fw-semibold mb-1">Data Kelas</p>
+                                    <h4 class="mb-1">Daftar Siswa</h4>
+                                    <p class="text-muted mb-0">{{ $students->count() }} siswa terdaftar di {{ $classes->name }}</p>
                                 </div>
-                                <div class="d-flex gap-2">
+                                <div class="d-flex gap-2 flex-wrap">
                                     <div class="input-group" style="width: 250px;">
+                                        <span class="input-group-text bg-white"><i class="mdi mdi-magnify"></i></span>
                                         <input type="text" class="form-control" placeholder="{{ __('index.search_student') }}" id="search-student">
-                                        <button class="btn btn-outline-secondary" type="button">
-                                            <i class="mdi mdi-magnify"></i>
-                                        </button>
                                     </div>
                                     @can('classes.create')
                                         <button type="button" class="btn btn-primary" onclick="addStudents()">
@@ -148,7 +336,8 @@
                                     @endcan
                                 </div>
                             </div>
-
+                        </div>
+                        <div class="card-body">
                             <!-- Students Table -->
                             <div class="table-responsive">
                                 <table class="table table-hover">
@@ -167,11 +356,11 @@
                                     <tbody id="students-tbody">
                                         @forelse ($students as $index => $student)
                                         <tr class="student-row" data-name="{{ $student->name ?? '' }}" data-nisn="{{ $student->nisn ?? '' }}">
-                                            <td>{{ $index + 1 }}</td>
+                                            <td><span class="student-number">{{ $index + 1 }}</span></td>
                                             <td>{{ $student->nisn ?? '-' }}</td>
                                             <td>
                                                 @if($student->user_id)
-                                                    <a href="{{ route('profile.show') }}?user_id={{ $student->user_id }}" class="text-primary text-decoration-none fw-medium">
+                                                    <a href="{{ route('profile.show') }}?user_id={{ $student->user_id }}" class="student-profile-link text-decoration-none">
                                                         {{ $student->name }}
                                                     </a>
                                                 @else
@@ -179,7 +368,7 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                @if(($student->gender ?? '') == 'L')
+                                                @if(($student->gender ?? '') == 'laki-laki')
                                                     <span class="badge bg-primary">L</span>
                                                 @else
                                                     <span class="badge bg-info">P</span>
@@ -396,7 +585,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">&nbsp;</label><br>
-                                    <div class="d-flex gap-2">
+                                    <div class="d-flex gap-2 flex-wrap">
                                         <button type="button" id="loadSubjectAttendance" class="btn btn-primary">
                                             <i class="mdi mdi-refresh me-1"></i>{{ __('index.load_data') }}
                                         </button>
@@ -405,6 +594,12 @@
                                                 <i class="mdi mdi-check me-1"></i>{{ __('index.mark_attendance') }}
                                             </button>
                                         @endcan
+                                        <button type="button" class="btn btn-success" onclick="exportLessonAttendanceExcel()">
+                                            <i class="mdi mdi-file-excel me-1"></i> Export Excel
+                                        </button>
+                                        <button type="button" class="btn btn-danger" onclick="exportLessonAttendancePdf()">
+                                            <i class="mdi mdi-file-pdf me-1"></i> Export PDF
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -505,49 +700,55 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info d-flex align-items-center" role="alert">
-                        <i class="mdi mdi-information me-2"></i>
+                    <div class="alert alert-info d-flex align-items-start" role="alert">
+                        <i class="mdi mdi-information me-2 mt-1"></i>
                         <div>
-                            <strong>{{ __('index.information') }}:</strong> {{ __('index.only_students_with_status') }} <span class="badge bg-success">{{ __('index.student') }}</span> {{ __('index.can_be_added_to_class') }}. 
+                            <strong>{{ __('index.information') }}:</strong> {{ __('index.only_students_with_status') }} <span class="badge bg-success">{{ __('index.student') }}</span> {{ __('index.can_be_added_to_class') }}.
                             {{ __('index.students_with_status') }} <span class="badge bg-warning">{{ __('index.prospective_student') }}</span> {{ __('index.will_not_be_displayed') }}.
                         </div>
                     </div>
-                    <form action="{{ route('classes.bulk-assign', $classes->id) }}" method="POST">
+                    <form action="{{ route('classes.bulk-assign', $classes->id) }}" method="POST" id="bulkAssignForm">
                         @csrf
-                        <div class="form-group">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <label class="form-label">{{ __('index.select_students') }}:</label>
-                                <div>
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="selectAll()">
-                                        <i class="mdi mdi-check-all me-1"></i>{{ __('index.select_all') }}
-                                    </button>
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="deselectAll()">
-                                        <i class="mdi mdi-close me-1"></i>{{ __('index.deselect_all') }}
-                                    </button>
-                                </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <span class="fw-medium">{{ __('index.select_students') }}</span>
+                                <span class="badge bg-primary ms-2" id="selectedCountBadge">0 {{ __('index.selected') }}</span>
                             </div>
-                            <div class="mb-3">
-                                <input type="text" class="form-control" id="searchAvailableStudent" placeholder="{{ __('index.search_name_or_nisn') }}">
+                            <div>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="selectAll()">
+                                    <i class="mdi mdi-check-all me-1"></i>{{ __('index.select_all') }}
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="deselectAll()">
+                                    <i class="mdi mdi-close me-1"></i>{{ __('index.deselect_all') }}
+                                </button>
                             </div>
-                            <div class="students-list" id="availableStudentsList" style="max-height: 400px; overflow-y: auto;">
-                                @foreach($availableStudents as $student)
-                                <div class="form-check mb-2 student-item">
-                                    <input class="form-check-input student-checkbox" type="checkbox" 
-                                        id="student_{{ $student->id }}" name="student_ids[]" value="{{ $student->id }}">
-                                    <label class="form-check-label d-flex align-items-center" for="student_{{ $student->id }}">
-                                        <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 12px;">
-                                            {{ strtoupper(substr($student->name, 0, 1)) }}
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <div class="fw-medium">{{ $student->name }}</div>
-                                            <small class="text-muted">{{ $student->nisn }} - {{ $student->user->email ?? 'No Email' }}</small>
-                                        </div>
-                                        <div>
-                                            <span class="badge bg-success">Siswa</span>
-                                        </div>
-                                    </label>
-                                </div>
-                                @endforeach
+                        </div>
+                        <div class="mb-3 position-relative">
+                            <i class="mdi mdi-magnify position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%);"></i>
+                            <input type="text" class="form-control ps-5" id="searchAvailableStudent" placeholder="{{ __('index.search_name_or_nisn') }}">
+                        </div>
+                        <div class="students-list" id="availableStudentsList" style="max-height: 420px; overflow-y: auto;">
+                            @foreach($availableStudents as $student)
+                            <div class="student-item mb-2">
+                                <input class="form-check-input student-checkbox" type="checkbox"
+                                    id="student_{{ $student->id }}" name="student_ids[]" value="{{ $student->id }}">
+                                <label class="student-label" for="student_{{ $student->id }}">
+                                    <div class="student-avatar">
+                                        {{ strtoupper(substr($student->name, 0, 1)) }}
+                                    </div>
+                                    <div class="student-info">
+                                        <div class="student-name">{{ $student->name }}</div>
+                                        <div class="student-meta">{{ $student->nisn }} · {{ $student->user->email ?? 'No Email' }}</div>
+                                    </div>
+                                    <div class="student-check">
+                                        <i class="mdi mdi-check-circle text-primary"></i>
+                                    </div>
+                                </label>
+                            </div>
+                            @endforeach
+                            <div id="noResultsMessage" class="text-center py-4 text-muted d-none">
+                                <i class="mdi mdi-magnify display-6"></i>
+                                <p class="mb-0 mt-2">{{ __('index.no_students_found') }}</p>
                             </div>
                         </div>
 
@@ -555,7 +756,7 @@
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                 <i class="mdi mdi-close me-1"></i>Batal
                             </button>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" id="btnAddSelected">
                                 <i class="mdi mdi-account-plus me-1"></i>Tambah Siswa Terpilih
                             </button>
                         </div>
@@ -866,6 +1067,32 @@
             }
         }
 
+        function exportLessonAttendance(format) {
+            const subjectId = document.getElementById('subjectFilter').value;
+            const month = document.getElementById('subjectMonthFilter').value;
+            const classId = '{{ $classes->id }}';
+
+            if (!subjectId) {
+                Swal.fire({ icon: 'warning', title: 'Pilih Mata Pelajaran', text: 'Silakan pilih mata pelajaran terlebih dahulu.', confirmButtonColor: '#3085d6' });
+                return;
+            }
+            if (!month) {
+                Swal.fire({ icon: 'warning', title: 'Pilih Bulan', text: 'Silakan pilih bulan terlebih dahulu.', confirmButtonColor: '#3085d6' });
+                return;
+            }
+
+            const endpoint = format === 'excel' ? '/lesson-attendances/export-excel' : '/lesson-attendances/print-pdf';
+            window.open(`${endpoint}?class_id=${classId}&subject_id=${subjectId}&month=${month}`, '_blank');
+        }
+
+        function exportLessonAttendanceExcel() {
+            exportLessonAttendance('excel');
+        }
+
+        function exportLessonAttendancePdf() {
+            exportLessonAttendance('pdf');
+        }
+
         function displayAttendanceCalendar(attendanceData, students, year, month) {
             const daysInMonth = new Date(year, month, 0).getDate();
             let tableHTML = '';
@@ -1008,36 +1235,77 @@
         }
 
         // Bulk Assign Functions
+        function updateSelectedState(checkbox) {
+            const item = checkbox.closest('.student-item');
+            if (checkbox.checked) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const checked = document.querySelectorAll('.student-checkbox:checked').length;
+            const badge = document.getElementById('selectedCountBadge');
+            const btn = document.getElementById('btnAddSelected');
+            if (badge) {
+                badge.textContent = checked + ' {{ __("index.selected") }}';
+            }
+            if (btn) {
+                btn.disabled = checked === 0;
+            }
+        }
+
         function selectAll() {
             document.querySelectorAll('.student-checkbox').forEach(checkbox => {
                 checkbox.checked = true;
+                updateSelectedState(checkbox);
             });
         }
 
         function deselectAll() {
             document.querySelectorAll('.student-checkbox').forEach(checkbox => {
                 checkbox.checked = false;
+                updateSelectedState(checkbox);
             });
         }
 
         // Search functionality for available students
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchAvailableStudent');
+            const noResults = document.getElementById('noResultsMessage');
             if (searchInput) {
                 searchInput.addEventListener('keyup', function() {
                     const value = this.value.toLowerCase();
                     const studentItems = document.querySelectorAll('#availableStudentsList .student-item');
-                    
+                    let visibleCount = 0;
+
                     studentItems.forEach(function(item) {
                         const text = item.textContent.toLowerCase();
                         if (text.includes(value)) {
                             item.style.display = 'block';
+                            visibleCount++;
                         } else {
                             item.style.display = 'none';
                         }
                     });
+
+                    if (noResults) {
+                        noResults.classList.toggle('d-none', visibleCount > 0);
+                    }
                 });
             }
+
+            // Initialize checkbox selection state
+            document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateSelectedState(this);
+                });
+                updateSelectedState(checkbox);
+            });
+
+            updateSelectedCount();
         });
 
         // Subject Attendance Functions

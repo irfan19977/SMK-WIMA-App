@@ -502,6 +502,99 @@
         }
     });
 
+    // Auto-fill class name based on grade, major, and academic year
+    function initClassNameAutoFill() {
+        const modalBody = document.querySelector('#class-modal .modal-body');
+        if (!modalBody) return;
+
+        const gradeSelect = modalBody.querySelector('#grade');
+        const majorSelect = modalBody.querySelector('#major');
+        const academicYearSelect = modalBody.querySelector('#academic_year');
+        const nameInput = modalBody.querySelector('#name');
+
+        if (!gradeSelect || !majorSelect || !academicYearSelect || !nameInput) {
+            return;
+        }
+
+        const gradeRoman = {
+            '10': 'X',
+            '11': 'XI',
+            '12': 'XII'
+        };
+
+        const majorShort = {
+            'Teknik Komputer & Jaringan': 'TKJ',
+            'Teknik Bisnis Sepeda Motor': 'TSM',
+            'Teknik Kendaraan Ringan Otomotif': 'TKR',
+            'Teknik Kimia Industri': 'KI'
+        };
+
+        function generateClassName() {
+            const grade = gradeSelect.value;
+            const major = majorSelect.value;
+            const academicYear = academicYearSelect.value;
+
+            if (grade && major && academicYear) {
+                const roman = gradeRoman[grade] || grade;
+                const short = majorShort[major] || major.split(' ').map(w => w[0]).join('').toUpperCase();
+                nameInput.value = roman + ' ' + short + ' ' + academicYear;
+            }
+        }
+
+        gradeSelect.addEventListener('change', generateClassName);
+        majorSelect.addEventListener('change', generateClassName);
+        academicYearSelect.addEventListener('change', generateClassName);
+
+        // Generate on initial load if all fields are set
+        generateClassName();
+    }
+
+    // Delete from modal
+    window.deleteFromClassModal = function(id, name) {
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: "Kelas \"" + name + "\" akan dihapus permanen!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Close modal first
+                const modal = bootstrap.Modal.getInstance(document.getElementById('class-modal'));
+                if (modal) modal.hide();
+                
+                // Create form for delete
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/classes/' + id;
+                form.style.display = 'none';
+                
+                // Add CSRF token
+                const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                if (csrfToken) {
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = csrfToken.getAttribute('content');
+                    form.appendChild(csrfInput);
+                }
+                
+                // Add method override for DELETE
+                const methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'DELETE';
+                form.appendChild(methodInput);
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
+
     // Modal functions
     function openClassModal() {
         console.log('Opening class modal');
@@ -517,6 +610,8 @@
             if (data.success) {
                 document.getElementById('class-modal-label').textContent = data.title;
                 document.querySelector('#class-modal .modal-body').innerHTML = data.html;
+                
+                initClassNameAutoFill();
                 
                 const modal = new bootstrap.Modal(document.getElementById('class-modal'));
                 modal.show();
@@ -552,6 +647,8 @@
             if (data.success) {
                 document.getElementById('class-modal-label').textContent = data.title;
                 document.querySelector('#class-modal .modal-body').innerHTML = data.html;
+                
+                initClassNameAutoFill();
                 
                 const modal = new bootstrap.Modal(document.getElementById('class-modal'));
                 modal.show();

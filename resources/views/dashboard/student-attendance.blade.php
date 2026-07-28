@@ -1,11 +1,11 @@
 @extends('layouts.master')
 
 @section('title')
-    Kehadiran Anak
+    Kehadiran Saya
 @endsection
 
 @section('page-title')
-    Kehadiran Anak
+    Kehadiran Saya
 @endsection
 
 @section('body')
@@ -107,7 +107,7 @@
                 </div>
 
                 <!-- Filter Form -->
-                <form method="GET" action="{{ route('parent.attendance') }}" class="mb-3">
+                <form method="GET" action="{{ route('student.attendance') }}" class="mb-3">
                     <div class="row">
                         <div class="col-md-3">
                             <label class="form-label">Tanggal Mulai</label>
@@ -134,10 +134,10 @@
                                 <button type="submit" class="btn btn-primary">
                                     <i class="mdi mdi-filter"></i> Filter
                                 </button>
-                                <a href="{{ route('parent.attendance') }}" class="btn btn-secondary">
+                                <a href="{{ route('student.attendance') }}" class="btn btn-secondary">
                                     <i class="mdi mdi-refresh"></i> Reset
                                 </a>
-                                <a href="{{ route('parent.attendance.export', array_merge(request()->query(), ['format' => 'pdf'])) }}" 
+                                <a href="{{ route('student.attendance.export', array_merge(request()->query(), ['format' => 'pdf'])) }}" 
                                    class="btn btn-danger" target="_blank">
                                     <i class="mdi mdi-file-pdf"></i> Export PDF
                                 </a>

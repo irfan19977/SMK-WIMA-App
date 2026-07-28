@@ -35,7 +35,7 @@ return [
     'face_scan_attendance' => 'Face Scan Attendance',
     'daily_attendance' => 'Daily Attendance',
     'in_out_attendance' => 'In/Out Attendance',
-    'child_in_out_attendance' => 'Child\'s In/Out Attendance',
+    'child_in_out_attendance' => 'Child\'s Attendance',
     
     // Biometric Submenu
     'face_scan' => 'Face Scan',
